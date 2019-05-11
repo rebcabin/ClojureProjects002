@@ -1,0 +1,387 @@
+#+TITLE: Literate Clojure
+#+AUTHOR: The Team of Fu
+#+LATEX_HEADER: \usepackage{tikz}
+#+LATEX_HEADER: \usepackage{tikz}
+#+LATEX_HEADER: \usepackage{tikz-cd}
+#+LATEX_HEADER: \usetikzlibrary{matrix,arrows,positioning,scopes,chains}
+#+LATEX_HEADER: \tikzset{node distance=2cm, auto}
+#+BEGIN_COMMENT
+The following line generates a benign error
+#+LATEX_HEADER: \usepackage{amsmath, amsthm, amssymb}
+#+END_COMMENT
+#+STYLE: <link rel="stylesheet" type="text/css" href="styles/default.css" />
+#+BEGIN_COMMENT
+  TODO: Integrate BibTeX
+#+END_COMMENT
+
+* Introduction
+\begin{figure}
+  \centering
+  \includegraphics[width=0.5\textwidth]{FuFortune2.png}
+  \caption{\label{fig:fufortune}This means ``Fortune'' and is pronounced ``Fu''.}
+\end{figure}
+
+** How-To's
+  This is a literate program.[fn:LP: See
+  http://en.wikipedia.org/wiki/Literate_programming.] That means that
+  source code /and/ documentation spring from the same, plain-text
+  source files. That gives us a fighting chance of keeping knowledge
+  and source coherent.
+
+  This file is named /ex1.org/. It's an outline in plain text with
+  obvious structure. Top-level headlines get a single star;
+  second-level headlines get two stars, and so on; \LaTeX{} can be
+  freely written anywhere; source-code examples abound to
+  copy-and-paste, and text explaining how to build and run the source
+  is nearby.
+
+  You can edit the file with any plain-text editor. Emacs offers some
+  automation in generating the typeset output, /ed1.pdf/, and the
+  source code of the application right out of the /org/ file. To
+  generate source code, issue the emacs command
+  \verb|org-babel-tangle|. To generate documentation, issue the emacs
+  command \verb|org-latex-export-to-pdf|.
+
+  We are working on a batch process via /make/ so that you can just
+  clone the repo, make whatever edits you like, type /make/, and have
+  a complete PDF file and a complete directory full of source code.
+
+* Tangle to Leiningen
+  Let's generate Leiningen projects.[fn::http://leiningen.org]
+  Leiningen is the easiest way to use Clojure.[fn::http://clojure.org]
+  Clojure is a 100\% Java-compatible functional programming language;
+  it is simple, straightforward, and arguably the best way to use Java
+  post-2010. As with any Java-based language, there is significant
+  ``ceremony'' in setting up code to run. Files must be in certain
+  directories that correspond to namespaces and packages, and the
+  ever-finicky /classpath/ must be set up. This ceremony is often much
+  more time-consuming than the code. Much of the value of the
+  Clojure-Leiningen combination is that Leiningen automates almost all
+  the ceremony.
+
+  After /tangling/ this file, as directed in this section, you will
+  have a Leiningen project. Go to the project directory (the one
+  containing the file /project.clj/), and type \verb|lein test| in a
+  console or terminal window, running all the unit tests. Type
+  \verb|lein repl| to get an interactive session, in which you may run
+  code from the project or any other experimental code. If you're
+  using emacs, you can also run the repl directly in emacs, as
+  described in section \ref{sec:emacs-repl}.
+
+  First, let's show the Leiningen project in detail. If you were to
+  run the following command at a console prompt
+#+BEGIN_SRC text
+$ lein new ex1
+#+END_SRC
+  you would get the following source tree:
+#+BEGIN_SRC text
+ex1
+ex1/.gitignore
+ex1/doc
+ex1/doc/intro.md
+ex1/project.clj
+ex1/README.md
+ex1/resources
+ex1/src
+ex1/src/ex1
+ex1/src/ex1/core.clj
+ex1/test
+ex1/test/ex1
+ex1/test/ex1/core_test.clj
+#+END_SRC
+  We create the identical, base structure by typing
+#+BEGIN_EXAMPLE
+  M-x org-babel-tangle
+#+END_EXAMPLE
+  and no more, in our org-mode buffer in emacs (or, eventually, by
+  typing /make/ in the root directory, for non-users of emacs). Below,
+  we tangle some more, application-specific code into that directory
+  structure.
+
+** Files in the Project Directory
+   In our example, the top-level directory doesn't have a name --
+   put our /org/ file in that directory. The Leiningen project directory
+   will have the same name as our /org/ file. Our /org/ file is named
+   \verb+ex1.org+ and we want a directory tree rooted at \verb+ex1+
+   exactly as above.
+
+   Start with the contents of the project directory, \verb+ex1+. Each
+   org-mode babel source-code block will name a file path -- including
+   sub-directories -- after a \verb+:tangle+ keyword on the
+   \texttt{\#+BEGIN\_SRC} command of org-mode.
+*** .Gitignore
+   First, we must create the \verb+.gitignore+ file that tells
+   \verb+git+ not to check in the ephemeral /ejecta/ of build
+   processes like \verb+maven+ and \verb+javac+. When we gain more
+   confidence and adoption with tangle and \LaTeX{}, we will even
+   ignore the PDF file and the generated source tree, saving /only/
+   the /org/ file in the repository.
+#+BEGIN_SRC text :mkdirp yes :tangle ./ex1/.gitignore
+/target
+/lib
+/classes
+/checkouts
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+.lein-deps-sum
+.lein-failures
+.lein-plugins
+.lein-repl-history
+#+END_SRC
+*** README.md
+   Next, we produce a \verb+README.md+ in \verb+markdown+ syntax for
+   the entire project:
+#+BEGIN_SRC markdown :mkdirp yes :tangle ./ex1/README.md
+# ex1
+A Clojure library designed to do SOMETHING.
+## Usage
+TODO
+## License
+Copyright © 2013 TODO
+#+END_SRC
+*** project.clj
+Next is the \verb+project.clj+ file required by Leiningen for fetching
+dependencies, loading libraries, and other housekeeping. If you are
+running the Clojure REPL inside emacs, you must visit this file /after
+tangling it out of the org file/, and then run
+#+BEGIN_EXAMPLE
+M-x nrepl-jack-in
+#+END_EXAMPLE
+in that buffer (see more in section
+\ref{sec:emacs-repl}).
+#+BEGIN_SRC clojure :noweb yes :mkdirp yes :tangle ./ex1/project.clj :exports none
+  <<project-file>>
+#+END_SRC
+#+NAME: project-file
+#+BEGIN_SRC clojure :tangle no
+(defproject ex1 "0.1.0-SNAPSHOT"
+  :description "Project Fortune's Excel Processor"
+  :url "http://example.com/TODO"
+  :license {:name "TODO"
+            :url "TODO"}
+  :dependencies [[org.clojure/clojure  "1.5.1"]
+                 [org.clojure/data.zip "0.1.1"]
+                 [dk.ative/docjure     "1.6.0"]
+                ]
+  :repl-options {:init-ns ex1.core})
+#+END_SRC
+
+** The Documentation Subdirectory
+  Mimicking Leiningen's documentation subdirectory, it contains the
+  single file \verb+intro.md+, again in \verb+markdown+ syntax.
+#+BEGIN_SRC markdown :mkdirp yes :tangle ./ex1/doc/intro.md
+# Introduction to ex1
+TODO: The project documentation is the .org file that produced
+this output, but it still pays to read
+http://jacobian.org/writing/great-documentation/what-to-write/
+#+END_SRC
+** Core Source File
+  By convention, the core source files go in a subdirectory named
+  \verb+./ex1/src/ex1+. This convention allows the Clojure namespaces
+  to map to Java packages.
+
+  The following is our core source file, explained in small pieces.
+  The /org/ file contains a spec for emitting the tangled source at
+  this point. This spec is not visible in the generated PDF file,
+  because we want to individually document the small pieces. The
+  invisible spec simply gathers up the source of the small pieces from
+  out of their explanations and then emits them into the source
+  directory tree, using another tool called
+  /noweb/.[fn::http://orgmode.org/manual/Noweb-reference-syntax.html]
+  This is not more complexity for you to learn, rather it is just a
+  way for you to feel comfortable with literate-programming magic.
+#+name: top-level-load-block
+#+BEGIN_SRC clojure  :exports none :mkdirp yes :tangle ./ex1/src/ex1/core.clj :padline no :results silent :noweb yes
+<<main-namespace>>
+<<main-zippered>>
+<<docjure-test-spreadsheet>>
+#+END_SRC
+
+*** The Namespace
+First, we must mention the libraries we're using. This is pure
+ceremony, and we get to the meat of the code immediately after. These
+library-mentions correspond to the \verb|:dependencies| in the
+\verb|project.clj| file above. Each \verb|:use| or \verb|:require|
+below must correspond to either an explicit dependency in the
+\verb|project.clj| file or to one of several implicitly loaded
+libraries. Leiningen loads libraries by processing the
+\verb|project.clj| file above. We bring symbols from those libraries
+into our namespace so we can use the libraries in our core routines.
+
+To ingest and compile raw Excel spreadsheets, we use the built-in
+libraries \verb|clojure.zip| for tree navigation and
+\verb|clojure.xml| for XML parsing, plus the third-party libraries
+\verb|clojure.data.zip.xml| and \verb|dk.ative.docjure.spreadsheet|.
+The following brings these libraries into our namespace:
+#+name: main-namespace
+#+BEGIN_SRC clojure :results silent
+(ns ex1.core
+  (:use [clojure.data.zip.xml :only (attr text xml->)]
+        [dk.ative.docjure.spreadsheet] )
+  (:require [clojure.xml :as xml]
+            [clojure.zip :as zip]))
+#+END_SRC
+
+*** Data Instances
+Next, we create a couple of data instances to manipulate later in our
+unit tests. The first one ingests a trivial XML file and the second
+one converts the in-memory data structure into a
+/zipper/,[fn::http://richhickey.github.io/clojure/clojure.zip-api.html]
+a very modern, functional tree-navigation facility. These instances
+will test our ability to freely navigate the raw XML form of Excel
+spreadsheets:
+#+name: main-zippered
+#+BEGIN_SRC clojure :results silent
+(def xml (xml/parse "myfile.xml"))
+(def zippered (zip/xml-zip xml))
+#+END_SRC
+
+*** A Test Excel Spreadsheet
+Finally, we use \verb|docjure| to emit a test Excel spreadsheet, which
+we will read in our unit tests and verify some operations on it. This
+code creates a workbook with a single sheet in a rather obvious way,
+picks out the sheet and its header row, and sets some visual
+properties on the header row. We can open the resulting spreadsheet in
+Excel after running \verb|lein test| and verify that the
+\verb|docjure| library works as advertised.
+#+name: docjure-test-spreadsheet
+#+BEGIN_SRC clojure
+(let [wb (create-workbook "Price List"
+                          [["Name"       "Price"]
+                           ["Foo Widget" 100]
+                           ["Bar Widget" 200]])
+      sheet (select-sheet "Price List" wb)
+      header-row (first (row-seq sheet))]
+  (do
+    (set-row-style!
+      header-row
+      (create-cell-style! wb
+        {:background :yellow,
+         :font       {:bold true}}))
+    (save-workbook! "spreadsheet.xlsx" wb)))
+#+END_SRC
+
+** Core Unit-Test File
+  Unit-testing files go in a subdirectory named \verb+./ex1/test/ex1+.
+  Again, the directory-naming convention enables valuable shortcuts
+  from Leiningen.
+
+#+BEGIN_SRC clojure  :exports none :mkdirp yes :tangle ./ex1/test/ex1/core_test.clj :padline no :results silent :noweb yes
+<<main-test-namespace>>
+<<test-zippered>>
+<<test-docjure-read>>
+#+END_SRC
+
+As with the core source files, we include the built-in and downloaded
+libraries, but also the \verb|test framework| and the \verb|core|
+namespace, itself, so we can test the functions in the core.
+#+name: main-test-namespace
+#+BEGIN_SRC clojure :results silent
+(ns ex1.core-test
+  (:use [clojure.data.zip.xml :only (attr text xml->)]
+        [dk.ative.docjure.spreadsheet]
+  )
+  (:require [clojure.xml :as xml]
+            [clojure.zip :as zip]
+            [clojure.test :refer :all]
+            [ex1.core :refer :all]))
+#+END_SRC
+
+We now test that the zippered XML file can be accessed by the /zipper/
+operators. The main operator of interest is \verb|xml->|, which acts
+a lot like Clojure's
+/fluent-style/ [fn::http://en.wikipedia.org/wiki/Fluent_interface]
+/threading/ operator
+\verb|->|.[fn::http://clojuredocs.org/clojure_core/clojure.core/-\%3E]
+It takes its first argument, a zippered XML file in this case, and
+then a sequence of functions to apply. For instance, the following
+XML file, when subjected to the functions \verb|:track|,
+\verb|:name|, and \verb|text|, should produce \verb|'("Track one" "Track two")|
+#+BEGIN_SRC xml :mkdirp yes :tangle ./ex1/myfile.xml
+<songs>
+  <track id="t1"><name>Track one</name></track>
+  <ignore>pugh!</ignore>
+  <track id="t2"><name>Track two</name></track>
+</songs>
+#+END_SRC
+Likewise, we can dig into the attributes with natural accessor
+functions [fn::Clojure treats colon-prefixed keywords as functions that
+fetch the corresponding values from hashmaps, rather like the dot
+operator in Java or JavaScript; Clojure also treats hashmaps as
+functions of their keywords: the result of the function call
+$\texttt{(\{:a 1\} :a)}$ is the same as the result of the function call
+$\texttt{(:a \{:a 1\})}$ ]#+name: docjure-test-namespace
+
+#+name: test-zippered
+#+BEGIN_SRC clojure :results silent
+(deftest xml-zipper-test
+  (testing "xml and zip on a trivial file."
+    (are [a b] (= a b)
+      (xml-> zippered :track :name text) '("Track one" "Track two")
+      (xml-> zippered :track (attr :id)) '("t1" "t2"))))
+#+END_SRC
+
+Next, we ensure that we can faithfully read back the workbook we
+created /via/ \verb|docjure|. Here, we use Clojure's
+\verb|thread-last| macro to achieve fluent style:
+#+name: test-docjure-read
+#+BEGIN_SRC clojure :results silent
+(deftest docjure-test
+  (testing "docjure read"
+    (is (=
+
+      (->> (load-workbook "spreadsheet.xlsx")
+           (select-sheet "Price List")
+           (select-columns {:A :name, :B :price}))
+
+      [{:name "Name"      , :price "Price"}, ; don't forget header row
+       {:name "Foo Widget", :price 100.0  },
+       {:name "Bar Widget", :price 200.0  }]
+
+      ))))
+#+END_SRC
+
+* A REPL-based Solution
+\label{sec:emacs-repl}
+To run the REPL for interactive programming and testing in org-mode,
+take the following steps:
+1. Set up emacs and nRepl (TODO: explain; automate)
+2. Edit your init.el file as follows (TODO: details)
+3. Start nRepl while visiting the actual |project-clj| file.
+4. Run code in the org-mode buffer with \verb|C-c C-c|; results of
+   evaluation are placed right in the buffer for inspection; they are
+   not copied out to the PDF file.
+
+#+BEGIN_SRC clojure :tangle no
+[(xml-> zippered :track :name text)        ; ("Track one" "Track two")
+ (xml-> zippered :track (attr :id))]       ; ("t1" "t2")
+#+END_SRC
+
+#+RESULTS:
+| Track one | Track two |
+| t1        | t2        |
+
+#+BEGIN_SRC clojure :tangle no
+(->> (load-workbook "spreadsheet.xlsx")
+     (select-sheet "Price List")
+     (select-columns {:A :name, :B :price}))
+#+END_SRC
+
+#+RESULTS:
+| :price | Price | :name | Name       |
+| :price | 100.0 | :name | Foo Widget |
+| :price | 200.0 | :name | Bar Widget |
+
+#+BEGIN_SRC clojure :tangle no
+(run-all-tests)
+#+END_SRC
+
+#+RESULTS:
+| :type | :summary | :pass | 115 | :test | 31 | :error | 0 | :fail | 0 |
+
+* References
+
+* Conclusion
+  Fu is Fortune.

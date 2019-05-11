@@ -1,0 +1,78 @@
+;; Connected to nREPL server - nrepl://localhost:51612
+;; CIDER 0.15.0snapshot (package: 20161227.21), nREPL 0.2.12
+;; Clojure 1.9.0-alpha14, Java 1.8.0_60
+;;     Docs: (doc function-name)
+;;           (find-doc part-of-name)
+;;   Source: (source function-name)
+;;  Javadoc: (javadoc java-object-or-class)
+;;     Exit: <C-c C-q>
+;;  Results: Stored in vars *1, *2, *3, an exception in *e;
+;; ======================================================================
+;; If you're new to CIDER it is highly recommended to go through its
+;; manual first. Type <M-x cider-view-manual> to view it.
+;; In case you're seeing any warnings you should consult the manual's
+;; "Troubleshooting" section.
+;;
+;; Here are few tips to get you started:
+;;
+;; * Press <C-h m> to see a list of the keybindings available (this
+;;   will work in every Emacs buffer)
+;; * Press <M-RET ,> to quickly invoke some REPL command
+;; * Press <M-RET s s> to switch between the REPL and a Clojure file
+;; * Press <M-.> to jump to the source of something (e.g. a var, a
+;;   Java method)
+;; * Press <M-RET h h> to view the documentation for something (e.g.
+;;   a var, a Java method)
+;; * Enable `eldoc-mode' to display function & method signatures in the minibuffer.
+;; * Print CIDER's refcard and keep it close to your keyboard.
+;;
+;; CIDER is super customizable - try <M-x customize-group cider> to
+;; get a feel for this. If you're thirsty for knowledge you should try
+;; <M-x cider-drink-a-sip>.
+;;
+;; If you think you've encountered a bug (or have some suggestions for
+;; improvements) use <M-x cider-report-bug> to report it.
+;;
+;; Above all else - don't panic! In case of an emergency - procure
+;; some (hard) cider and enjoy it responsibly!
+;;
+;; You can remove this message with the `cider-repl-clear-help-banner' command.
+;; You can disable it from appearing on start by setting
+;; `cider-repl-display-help-banner' to nil.
+;; ======================================================================
+rummy.core> (pmap (fn [_] tally-of-run-like-lengths 1000) (range 2)) 
+(1000 1000)
+rummy.core> (pmap (fn [_] (tally-of-run-like-lengths 1000)) (range 2)) 
+({2 212, 3 28, 4 2} {2 242, 3 21, 6 1})
+rummy.core> (pmap (fn [_] (tally-of-run-like-lengths 500000)) (range 2)) 
+({2 111760, 3 14493, 4 1515, 5 101, 6 8} {2 111897, 3 15128, 4 1518, 5 103, 6 6})
+rummy.core> (pmap (fn [_] (tally-of-run-like-lengths 500000)) (range 2)) 
+({2 111789, 3 14816, 4 1486, 5 109, 6 5}
+ {2 112023, 3 14882, 4 1472, 5 125, 6 4})
+rummy.core> (time (pmap (fn [_] (tally-of-run-like-lengths 500000)) (range 2)) )
+"Elapsed time: 0.1666 msecs"
+({2 111698, 3 14659, 4 1504, 5 116, 6 7}
+ {4 1526, 2 111868, 3 14854, 5 108, 6 8})
+rummy.core> (time (pmap (fn [_] (tally-of-run-like-lengths 500000)) (range 2)) )
+"Elapsed time: 0.168124 msecs"
+({2 112274, 3 14586, 4 1547, 5 111, 6 5}
+ {2 112034, 3 14595, 4 1487, 5 113, 6 4})
+rummy.core> (time (map (fn [_] (tally-of-run-like-lengths 500000)) (range 1)) )
+"Elapsed time: 0.151971 msecs"
+({2 111940, 3 14742, 4 1491, 5 97, 6 8})
+rummy.core> (time (doall (map (fn [_] (tally-of-run-like-lengths 500000)) (range 1))))
+"Elapsed time: 13076.484299 msecs"
+({2 112295, 3 14664, 4 1529, 5 106, 6 8})
+rummy.core> (time (doall (map (fn [_] (tally-of-run-like-lengths 500000)) (range 2))))
+"Elapsed time: 26140.389607 msecs"
+({2 111834, 3 14764, 4 1535, 5 110, 6 4}
+ {2 112544, 3 14753, 4 1490, 5 116, 6 6})
+rummy.core> (time (doall (pmap (fn [_] (tally-of-run-like-lengths 500000)) (range 2))))
+"Elapsed time: 17556.478365 msecs"
+({2 112465, 4 1461, 3 14861, 5 115, 6 6}
+ {2 111489, 3 14679, 4 1489, 5 117, 6 6})
+rummy.core> (time (doall (pmap (fn [_] (tally-of-run-like-lengths 500000000)) (range 2))))
+"Elapsed time: 2.7645468274186E7 msecs"
+({2 111903420, 3 14752718, 4 1503675, 5 111142, 6 5145, 7 132}
+ {2 111891431, 3 14761718, 5 111188, 4 1501218, 6 5325, 7 102})
+rummy.core> 

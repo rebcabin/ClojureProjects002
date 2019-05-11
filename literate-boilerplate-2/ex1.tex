@@ -1,0 +1,115 @@
+% Created 2014-05-22 Thu 14:58
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage[normalem]{ulem}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{latexsym}
+\usepackage{amssymb}
+\usepackage{amstext}
+\usepackage{hyperref}
+\tolerance=1000
+\usepackage{ntheorem}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usetikzlibrary{matrix,arrows,positioning,scopes,chains}
+\tikzset{node distance=2cm, auto}
+\author{The Team of Fu}
+\date{\today}
+\title{Postfix}
+\hypersetup{
+  pdfkeywords={},
+  pdfsubject={},
+  pdfcreator={Emacs 24.3.1 (Org mode 8.0)}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\section{Introduction}
+\label{sec-1}
+\begin{description}
+\item[{Remark}] This is a literate program.
+\footnote{See \url{http://en.wikipedia.org/wiki/Literate_programming}.}
+Source code \emph{and} PDF documentation spring
+from the same, plain-text source files.
+\end{description}
+\section{Tangle to Leiningen}
+\label{sec-2}
+
+\begin{figure}[H]
+\label{project-file}
+\begin{verbatim}
+(defproject ex1 "0.1.0-SNAPSHOT"
+  :description "Project Fortune's Postfix Expression Evaluator"
+  :url "http://example.com/TODO"
+  :license {:name "TODO"
+            :url "TODO"}
+  :dependencies [[org.clojure/clojure  "1.5.1"]
+                ]
+  :repl-options {:init-ns ex1.core})
+\end{verbatim}
+\end{figure}
+
+\subsubsection{The Namespace}
+\label{sec-2-0-1}
+
+\begin{figure}[H]
+\label{main-namespace}
+\begin{verbatim}
+(ns ex1.core)
+\end{verbatim}
+\end{figure}
+\subsubsection{Functions}
+\label{sec-2-0-2}
+
+\begin{figure}[H]
+\label{main-functions}
+\begin{verbatim}
+(def x 42)
+\end{verbatim}
+\end{figure}
+\subsection{Core Unit-Test File}
+\label{sec-2-1}
+
+\begin{figure}[H]
+\label{main-test-namespace}
+\begin{verbatim}
+(ns ex1.core-test
+  (:require [ex1.core :refer :all]
+            [clojure.test :refer :all]
+  ))
+\end{verbatim}
+\end{figure}
+
+\begin{figure}[H]
+\label{test-functions}
+\begin{verbatim}
+(deftest null-test
+  (testing "null test"
+    (is (= 1 1))))
+\end{verbatim}
+\end{figure}
+\section{A REPL-based Solution}
+\label{sec-3}
+\label{sec:emacs-repl}
+To run the REPL for interactive programming and testing in org-mode,
+take the following steps:
+\begin{enumerate}
+\item Set up emacs and nRepl (TODO: explain; automate)
+\item Edit your init.el file as follows (TODO: details)
+\item Start nRepl while visiting the actual |project-clj| file.
+\item Run code in the org-mode buffer with \verb|C-c C-c|; results of
+evaluation are placed right in the buffer for inspection; they are
+not copied out to the PDF file.
+\end{enumerate}
+% Emacs 24.3.1 (Org mode 8.0)
+\end{document}

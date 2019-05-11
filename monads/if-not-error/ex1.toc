@@ -1,0 +1,13 @@
+\contentsline {section}{\numberline {1}Introduction}{1}{section.1}
+\contentsline {section}{\numberline {2}Motivating Example Problem}{2}{section.2}
+\contentsline {subsection}{\numberline {2.1}Fluent Solution in Java, No Error Handling}{2}{subsection.2.1}
+\contentsline {subsubsection}{\numberline {2.1.1}A Complete Sample Program}{4}{subsubsection.2.1.1}
+\contentsline {subsection}{\numberline {2.2}Fluent Solution in Java, with Exceptions}{5}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Fluency Lost Without Exceptions}{7}{subsection.2.3}
+\contentsline {section}{\numberline {3}Let's Do Better}{12}{section.3}
+\contentsline {subsection}{\numberline {3.1}Fluent Functional Solution With Exceptions}{14}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Fluent Error Handling Without Exceptions}{16}{subsection.3.2}
+\contentsline {subsubsection}{\numberline {3.2.1}Monads Are Values In Boxes}{18}{subsubsection.3.2.1}
+\contentsline {subsubsection}{\numberline {3.2.2}Monad Particulars and Generalities}{20}{subsubsection.3.2.2}
+\contentsline {subsubsection}{\numberline {3.2.3}Varying from the Standard Maybe Monad}{20}{subsubsection.3.2.3}
+\contentsline {section}{\numberline {4}Conclusion}{20}{section.4}

@@ -1,0 +1,17 @@
+(in-ns 'getting-data.read-json)
+load-data
+(ns-publics)
+user/ns-public
+ns-publics
+(doc ns-publics)
+(dod mac)
+(doc map)
+(load
+)
+(use 'getting-data.read-json)
+(load-data "data/small-sample.json")
+(use 'getting-data.read-jdbc)
+(load-table-data {:subprotocol "sqlite", :subname "data/small-sample.sqlite" :classname "org.sqlite.JDBC"} 'people)
+)
+(
+)

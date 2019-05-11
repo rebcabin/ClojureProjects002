@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>com.netflix.rxjava</groupId>
+  <artifactId>rxjava-core</artifactId>
+  <versioning>
+    <versions>
+      <version>0.9.1-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20130630175310</lastUpdated>
+  </versioning>
+</metadata>

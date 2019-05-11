@@ -1,0 +1,5 @@
+line 1 containing text
+line 2 containing (= 3 (+ 1 2))
+
+line 4 line 3 was blank
+line 5 has no linefeed at the end

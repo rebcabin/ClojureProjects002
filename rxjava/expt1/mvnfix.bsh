@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+mvn deploy:deploy-file \
+    -DgroupId=com.netflix.rxjava \
+    -DartifactId=rxjava-clojure \
+    -Dversion=0.9.1-SNAPSHOT \
+    -Dpackaging=jar \
+    -Dfile=/Users/rebcabin/Documents/RxJava/language-adaptors/rxjava-clojure/build/libs/rxjava-clojure-0.9.1-SNAPSHOT.jar \
+    -Durl=file:maven_repository
+
+mvn deploy:deploy-file \
+    -DgroupId=com.netflix.rxjava \
+    -DartifactId=rxjava-core \
+    -Dversion=0.9.1-SNAPSHOT \
+    -Dpackaging=jar \
+    -Dfile=/Users/rebcabin/Documents/RxJava/rxjava-core/build/libs/rxjava-core-0.9.1-SNAPSHOT.jar \
+    -Durl=file:maven_repository

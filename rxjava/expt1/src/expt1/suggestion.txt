@@ -1,0 +1,39 @@
+What if "onNext," instead of returning void, returned "this"? Then we
+could write
+
+(rx.Observable/create (rx/fn [obr]
+  (-> obr
+       (.onNext 41)
+       (.onNext 42)
+       (.onNext 43)
+       (.onCompleted)))
+
+instead of
+
+(rx.Observable/create (rx/fn [obr]
+   (.onNext obr 41)
+   (.onNext obr 42)
+   (.onNext obr 43)
+   (.onCompleted obr)))
+
+a small point in this contrived example, but, reflexively, fluent style
+seems preferable to "progn" style, especially when there is almost no
+cost to it (returning void is a waste of an opportunity to return
+something useful). In fact, punning on "reflexively," suppose the
+sequence of incomplete "commands"
+
+       '(.onNext 41)
+       '(.onNext 42)
+       '(.onNext 43)
+       '(.onCompleted)
+
+were, itself, an observable, then we could have an observable of
+commands that loaded some other observable, determined at run time, by
+"eval"ing the commands against another observer.  IOW, the observer of a
+sequence of commands just evals the commands against some particular
+other observer.
+
+I'm sure I can think of more benefits of fluent style.
+
+I know this is a break with the Rx tradition, and that has to be counted
+against the idea. But perhaps the benefits outweigh?

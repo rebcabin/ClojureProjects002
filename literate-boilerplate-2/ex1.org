@@ -1,0 +1,127 @@
+#+TITLE: Postfix
+#+AUTHOR: The Team of Fu
+#+LATEX_HEADER: \usepackage{ntheorem}
+#+LATEX_HEADER: \usepackage{tikz}
+#+LATEX_HEADER: \usepackage{tikz-cd}
+#+LATEX_HEADER: \usetikzlibrary{matrix,arrows,positioning,scopes,chains}
+#+LATEX_HEADER: \tikzset{node distance=2cm, auto}
+#+BEGIN_COMMENT
+The following line generates a benign error
+#+LATEX_HEADER: \usepackage{amsmath, amsthm, amssymb}
+#+END_COMMENT
+#+STYLE: <link rel="stylesheet" type="text/css" href="styles/default.css" />
+#+BEGIN_COMMENT
+  TODO: Integrate BibTeX
+#+END_COMMENT
+
+* Introduction
+  + Remark :: This is a literate program. 
+              [fn:LP: See http://en.wikipedia.org/wiki/Literate_programming.] 
+              Source code /and/ PDF documentation spring
+              from the same, plain-text source files.
+
+* Tangle to Leiningen
+
+#+BEGIN_SRC text :mkdirp yes :tangle ./ex1/.gitignore :exports none
+/target
+/lib
+/classes
+/checkouts
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+.lein-deps-sum
+.lein-failures
+.lein-plugins
+.lein-repl-history
+#+END_SRC
+
+#+BEGIN_SRC markdown :mkdirp yes :tangle ./ex1/README.md :exports none
+# ex1
+A Clojure library designed to do SOMETHING. 
+## Usage
+TODO
+## License
+Copyright © 2013 TODO
+#+END_SRC
+
+#+BEGIN_SRC clojure :noweb yes :mkdirp yes :tangle ./ex1/project.clj :exports none
+  <<project-file>>
+#+END_SRC
+
+#+NAME: project-file
+#+BEGIN_SRC clojure :tangle no
+(defproject ex1 "0.1.0-SNAPSHOT"
+  :description "Project Fortune's Postfix Expression Evaluator"
+  :url "http://example.com/TODO"
+  :license {:name "TODO"
+            :url "TODO"}
+  :dependencies [[org.clojure/clojure  "1.5.1"]
+                ]
+  :repl-options {:init-ns ex1.core})
+#+END_SRC
+
+#+BEGIN_SRC markdown :mkdirp yes :tangle ./ex1/doc/intro.md :exports none
+# Introduction to ex1
+TODO: The project documentation is the .org file that produced 
+this output, but it still pays to read
+http://jacobian.org/writing/great-documentation/what-to-write/
+#+END_SRC
+  
+#+name: top-level-load-block
+#+BEGIN_SRC clojure :exports none :mkdirp yes :tangle ./ex1/src/ex1/core.clj :padline no :results silent :noweb yes
+<<main-namespace>>
+<<main-functions>>
+#+END_SRC
+
+*** The Namespace
+
+#+name: main-namespace
+#+BEGIN_SRC clojure :results silent 
+(ns ex1.core)
+#+END_SRC
+
+*** Functions
+
+#+name: main-functions
+#+BEGIN_SRC clojure :results silent 
+(def x 42)
+#+END_SRC
+
+** Core Unit-Test File
+
+#+BEGIN_SRC clojure :exports none :mkdirp yes :tangle ./ex1/test/ex1/core_test.clj :padline no :results silent :noweb yes
+<<main-test-namespace>>
+<<test-functions>>
+#+END_SRC
+
+#+name: main-test-namespace
+#+BEGIN_SRC clojure :results silent 
+(ns ex1.core-test
+  (:require [ex1.core :refer :all]
+            [clojure.test :refer :all]
+  ))
+#+END_SRC
+
+#+name: test-functions
+#+BEGIN_SRC clojure :results silent 
+(deftest null-test
+  (testing "null test"
+    (is (= 1 1))))
+#+END_SRC
+
+* A REPL-based Solution
+\label{sec:emacs-repl}
+To run the REPL for interactive programming and testing in org-mode,
+take the following steps:
+1. Set up emacs and nRepl (TODO: explain; automate)
+2. Edit your init.el file as follows (TODO: details)
+3. Start nRepl while visiting the actual |project-clj| file.
+4. Run code in the org-mode buffer with \verb|C-c C-c|; results of
+   evaluation are placed right in the buffer for inspection; they are
+   not copied out to the PDF file.
+  
+#+BEGIN_SRC clojure :tangle no
+#+END_SRC
+

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+mvn deploy:deploy-file \
+    -DgroupId=local \
+    -DartifactId=swiss-arrows \
+    -Dversion=1.0.0 \
+    -Dpackaging=jar \
+    -Dfile=/Users/bbeckman/Documents/swiss-arrows/target/swiss-arrows-1.0.0.jar \
+    -Durl=file:maven_repository

@@ -1,0 +1,6 @@
+
+<songs>
+  <track id="t1"><name>Track one</name></track>
+  <ignore>pugh!</ignore>
+  <track id="t2"><name>Track two</name></track>
+</songs>

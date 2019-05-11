@@ -1,0 +1,120 @@
+% Created 2015-05-09 Sat 18:11
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\tolerance=1000
+\author{Brian Beckman}
+\date{\today}
+\title{Experiments in Literate Programming}
+\hypersetup{
+  pdfkeywords={},
+  pdfsubject={},
+  pdfcreator={Emacs 24.5.1 (Org mode 8.0)}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\begin{abstract}
+Fast, parallel factoring of integers is the ``Hello, world!''
+of good hackers and of bad guys.
+
+The problem looks like this: given a big integer $n\in\mathbb{N}$ such
+ that \[n = p q\] where $p$ and $q$
+are big primes, find $p$ and $q$.
+
+RSA uses numbers like $n$ as public encryption
+keys. Anyone can encrypt you a message using $n$.
+Decrypting is easy only if you know $p$ and $q$.
+
+Because RSA and most of
+internet security depends on the assumption that factoring is
+hard, this problem is critical. Whoever can
+`break' RSA by factoring keys will `own the world' for a short time,
+until internet security is reformulated in some new way.
+\end{abstract}
+
+\section{Records}
+\label{sec-1}
+The biggest RSA key factored as of \textit{<2013-08-18 Sun>} is
+\begin{verbatim}
+(defn wrapped-lines-to-bigint [& strs]
+  (bigint (apply str strs)))
+
+(def RSA-768
+  (wrapped-lines-to-bigint
+   "12301866845301177551304949583849627207728535695953347921"
+   "97322452151726400507263657518745202199786469389956474942"
+   "77406384592519255732630345373154826850791702612214291346"
+   "16704292143116022212404792747377940806653514195974598569"
+   "02143413"
+   ))
+
+(def TEST
+  (*
+   (wrapped-lines-to-bigint
+    "33478071698956898786044169848212690817704794983713768568"
+    "91243138898288379387800228761471165253174308773781446799"
+    "9489")
+
+   (wrapped-lines-to-bigint
+    "36746043666799590428244633799627952632279158164343087642"
+    "67603228381573966651127923337341714339681027009279873630"
+    "8917")))
+
+(== RSA-768 TEST)
+\end{verbatim}
+$\longrightarrow$
+\begin{verbatim}
+true
+\end{verbatim}
+
+\section{A Clojure Program}
+\label{sec-2}
+
+First, add the following to the \verb~:dependencies~ section of your \href{https://github.com/technomancy/leiningen}{Leiningen}
+\emph{project.clj} file:
+
+\begin{verbatim}
+1  [org.clojure/core.contracts "0.0.5"]
+\end{verbatim}
+
+In line 1 of section \ref{sec-2}, \hyperref[sec-2]{the Introduction}, and
+perhaps even in \ref{sec:more}, \hyperref[sec:more]{But Wait, There's More}, the version of
+\textbf{contracts} was specified; this doesn't yet have anything to do with
+internet security.
+
+Next, shift attention to the file ``core.clj,'' which implements the
+principal functions of our demonstration.
+
+\begin{verbatim}
+2  (ns big-prime.core
+3  (:import java.util.Random)
+4  (:use [big-prime.utils]
+5        [big-prime.sqrt :as nt]
+6        [clojure.core.contracts :as contracts]
+7        [clojure.set :only [difference]]
+8        ))
+\end{verbatim}
+
+\section{One More}
+\label{sec-3}
+\label{sec:more}
+
+The mass of the sun is M$_{\text{sun}~}$=~1.989~\texttimes{}~10$^{\text{30}}$~kg.  The radius of
+the sun is R$_{\text{sun}}$~=~6.96~\texttimes{}~10$^{\text{8}}$~m.
+% Emacs 24.5.1 (Org mode 8.0)
+\end{document}

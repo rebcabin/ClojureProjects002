@@ -1,0 +1,40 @@
+
+project.clj,36
+(defproject big-primebig-prime1,0
+
+src/big_prime/core.clj,459
+(ns bigbig1,0
+(defn dividesdivides12,245
+(defn simple-factorssimple-factors16,424
+(defn try-divisors-itry-divisors-i27,722
+(defn try-divisorstry-divisors54,1910
+(defn make-partition-book-endsmake-partition-book-ends85,3122
+(defn divide-outdivide-out93,3330
+(defn find-divisorsfind-divisors98,3433
+(defn sievesieve110,3749
+(defn factorsfactors119,3958
+(defn check-factorizationcheck-factorization134,4522
+(defn big-randbig-rand144,4834
+
+src/big_prime/sqrt.clj,210
+(ns bigbig1,0
+(defn sumsum9,246
+(defn productproduct14,311
+(defn nt-averagent-average19,379
+(defn absabs27,584
+(defn squaresquare32,644
+(defn nt-sqrtnt-sqrt51,1220
+(defn nt-powernt-power59,1517
+
+src/big_prime/utils.clj,161
+(ns bigbig1,0
+(defmacro pdumppdump5,77
+(defn list-defslist-defs15,402
+(defn flipflip18,461
+(defn pluckerplucker20,497
+(defn my-mapcatmy-mapcat22,540
+
+test/big_prime/core_test.clj,132
+(ns bigbig8,389
+(deftest big-prime-testsbig-prime-tests16,626
+(deftest integer-operation-testsinteger-operation-tests115,4281

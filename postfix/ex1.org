@@ -1,0 +1,164 @@
+#+TITLE: Postfix
+#+AUTHOR: The Team of Fu
+#+LATEX_HEADER: \usepackage{ntheorem}
+#+LATEX_HEADER: \usepackage{tikz}
+#+LATEX_HEADER: \usepackage{tikz-cd}
+#+LATEX_HEADER: \usetikzlibrary{matrix,arrows,positioning,scopes,chains}
+#+LATEX_HEADER: \tikzset{node distance=2cm, auto}
+#+BEGIN_COMMENT
+The following line generates a benign error
+#+LATEX_HEADER: \usepackage{amsmath, amsthm, amssymb}
+#+END_COMMENT
+#+STYLE: <link rel="stylesheet" type="text/css" href="styles/default.css" />
+#+BEGIN_COMMENT
+  TODO: Integrate BibTeX
+#+END_COMMENT
+
+* Introduction
+  + Remark :: This is a literate program.
+              [fn:LP: See http://en.wikipedia.org/wiki/Literate_programming.]
+              Source code /and/ PDF documentation spring
+              from the same, plain-text source files.
+
+#+BEGIN_SRC text :mkdirp yes :tangle ./ex1/.gitignore :exports none
+/target
+/lib
+/classes
+/checkouts
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+.lein-deps-sum
+.lein-failures
+.lein-plugins
+.lein-repl-history
+#+END_SRC
+
+#+BEGIN_SRC markdown :mkdirp yes :tangle ./ex1/README.md :exports none
+# ex1
+A Clojure library designed to do SOMETHING.
+## Usage
+TODO
+## License
+Copyright © 2013 TODO
+#+END_SRC
+
+#+BEGIN_SRC clojure :noweb yes :mkdirp yes :tangle ./ex1/project.clj :exports none
+  <<project-file>>
+#+END_SRC
+
+#+NAME: project-file
+#+BEGIN_SRC clojure :tangle no
+(defproject ex1 "0.1.0-SNAPSHOT"
+  :description "Project Fortune's Postfix Expression Evaluator"
+  :url "http://example.com/TODO"
+  :license {:name "TODO"
+            :url "TODO"}
+  :dependencies [[org.clojure/clojure  "1.5.1"]
+                ]
+  :repl-options {:init-ns ex1.core})
+#+END_SRC
+
+#+BEGIN_SRC markdown :mkdirp yes :tangle ./ex1/doc/intro.md :exports none
+# Introduction to ex1
+TODO: The project documentation is the .org file that produced
+this output, but it still pays to read
+http://jacobian.org/writing/great-documentation/what-to-write/
+#+END_SRC
+
+#+name: top-level-load-block
+#+BEGIN_SRC clojure :exports none :mkdirp yes :tangle ./ex1/src/ex1/core.clj :padline no :results silent :noweb yes
+<<main-namespace>>
+<<main-postfix>>
+<<main-functions>>
+#+END_SRC
+
+* The Namespace
+
+#+name: main-namespace
+#+BEGIN_SRC clojure :results silent
+(ns ex1.core)
+#+END_SRC
+
+* Functions
+
+This /postfix/ function receives a sequence of expressions $es$. It
+produces a reduction of a binary function $f$ over the empty vector
+$[\;]$ and $es$. $f$ receives a vector $a$ and an expression $e$. $a$
+implements a stack. If $e$ is a function, $f$ replaces the top two
+elements $r$ and $l$ of $a$ with $e(l,r)$, the application of function
+$e$ to those arguments. Otherwise, $f$ just /cons/-es $e$ to the front
+of $a$. $r$ and $l$ appear in opposite order in $a$ to the order that
+$e$ receives them; while reducing arguments left-to-right in $es$,
+/postfix/ reverses them when /cons/-ing to the front of the stack.
+
+#+name: main-postfix
+#+BEGIN_SRC clojure :results silent
+(defn postfix [& es]
+  (reduce
+    (fn f [a-vec e]
+      (if (fn? e)
+          (let [[r l & m] a-vec]
+            (cons (e l r) m))
+          (cons e a-vec)))
+    []
+    es))
+#+END_SRC
+
+#+name: main-functions
+#+BEGIN_SRC clojure :results silent
+(defn zero-out-divide-by-zero [fn l r]
+  ; if function is division (/) and right-hand operand is 0
+  (if (and
+        (= fn /)
+        (some #{r} [0 0.0 0M]))
+    ; return operand
+    r
+    ; otherwise, execute function
+    (fn l r)))
+
+(defn binary-apply-fn [fn r l]
+  (apply map (partial zero-out-divide-by-zero fn)
+    (list r l)))
+
+(defn postfix-collections [& e]
+  (mapcat identity
+    (reduce #(if (fn? %2)
+               (let [[r l & m]%]
+                 (cons (binary-apply-fn %2 l r) m))
+               (cons %2 %))[]e)))
+#+END_SRC
+
+* Core Unit-Test File
+
+#+BEGIN_SRC clojure :exports none :mkdirp yes :tangle ./ex1/test/ex1/core_test.clj :padline no :results silent :noweb yes
+<<main-test-namespace>>
+<<test-functions>>
+#+END_SRC
+
+#+name: main-test-namespace
+#+BEGIN_SRC clojure :results silent
+(ns ex1.core-test
+  (:require [ex1.core :refer :all]
+            [clojure.test :refer :all]
+  ))
+#+END_SRC
+
+#+name: test-functions
+#+BEGIN_SRC clojure :results silent
+(deftest null-test
+  (testing "null test"
+    (is (= 1 1))))
+#+END_SRC
+
+* A REPL-based Solution
+\label{sec:emacs-repl}
+To run the REPL for interactive programming and testing in org-mode,
+take the following steps:
+1. Set up emacs and nRepl (TODO: explain; automate)
+2. Edit your init.el file as follows (TODO: details)
+3. Start nRepl while visiting the actual |project-clj| file.
+4. Run code in the org-mode buffer with \verb|C-c C-c|; results of
+   evaluation are placed right in the buffer for inspection; they are
+   not copied out to the PDF file.

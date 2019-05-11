@@ -1,0 +1,516 @@
+% Created 2013-09-23 Mon 16:22
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage[normalem]{ulem}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{latexsym}
+\usepackage{amssymb}
+\usepackage{amstext}
+\usepackage{hyperref}
+\tolerance=1000
+\usepackage{savesym}
+\savesymbol{iint}
+\savesymbol{iiint}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usetikzlibrary{matrix,arrows,positioning,scopes,chains}
+\tikzset{node distance=2cm, auto}
+\usepackage{framed}
+\usepackage[framed]{ntheorem}
+\newframedtheorem{myrule}{Rule}[section]
+\newframedtheorem{mydefinition}{Definition}[section]
+\author{The Team of Fu}
+\date{\today}
+\title{Reversible Arithmetic on Collections}
+\hypersetup{
+  pdfkeywords={},
+  pdfsubject={},
+  pdfcreator={Emacs 24.3.1 (Org mode 8.0)}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\begin{description}
+\item[{Remark}] This is a literate program.
+\footnote{\url{http://en.wikipedia.org/wiki/Literate_programming}.}
+Source code \emph{and} PDF documentation spring
+from the same, plain-text source files.
+\end{description}
+
+\section{Introduction}
+\label{sec-1}
+
+We often encounter data records or rows as hash-maps, lists, vectors
+(also called \emph{arrays}). In our financial calculations, we often want
+to add up a collection of such things, where adding two rows means
+adding the corresponding elements and creating a new virtual row from
+the result. We also want to \emph{un-add} so we can undo a mistake, roll
+back a provisional result, perform a backfill or allocation: in short,
+get back the original inputs. This paper presents a library supporting
+reversible arithmetic on a large class of collections in
+Clojure.\footnote{\url{http://clojure.org}}
+\section{Mathematical Background}
+\label{sec-2}
+
+Think of computer lists and vectors as \emph{mathematical vectors} familiar
+from linear algebra:\footnote{\url{http://en.wikipedia.org/wiki/Linear_algebra}}
+ordered sequences of numerical \emph{components} or \emph{elements}. Think of
+hash-maps, which are equivalent to \emph{objects} in object-oriented
+programming,\footnote{\url{http://en.wikipedia.org/wiki/Object-oriented_programming}}
+as sparse vectors\footnote{\url{http://en.wikipedia.org/wiki/Sparse_vector}} of
+\emph{named} elements.
+
+Mathematically, arithmetic on vectors is straightforward: to add
+them, just add the corresponding elements, first-with-first,
+second-with-second, and so on.  Here's an example in two dimensions:
+$$[1, 2] + [3, 4] = [4, 6]$$
+
+Clojure's \emph{map} function does mathematical vector addition straight
+out of the box on Clojure vectors and lists.  (We don't need to write
+the commas, but we can if we want -- they're just whitespace in
+Clojure):
+\begin{verbatim}
+(map + [1 2] [3 4])
+\end{verbatim}
+
+\begin{verbatim}
+==> [4 6]
+\end{verbatim}
+
+With Clojure hash-maps, add corresponding elements via \emph{merge-with}:
+\begin{verbatim}
+(merge-with + {:x 1, :y 2} {:x 3, :y 4})
+\end{verbatim}
+
+\begin{verbatim}
+==> {:x 4, :y 6}
+\end{verbatim}
+
+The same idea works in any number of dimensions and with any kind of
+elements that can be added (any \emph{mathematical
+field}:\footnote{\url{http://en.wikipedia.org/wiki/Field_(mathematics)}}
+integers, complex numbers, quaternions -- many more.
+
+Now, suppose you want to \emph{un-add} the result, \verb|[4 6]|? There is
+no unique answer.  All the following are mathematically correct:
+\begin{align*}
+[-1, 2] + [5, 4] &= [4, 6] \\
+[ 0, 2] + [4, 4] &= [4, 6] \\
+[ 1, 2] + [3, 4] &= [4, 6] \\
+[ 2, 2] + [2, 4] &= [4, 6] \\
+[ 3, 2] + [1, 4] &= [4, 6] \\
+\end{align*}
+and a large infinity of more answers.
+\section{A Protocol for Reversible Arithmetic}
+\label{sec-3}
+
+Let's define a protocol for \emph{reversible arithmetic in vector spaces}
+that captures the desired functionality.  We want a \emph{protocol} --
+Clojure's word for
+\emph{interface},\footnote{\url{http://en.wikipedia.org/wiki/Interface_(computing)}}
+because we want several implementations with the same reversible
+arithmetic: one implementation for vectors and lists, another
+implementation for hash-maps.  \emph{Protocols} let us ignore inessential
+differences: the protocol for reversible arithmetic is the same for
+all compatible collection
+types.\footnote{including streams over time! Don't forget Rx and SRS.}
+
+Name our objects of interest \emph{algebraic vectors} to distinguish them
+from Clojure's existing \emph{vector} type. Borrowing an idiom from C\# and
+.NET, name our protocol with an initial \emph{I} and with camelback
+casing.\footnote{\url{http://en.wikipedia.org/wiki/CamelCase}} Don't misread
+\emph{IReversibleAlgebraicVector} as ``irreversible algebraic vector;''
+rather read it as ``I Reversible Algebraic Vector'', i.e., ``Interface
+to Reversible Algebraic Vector,'' where the ``I'' abbreviates
+``Interface.''
+
+We want to add, subtract, and scale our reversible vectors, just as we
+can do with mathematical vectors.  \emph{Add} should be multiary, because
+that's intuitive.  Multiary functions are written with ampersands
+before all the optional parameters, which Clojure will package in a
+sequence. Unfortunately, protocol functions don't support ``rest''
+arguments,\footnote{\url{http://bit.ly/18kecbJ}} so we'll go with binary \emph{add}
+for now, and built up multiarity through functional programming mojo.
+
+\emph{Sub} should be binary, because multiary sub is ambiguous.
+
+Include inner product, because it is likely to be useful.
+
+Though we don't have immediate scenarios for subtraction, scaling, and
+inner product, the mathematics tells us they're fundamental. Putting
+them in our design \emph{now} affords two benefits:
+\begin{enumerate}
+\item when the need arises, we won't have to change the code
+\item their existence in the library may inspire usage scenarios
+
+\item[{Remark}] The choice to include operations in a library in the absense
+of scenarios is
+philosophical,\footnote{\url{http://en.wikipedia.org/wiki/Design_philosophy}}
+perhaps more akin to \emph{Action-Centric} design or \emph{proactive}
+design as opposed to \emph{Rationalist} or \emph{minimalist}
+design. The former philosophy promotes early inclusion of
+facilities likely to be useful or inspirational, whereas the
+latter philosophy demands ruthless rejection of facilities
+not known to be needed. Both require removing facilities
+\emph{known to be not needed}, of course. The former philosophy
+relies on intuition, taste, judgment, and experience; and
+the latter philosophy embraces ignorance of the future as a
+design principle. We thus prefer the former.
+\end{enumerate}
+
+Finally, we need \emph{undo} and \emph{redo}, the differentiating features of
+reversible algebraic vectors. Unlike object-oriented programming,
+there is no implicit \emph{this} instance.  Here is our protocol design:
+
+\begin{figure}[H]
+\label{reversible-algebraic-vector-protocol}
+\begin{verbatim}
+(defprotocol IReversibleAlgebraicVector
+  ;; binary operators
+  (add   [this that])
+  (sub   [this that])
+  (inner [this that])
+  ;; unary operators
+  (scale [this scalar])
+  ;; reverse any operation
+  (undo [this])
+  (redo [this])
+)
+\end{verbatim}
+\end{figure}
+\section{Implementing the Protocol}
+\label{sec-4}
+
+\subsection{Defining \emph{r-vectors} and \emph{a-vectors}}
+\label{sec-4-1}
+
+What things represent algebraic vectors?  Things we can operate on
+with \emph{map} or \emph{merge-with}.  Therefore, they must be Clojure vectors,
+lists, or hash-maps.
+
+The higher-level case wraps the reversing information in a hash-map
+along with base-case algebraic vector data. The base-case data will
+belong to the \emph{\mbox{:a-vector}} key, by convention.
+
+
+\begin{mydefinition}[Algebraic Vector (a-vector)]
+   An \textbf{a-vector} is a Clojure vector, a list, or a hash-map that does not
+   contain an \mbox{\texttt{:a-vector}} attribute.
+\end{mydefinition}
+
+\begin{mydefinition}[Reversible Algebraic Vector (r-vector)]
+   A \textbf{reversible algebraic vector} or \textbf{r-vector} is a
+   hash-map containing an \texttt{:a-vector} attribute. The value of
+   that attribute must be an a-vector.
+\end{mydefinition}
+\subsection{Checking the Definition}
+\label{sec-4-2}
+
+Here is a type-checking function for \emph{a-vector}. This function is
+private to the namespace (that's what the `-' in \emph{defn-} means).  It
+takes a single parameter named \emph{that}. It promotes \emph{fluent} or
+function-chaining style by being, semantically, the identity
+function. It either returns its input or throws an exception if
+something is wrong.
+
+\begin{figure}[H]
+\label{check-a-vector}
+\begin{verbatim}
+(defn- check-a-vector [that]
+  (if (or (list? that)
+          (vector? that)
+          (and (map? that) (not (contains? that :a-vector))))
+      that ; ok -- otherwise:
+      (throw (IllegalArgumentException.
+        (str "; This type can't hold a-vector data: "
+             (type that))))))
+\end{verbatim}
+\end{figure}
+\subsection{Fetching \emph{a-vector} Data}
+\label{sec-4-3}
+
+We need a way to get a-vector data out of any r-vector.
+
+\begin{figure}[H]
+\label{get-a-vector}
+\begin{verbatim}
+(defn get-a-vector [that]
+  (if (not (map? that))
+      (throw (IllegalArgumentException. (str that)))
+      (check-a-vector (:a-vector that))))
+\end{verbatim}
+\end{figure}
+\subsection{Unit-Testing \emph{get-a-vector}}
+\label{sec-4-4}
+
+We require \emph{IllegalArgumentExceptions} for inputs that are not
+a-vectors and for r-vectors that contain r-vectors: our design does
+not nest r-vectors.
+
+Let's make test sets for data that should be accepted and rejected
+immediately.  Creating new tests is as easy as adding new instances
+to these sets.  Include some types that may not be acceptable for
+arithmetic; we are just testing structure here.
+
+\begin{figure}[H]
+\label{test-data-sets}
+\begin{verbatim}
+(def ^:private atoms
+  '(42 42.0 42.0M 42N 'a :a "a" \a
+    #inst "2012Z"
+    #{} #{0} nil true false))
+
+(def ^:private vectors
+  (concat [[]] (map vector atoms)))
+
+(def ^:private lists
+  (concat [()] (map list atoms)))
+
+(def ^:private maps
+  (concat [{}] (map (fn [a] {:a a}) atoms)))
+
+(def ^:private a-vectors
+  (concat (map (fn [a] {:a-vector a}) vectors)
+          (map (fn [a] {:a-vector a}) lists)
+          (map (fn [a] {:a-vector a}) maps)))
+
+(def ^:private good-ish-test-collection
+  a-vectors)
+
+(def ^:private bad-ish-test-collection
+  (concat maps
+          (map (fn [a] {:a-vector a}) atoms)
+          (map (fn [a] {:a-vector a}) a-vectors)))
+\end{verbatim}
+\end{figure}
+
+We cannot just \emph{map} or iterate \emph{get-a-vector} over bad inputs
+because Clojure evaluates arguments
+eagerly.\footnote{\url{http://en.wikipedia.org/wiki/Evaluation_strategy#Applicative_order}}
+The first exception will terminate the entire \emph{map} operation, but we
+want to test that they all throw exceptions.
+
+One way to defeat eager evaluation is with a higher-order function.\footnote{another, more complicated way is with a \emph{macro}, which rewrites
+   expressions at compile time. Macrros should be avoided when
+   functional alternatives exist because they are hard to develop and
+   debug.}  Pass \emph{get-a-vector} as a function to another function that
+wraps it in a \emph{try} that converts an exception into a string.
+Collect all bad-ish strings into a hash-set and test that the
+hash-set contain only the string
+``\emph{java.lang.IllegalArgumentException}.'' For the \emph{good-ish}
+test set, map the values into a sequence that should match the inputs
+in order.
+
+\begin{figure}[H]
+\label{get-a-vector-test}
+\begin{verbatim}
+(defn- exception-to-name [fun expr]
+  (try (fun expr)
+       (catch Exception e (re-find #"[^:;,]+" (str e)))))
+
+(defn- value-seq [fun exprs]
+  (map (fn [x] (exception-to-name fun x)) exprs))
+
+(defn- value-set [fun exprs]
+  (set (value-seq fun exprs)))
+
+(deftest get-a-vector-test
+  (testing "get-a-vector"
+    ;; Negative tests
+    (is (= #{"java.lang.IllegalArgumentException"}
+           (value-set get-a-vector bad-ish-test-collection)))
+    ;; Positive tests
+    (is (= (map :a-vector good-ish-test-collection)
+           (value-seq get-a-vector good-ish-test-collection))) ) )
+\end{verbatim}
+\end{figure}
+\subsection{Dispatching Operations by Collection Type}
+\label{sec-4-5}
+
+To implement the protocol, we need multimethods that dispatch on the
+collection types of the a-vectors. Lists and Clojure vectors should
+be treated the same: as sequences. Let's call them
+\emph{seq-ish}. Hash-maps should be treated as \emph{map-ish}. All other types
+are illegal.
+
+\begin{figure}[H]
+\label{one-type}
+\begin{verbatim}
+(defn one-type [a]
+  (cond
+    (or (vector? a) (list? a)) 'seq-ish
+    (map? a)                   'map-ish
+    :default (throw (IllegalArgumentException. (str a)))))
+\end{verbatim}
+\end{figure}
+
+To dispatch on collection type, test the types of all inputs. Here we
+see ampersands before a parameter that represents a sequence of all
+optional arguments.
+
+\begin{figure}[H]
+\label{add-a-vectors}
+\begin{verbatim}
+(defn- all-types [& exprs] (set (map one-type exprs)))
+(defmulti  add-a-vectors all-types)
+(defmethod add-a-vectors #{'seq-ish} [& those]
+  (apply map + those))
+(defmethod add-a-vectors #{'map-ish} [& those]
+  (apply merge-with + those))
+(defmethod add-a-vectors :default    [& those]
+  (throw (IllegalArgumentException.
+    (str "; Illegal type combination: " (map type those)))))
+\end{verbatim}
+\end{figure}
+
+At this point, it is worth noting that \emph{static typing} -- types
+tested by a compiler -- would save us the work of writing run-time
+type tests, but at the expense of the build-time and run-time
+complexity of introducing another language into our data-processing
+pipeline. This complexity tradeoff -- coding versus building and
+running -- is a judgment call.  We stick with dynamic type-checking,
+the only option available in Clojure, for now.
+
+Our \emph{add-a-vectors} function is loose: it will add one or more
+a-vectors, where our protocol will only accept two or more. This is
+fine: it only means that we unit test a few more cases for
+\emph{add-a-vectors} than for our protocol.
+
+Regarding the underlying arithmetic: if we attempt to add values that
+cannot be added via the $+$ operator, we do not interfere with the
+underlying exceptions that Clojure and Java may throw. Therefore, we
+do not need to test such cases here.
+
+\begin{figure}[H]
+\label{add-a-vectors-test}
+\begin{verbatim}
+(deftest add-a-vectors-test
+  (testing "add-a-vectors")
+  (is (= #{"java.lang.IllegalArgumentException"}
+         (value-set add-a-vectors atoms)))
+  (are [expr] (thrown? java.lang.IllegalArgumentException expr)
+       (add-a-vectors '()  {})
+       (add-a-vectors  []  {})
+       (add-a-vectors  {} '())
+       (add-a-vectors  {}  [])
+       (add-a-vectors))
+  (are [x y] (= x y)
+    (add-a-vectors [])    []
+    (add-a-vectors [1])   [1]
+    (add-a-vectors [1 1]) [1 1]
+
+    (add-a-vectors '())    '()
+    (add-a-vectors '(1))   '(1)
+    (add-a-vectors '(1 1)) '(1 1)
+
+    (add-a-vectors [1]   [2])   [3]
+    (add-a-vectors [1 2] [3 4]) [4 6]
+
+    (add-a-vectors '(1)   '(2))   '(3)
+    (add-a-vectors '(1 2) '(3 4)) '(4 6)
+
+    (add-a-vectors '(1)   [2])   [3]
+    (add-a-vectors '(1 2) [3 4]) [4 6]
+
+    (add-a-vectors [1]   '(2))   [3]
+    (add-a-vectors [1 2] '(3 4)) [4 6]
+
+    (add-a-vectors [1]   [2])   '(3)
+    (add-a-vectors [1 2] [3 4]) '(4 6)
+
+    (add-a-vectors '(1)   [2])   '(3)
+    (add-a-vectors '(1 2) [3 4]) '(4 6)
+
+    (add-a-vectors [1]   '(2))   '(3)
+    (add-a-vectors [1 2] '(3 4)) '(4 6)
+
+    (add-a-vectors [1]   [2 3])   [3]
+    (add-a-vectors [1 2] [3 4 5]) [4 6]
+
+    (add-a-vectors {})          {}
+
+    (add-a-vectors {:a 1})      {:a 1}
+    (add-a-vectors {:a 1 :b 2}) {:a 1 :b 2}
+
+    (add-a-vectors {:a 1} {})      {:a 1}
+    (add-a-vectors {:a 1 :b 2} {}) {:a 1 :b 2}
+
+    (add-a-vectors {} {:a 1})      {:a 1}
+    (add-a-vectors {} {:a 1 :b 2}) {:a 1 :b 2}
+
+    (add-a-vectors {} {:a 1})      {:a 1}
+    (add-a-vectors {} {:a 1 :b 2}) {:a 1 :b 2}
+
+    (add-a-vectors {} {:a 1} {})      {:a 1}
+    (add-a-vectors {} {:a 1 :b 2} {}) {:a 1 :b 2}
+
+    (add-a-vectors {:a 1} {:a 2})           {:a 3}
+    (add-a-vectors {:a 1 :b 2} {:a 3 :b 4}) {:a 4 :b 6}
+
+    (add-a-vectors {:a 1} {:b 2})           {:a 1 :b 2}
+    (add-a-vectors {:a 1 :b 2} {:a 3 :c 4}) {:a 4 :b 2 :c 4}
+  ) )
+\end{verbatim}
+\end{figure}
+\subsection{The ReversibleVector Type}
+\label{sec-4-6}
+
+We now have enough to implement the \emph{add} method of the protocol.
+
+\begin{figure}[H]
+\label{reversible-algebraic-vector}
+\begin{verbatim}
+(defrecord ReversibleVector [my-r-vector]
+  IReversibleAlgebraicVector
+  (add   [this that]
+         (let [prior-a-vectors
+               [(get-a-vector (.my-r-vector this))
+                (get-a-vector (.my-r-vector that))]]
+           (->ReversibleVector
+             {:priors    [this that]
+              :operation 'add
+              :a-vector  (apply add-a-vectors prior-a-vectors)})))
+  (sub   [this that] nil)
+  (inner [this that] nil)
+  (scale [this scalar] nil)
+  (undo  [this] nil)
+  (redo  [this] nil))
+\end{verbatim}
+\end{figure}
+\section{Unit-Tests}
+\label{sec-5}
+
+\begin{figure}[H]
+\label{test-namespace}
+\begin{verbatim}
+(ns ex1.core-test
+  (:require [clojure.test :refer :all]
+            [ex1.core     :refer :all]))
+\end{verbatim}
+\end{figure}
+\section{REPLing}
+\label{sec-6}
+\label{sec:emacs-repl}
+To run the REPL for interactive programming and testing in org-mode,
+take the following steps:
+\begin{enumerate}
+\item Set up emacs and nRepl (TODO: explain; automate)
+\item Edit your init.el file as follows (TODO: details)
+\item Start nRepl while visiting the actual |project-clj| file.
+\item Run code in the org-mode buffer with \verb|C-c C-c|; results of
+evaluation are placed right in the buffer for inspection; they are
+not copied out to the PDF file.
+\end{enumerate}
+% Emacs 24.3.1 (Org mode 8.0)
+\end{document}
