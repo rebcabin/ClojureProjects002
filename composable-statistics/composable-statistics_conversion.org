@@ -1,0 +1,2403 @@
+#+STARTUP: showall
+#+TITLE: Composable Statistics
+#+AUTHOR: Brian Beckman
+#+EMAIL: bc.beckman@gmail.com
+
+# FOR DOCUMENTATION OF THESE OPTIONS, see 12.2, Export Settings of the Org Info Manual
+
+#+OPTIONS: ':t                # export smart quotes
+#+OPTIONS: *:t                # export emphasized text
+#+OPTIONS: -:t                # conversion of special strings
+#+OPTIONS: ::t                # fixed-width sections
+#+OPTIONS: <:t                # time/date active/inactive stamps
+#+OPTIONS: \n:nil             # preserve line breaks
+#+OPTIONS: ^:nil              # TeX-like syntax for sub- and super-scripts
+#+OPTIONS: arch:headline      # archived trees
+#+OPTIONS: author:t           # toggle inclusion of author name on export
+#+OPTIONS: broken-links:mark
+#+OPTIONS: c:nil              # clock keywords
+#+CREATOR: Emacs 26.2 of 2019-04-12, org version: 9.2.2
+#+OPTIONS: creator:comment
+#+OPTIONS: d:(not "LOGBOOK")  # drawers to include or exclude
+#+OPTIONS: date:t
+#+OPTIONS: e:t                # entities
+#+OPTIONS: email:nil          # do or don't export my email
+#+OPTIONS: f:t                # footnotes
+#+OPTIONS: H:3                # number of headline levels to export
+#+OPTIONS: inline:t           # export inline tasks?
+#+OPTIONS: num:t              # section numbers
+#+OPTIONS: p:nil              # toggle export of planning information
+#+OPTIONS: pri:nil            # priority cookies
+#+OPTIONS: prop:nil           # include property drawers? or list to include?
+#+OPTIONS: stat:t             # statistics cookies?
+#+OPTIONS: tags:t             # org-export-with-tags? (what's a "tag"?)
+#+OPTIONS: tasks:t            # include TODO items ("tasks" some complexity here)
+#+OPTIONS: tex:t              # exports inline LaTeX
+#+OPTIONS: timestamp:t        # creation timestamp in the exported file?
+#+OPTIONS: toc:2              # set level limit in TOC or nil to exclude
+#+OPTIONS: todo:t             # inclusion of actual TODO keyword
+#+OPTIONS: |:t                # include tables
+
+#+LaTeX_HEADER: \usepackage{amsmath}
+#+LaTeX_HEADER: \usepackage{interval}  % must install texlive-full
+#+LaTeX_HEADER: \usepackage[shortcuts]{extdash}
+
+#+LaTeX_HEADER: \usepackage[top=0.90in,bottom=0.55in,left=1in,right=1in,includefoot]{geometry}
+#+LaTeX_HEADER: \usepackage{palatino}
+#+LaTeX_HEADER: \usepackage{siunitx}
+#+LaTeX_HEADER: \usepackage{braket}
+#+LaTeX_HEADER: \usepackage[euler-digits,euler-hat-accent]{eulervm}
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \pagestyle{fancyplain}
+#+LATEX_HEADER: \lhead{}
+#+LATEX_HEADER: \chead{Confidential The TBD Group 2019}
+#+LATEX_HEADER: \rhead{}
+#+LATEX_HEADER: \lfoot{Confidential The TBD Group 2019}
+#+LATEX_HEADER: \cfoot{\thepage}
+#+LATEX_HEADER: \rfoot{}
+#+LATEX_HEADER: \usepackage{lineno}
+#+LATEX_HEADER: \linenumbers
+
+#+LATEX_HEADER_EXTRA: \usepackage{mdframed}
+#+LATEX_HEADER_EXTRA: \BeforeBeginEnvironment{minted}{\begin{mdframed}}
+#+LATEX_HEADER_EXTRA: \AfterEndEnvironment{minted}{\end{mdframed}}
+
+#                                                    _
+#  _ _  _____ __ __  __ ___ _ __  _ __  __ _ _ _  __| |___
+# | ' \/ -_) V  V / / _/ _ \ '  \| '  \/ _` | ' \/ _` (_-<
+# |_||_\___|\_/\_/  \__\___/_|_|_|_|_|_\__,_|_||_\__,_/__/
+
+#+LaTeX_HEADER: \newcommand\definedas{\stackrel{\text{\tiny def}}{=}}
+
+
+
+#+SELECT_TAGS: export
+#+STARTUP: indent
+
+#+LaTeX_CLASS_OPTIONS: [10pt,oneside,x11names]
+
+* COMMENT PRELIMINARIES
+
+#+BEGIN_SRC emacs-lisp :exports results :results output
+  (defun update-equation-tag ()
+    (interactive)
+    (save-excursion
+      (goto-char (point-min))
+      (let ((count 1))
+        (while (re-search-forward "\\tag{\\([0-9]+\\)}" nil t)
+          (replace-match (format "%d" count) nil nil nil 1)
+          (setq count (1+ count))))))
+  (update-equation-tag)
+  (setq org-confirm-babel-evaluate nil)
+  (princ (concat (format "Emacs version: %s\n" (emacs-version))
+                 (format "org version: %s\n" (org-version))))
+  ;; (org-babel-map-src-blocks nil (org-babel-remove-result))
+  ;; (slime)
+#+END_SRC
+
+#+RESULTS:
+: Emacs version: GNU Emacs 26.2 (build 2, x86_64-pc-linux-gnu, GTK+ Version 3.24.4)
+:  of 2019-04-12
+: org version: 9.2.2
+
+#+BEGIN_SRC python :results output
+import time
+import sys
+print(f"Hello, today's date is {time.ctime()}")
+print(f'Two plus two is {2 + 2}')
+print(f"Python's version info: {sys.version}")
+#+END_SRC
+
+#+RESULTS:
+: Hello, today's date is Tue May 21 17:11:43 2019
+: Two plus two is 4
+: Python's version info: 3.7.3 (default, Mar 27 2019, 22:11:17)
+: [GCC 7.3.0]
+
+#+begin_src clojure
+(* 6 (+ 6 1))
+#+end_src
+
+#+RESULTS:
+: 42
+
+* COMPOSABLE STATISTICS
+  :PROPERTIES:
+  :CUSTOM_ID: composable-statistics
+  :END:
+
+*Brian Beckman*
+
+*June 2017* - *June 2019*
+
+** CLOJURE
+   :PROPERTIES:
+   :CUSTOM_ID: clojure
+   :END:
+
+We prefer Clojure to Python for this exercise due to Clojure's
+concurrency primitives, especially atoms and core.async. Python is
+growing and improving rapidly, so we may return to it someday.
+
+#+begin_comment :deprecated
+Section [[#HOW-TO-USE-THIS-DOCUMENT][HOW TO USE THIS DOCUMENT]] explains
+how to get Clojure working inside Jupyter.
+#+end_comment
+
+The best sites for learning Clojure by example are
+[[http://clojuredocs.org][clojuredocs.org]] and
+[[http://4clojure.org][4clojure.org]]. A recommended book is
+[[http://braveclojure.com][Clojure for the Brave and True]].
+
+** TODO HOW TO USE THIS DOCUMENT
+   :PROPERTIES:
+   :CUSTOM_ID: how-to-use-this-document
+   :END:
+
+   This document is adapted from an original Jupyter notebook. I moved to
+   org-mode after a catastrophic failure of Jupyter. I decided it was more
+   worthwhile to start again from org-mode than from Jupyter.
+
+   Explain how to run Clojure code inside an org-mode buffer, how to tangle and
+   weave, etc.
+
+
+1. Install leiningen https://leiningen.org/ (this is all you need for Clojure)
+#+begin_comment :deprecated
+2. Install [[http://jupyter.readthedocs.io/en/latest/install.html][jupyter notebook]]
+3. https://github.com/clojupyter/clojupyter
+4. At a bash prompt, type =jupyter notebook=
+5. A web page will open automatically; navigate to the file you're reading right
+   now
+6. Evaluate cells by typing =Shift-Enter=
+#+end_comment
+
+Consider doing all Python work in [[https://pipenv.readthedocs.io/][pipenv]]. It keeps virtual environments outside
+your local folders. It works for this =clojupyter= notebook as well.
+
+* INTRODUCTION
+  :PROPERTIES:
+  :CUSTOM_ID: introduction
+  :END:
+
+We want to compute descriptive statistics in constant memory. We want
+exactly the same code to run over sequences distributed in space as runs
+over sequences distributed in time. Sequences distributed in space are
+vectors, lists, arrays, lazy or not. Sequences distributed over time are
+asynchronous streams. Descriptive statistics range from =count=, =mean=,
+=max=, =min=, and =variance= to Kalman filters and Gaussian processes.
+We decouple computation from data delivery by packaging computation in
+composable functions.
+
+Some sample scalar data:
+
+#+BEGIN_SRC clojure :results none
+    (def zs [-0.178654, 0.828305, 0.0592247, -0.0121089, -1.48014,
+             -0.315044, -0.324796, -0.676357, 0.16301, -0.858164])
+#+END_SRC
+
+** TODO: GENERATE NEW RANDOM DATA
+
+* RUNNING COUNT
+  :PROPERTIES:
+  :CUSTOM_ID: running-count
+  :END:
+
+The traditional and obvious way with =reduce= and =reductions=
+(https://clojuredocs.org/clojure.core/reduce). /Reduce/ takes three
+arguments: a binary function, an initial value, and a space-sequence of
+inputs.
+
+#+BEGIN_SRC clojure
+    (reduce
+        (fn [count datum] (inc count)) ; binary function
+        0                              ; initial value
+        zs)                            ; space sequence
+#+END_SRC
+
+#+RESULTS:
+: 10
+
+... with all intermediate results:
+
+#+BEGIN_SRC clojure
+    (reductions (fn [c z] (inc c)) 0 zs)
+#+END_SRC
+
+#+RESULTS:
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+
+** THREAD-SAFE
+   :PROPERTIES:
+   :CUSTOM_ID: thread-safe
+   :END:
+
+Overkill for sequences in space, but safe for multiple threads from
+asynchronous streams. It also shows (1) /let-over-lambda/ (LOL): closing
+over mutable state variables, and (2) transactional mutation, i.e.,
+/atomic updates/. LOL is sematically equivalent to data encapsulation in
+OOP, and transactions are easier to verify than is OOP with locks and
+mutexes.
+
+The following has a defect: we need =initial-count= both to initialize
+the atom and to initialize the =reduce= call. This defect must be traded
+off against the generalizable form or /functional type/ of the
+reducible, namely
+$(\textrm{estimate}, \textrm{measurement})\rightarrow\textrm{estimate}$.
+We get rid of this defect later.
+
+#+BEGIN_SRC clojure
+    (let [initial-count 0] ; Must use this twice below.
+        (reduce
+            ; Let-over-lambda (anonymous "object") follows.
+            ; "Atom" is a transactional (thread-safe) type in Clojure.
+            (let [running-count (atom initial-count)]
+                ; That was the "let" of "LOL." Here comes the lambda:
+                ; Reducible closure over "running-count."
+                (fn [c z] ; Here's the "lambda" of "LOL"
+                    (swap! running-count inc) ; transactional update
+                    @running-count))
+                    ; safe "read" of the atom ~~> new value for c
+            initial-count
+            zs))
+#+END_SRC
+
+#+RESULTS:
+: 10
+
+Showing all intermediate results:
+
+#+BEGIN_SRC clojure
+    (let [initial-count 0]
+        (reductions ; <-- this is the only difference to above
+            (let [running-count (atom initial-count)]
+                (fn [c z]
+                    (swap! running-count inc)
+                    @running-count)) ; ~~> new value for c
+            initial-count
+            zs))
+#+END_SRC
+
+#+RESULTS:
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+
+** AVOIDING /REDUCE/
+   :PROPERTIES:
+   :CUSTOM_ID: avoiding-reduce
+   :END:
+
+=Reduce= only works in space, not in time. Avoiding =reduce= decouples
+the statistics code ("business logic") from the space environment
+("plumbing"). That spaces environment delivers data from vectors, lists,
+etc.). We want to be able to switch out an environment that delivers
+data from space for an environment that delivers data points $z$ from
+time.
+
+The following is a thread-safe LOL, without =reduce=. We /map/ the LOL
+over a space-sequence in memory to produce exactly the same result as
+with =reduce=. The mappable LOL does not need an accumulator argument
+for =count=.
+
+Below, we map /exactly/ the same mappable LOL over asynchronous streams.
+
+A subtle defect: the output is still coupled to the computing
+environment through =print=. We get rid of that, too,
+[[#REMOVING-OUTPUT-COUPLING][below]].
+
+#+BEGIN_SRC clojure :results output
+    (dorun ; <-- Discard 'nil's produced by "print."
+        (map
+            (let [running-count (atom 0)]
+                (fn [z] ; <-- one fewer argument
+                    (swap! running-count inc)
+                    (print (str @running-count " "))))
+            zs))
+#+END_SRC
+
+#+RESULTS:
+: 1 2 3 4 5 6 7 8 9 10
+
+* RUNNING MEAN
+  :PROPERTIES:
+  :CUSTOM_ID: running-mean
+  :END:
+
+Consider the following general scheme for recurrence: */a new statistic is an
+old statistic plus a correction/*.
+
+The /correction/ is a /gain/ times a /residual/. For running mean, the
+residual is the difference between the new measurement $z$ and the old
+mean $x$. The gain is $1/(n+1)$, where $n$ is /count-so-far/. $n$ is a
+statistic, too, so it is an /old/ value, computed and saved before the
+current observation $z$ arrived.
+
+/The correction therefore depends only on the new input $z$ and on old
+statistics $x$ and $n$. The correction does not depend on new
+statistics/.
+
+Mathematically, write the general recurrence idea without subscripts as
+
+$$x\leftarrow{x+K\,(z-x)}$$
+
+or, with Lamport's notation, wherein new versions of old values get a
+prime, as an equation
+
+$$x'=x+K\,(z-x)$$
+
+($z$ does not have a prime; it is the only exception to the rule that
+new versions of old quantities have primes).
+
+Contrast the noisy traditional form, which introduces another variable,
+the index $n$. This traditional form is objectively more complicated
+than either of the two above:
+
+$$x_{n+1}=x_n+K(n)\,(z_{n+1}-x_n)$$
+
+#+BEGIN_SRC clojure :results output
+    (dorun
+        (map
+            (let [running-stats (atom {:count 0, :mean 0})]
+                (fn [z]
+                    (let [{x :mean, n :count} @running-stats
+                          n+1 (inc n) ; cool variable name!
+                          K   (/ 1.0 n+1)]
+                        (swap! running-stats conj
+                               [:count n+1]
+                               [:mean (+ x (* K (- z x)))]))
+                    (println @running-stats)))
+            zs))
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+{:count 1, :mean -0.178654}
+{:count 2, :mean 0.3248255}
+{:count 3, :mean 0.2362919}
+{:count 4, :mean 0.1741917}
+{:count 5, :mean -0.15667464000000003}
+{:count 6, :mean -0.18306953333333337}
+{:count 7, :mean -0.20331617142857145}
+{:count 8, :mean -0.262446275}
+{:count 9, :mean -0.21517335555555556}
+{:count 10, :mean -0.27947242}
+#+end_example
+
+The =swap= above calls =conj= on the current contents of the atom
+=running-stats= and on the rest of the arguments, namely
+=[:count n+1, :mean ...]=. =conj= is the idiom for "updating" a hashmap,
+the hashmap in the atom, the hashmap that starts off as
+={:count 0, :mean 0}=.
+
+** REMOVING OUTPUT COUPLING
+   :PROPERTIES:
+   :CUSTOM_ID: REMOVING-OUTPUT-COUPLING
+   :END:
+
+Remove =println= from inside the LOL function of $z$. Now the LOL
+function of $z$ is completely decoupled from its environment. Also,
+abstract a "factory" method for the LOL, /make-running-stats-mapper/, to
+clean up the line that does the printing.
+
+*** MAKE-RUNNING-STATS-MAPPER
+    :PROPERTIES:
+    :CUSTOM_ID: make-running-stats-mapper
+    :END:
+
+#+BEGIN_SRC clojure :results output
+    (defn make-running-stats-mapper []
+        (let [running-stats (atom {:count 0 :mean 0 :datum 0})]
+            (fn [z]
+                (let [{x :mean, n :count, _ :datum} @running-stats
+                      n+1 (inc n)
+                      K   (/ 1.0 n+1)]
+                    (swap! running-stats conj
+                           [:count n+1]
+                           [:mean (+ x (* K (- z x)))]
+                           [:datum z]))
+                @running-stats)))
+
+    (clojure.pprint/pprint (map (make-running-stats-mapper) zs))
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+({:count 1, :mean -0.178654, :datum -0.178654}
+ {:count 2, :mean 0.3248255, :datum 0.828305}
+ {:count 3, :mean 0.2362919, :datum 0.0592247}
+ {:count 4, :mean 0.1741917, :datum -0.0121089}
+ {:count 5, :mean -0.15667464000000003, :datum -1.48014}
+ {:count 6, :mean -0.18306953333333337, :datum -0.315044}
+ {:count 7, :mean -0.20331617142857145, :datum -0.324796}
+ {:count 8, :mean -0.262446275, :datum -0.676357}
+ {:count 9, :mean -0.21517335555555556, :datum 0.16301}
+ {:count 10, :mean -0.27947242, :datum -0.858164})
+#+end_example
+
+** NUMERICAL CHECK
+   :PROPERTIES:
+   :CUSTOM_ID: numerical-check
+   :END:
+
+The last value of the running mean is $-0.279...42$. Check that against
+an independent calculation.
+
+**** DEFN MEAN
+
+#+BEGIN_SRC clojure :results output
+    (defn mean [zs] (/ (reduce + zs) (count zs)))
+    (println (mean zs))
+#+END_SRC
+
+#+RESULTS:
+: -0.27947242
+
+* CORE.ASYNC
+  :PROPERTIES:
+  :CUSTOM_ID: core.async
+  :END:
+
+For data distributed over time, we'll use Clojure's core.async.
+Core.async has some subtleties that we analyze below.
+
+#+BEGIN_SRC clojure :results none
+    (require
+        '[clojure.core.async
+          :refer
+          [sliding-buffer dropping-buffer buffer
+           <!!,  <!,  >!,  >!!,
+           go chan onto-chan close!
+           thread alts! alts!! timeout]])
+#+END_SRC
+
+** SHALLOW TUTORIAL
+   :PROPERTIES:
+   :CUSTOM_ID: shallow-tutorial
+   :END:
+
+https://github.com/clojure/core.async/blob/master/examples/walkthrough.clj
+
+** DEEP TUTORIAL
+   :PROPERTIES:
+   :CUSTOM_ID: deep-tutorial
+   :END:
+
+The asynchronous, singleton =go= thread is loaded with very lightweight
+/pseudothreads/ (my terminology, not standard; most things you will read
+or see about Clojure.async does not carefully distinguish between
+threads and pseudothreads, and I think that's not helpful).
+
+Pseudothreads are lightweight state machines that pick up where they
+left off. It is feasible to have thousands, even millions of them.
+Pseudothreads don't block, they /park/. /Parking/ and /unparking/ are
+very fast. We can write clean code with pseudothreads because our code
+looks like it's blocked waiting for input or blocked waiting for buffer
+space. Code with blocking I/O is easy to write and to understand. Code
+in =go= forms doesn't actually block, just looks like it.
+
+Some details are tricky and definitely not easy to divine from the
+documentation. Hickey's video from InfoQ 2013
+(https://www.infoq.com/presentations/core-async-clojure) is more
+helpful, but you can only appreciate the fine points after you've
+stumbled a bit. I stumbled over the fact that buffered and unbuffered
+channels have different synchronization semantics. Syntactically, they
+look the same, but you cannot, in general, run the same code over an
+unbuffered channel that works on a buffered channel. Hickey says this,
+but doesn't nail it to the mast; doesn't emphasize it with an example,
+as I do here in this deep tutorial. He motivates the entire library with
+the benefits of first-class queues, but fails to emphasize that, by
+default, a channel is not a queue but a blocking rendezvous. He does
+mention it, but one cannot fully appreciate the ramifications from a
+passing glance.
+
+*** COMMUNICATING BETWEEN THREADS AND PSEUDOTHREADS
+    :PROPERTIES:
+    :CUSTOM_ID: communicating-between-threads-and-pseudothreads
+    :END:
+
+Write output to unbuffered channel =c= via =>!= on the asynchronous =go=
+real-thread and read input from the same channel =c= via =<!!= on the
+UI/REPL =println= real-thread. We'll see later that writing via =>!!= to
+an unbuffered channel blocks the UI real-thread, so we can't write
+before reading unbuffered on the UI/REPL real-thread. However, we can
+write before reading on a non-blocking pseudothread, and no buffer space
+is needed.
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan)]        ;; unbuffered chan
+        (go (>! c 42))     ;; parks if no space in chan
+        (println (<!! c))  ;; blocks UI/REPL until data on c
+        (close! c))        ;; idiom; may be harmless overkill
+#+END_SRC
+
+#+RESULTS:
+: 42
+
+In general, single-bang forms work on =go= pseudothreads, and
+double-bang forms work on real, heavyweight, Java threads like the
+UI/REPL thread behind this notebook. In the rest of this notebook,
+"thread" means "real thread" and we write "pseudothread" explicitly when
+that's what we mean.
+
+I don't address thread leakage carefully in this tutorial, mostly
+because I don't yet understand it well. I may overkill by closing
+channels redundantly.
+
+*** CHANNEL VOODOO FIRST
+    :PROPERTIES:
+    :CUSTOM_ID: channel-voodoo-first
+    :END:
+
+Writing before reading seems very reasonable, but it does not work on
+unbuffered channels, as we see below. Before going there, however, let's
+understand more corners of the example above.
+
+The =go= form itself returns a channel:
+
+#+BEGIN_SRC clojure :results output
+    (clojure.repl/doc go)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+-------------------------
+clojure.core.async/go
+([& body])
+Macro
+  Asynchronously executes the body, returning immediately to the
+  calling thread. Additionally, any visible calls to <!, >! and alt!/alts!
+  channel operations within the body will block (if necessary) by
+  'parking' the calling thread rather than tying up an OS thread (or
+  the only JS thread when in ClojureScript). Upon completion of the
+  operation, the body will be resumed.
+
+  Returns a channel which will receive the result of the body when
+  completed
+#+end_example
+
+I believe "the calling thread" above refers to a pseudothread inside the
+=go= real-thread, but I am not sure because of the ambiguities in the
+official documentation between "blocking" and "parking" and between
+"thread" and "well, we don't have a name for them, but Brian calls them
+'pseudothreads'."
+
+Is the channel returned by =go= the same channel as =c=?
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan)]
+        (println {:c-channel c})
+        (println {:go-channel (go (>! c 42))})
+        (println {:c-coughs-up (<!! c)})
+        (println {:close-c (close! c)}))
+#+END_SRC
+
+#+RESULTS:
+: {:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x710fa85d clojure.core.async.impl.channels.ManyToManyChannel@710fa85d]}
+: {:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x14684a80 clojure.core.async.impl.channels.ManyToManyChannel@14684a80]}
+: {:c-coughs-up 42}
+: {:close-c nil}
+
+No, =c= is a different channel from the one returned by =go=. Consult
+the documentation for =go= once more:
+
+#+BEGIN_SRC clojure :results output
+    (clojure.repl/doc go)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+-------------------------
+clojure.core.async/go
+([& body])
+Macro
+  Asynchronously executes the body, returning immediately to the
+  calling thread. Additionally, any visible calls to <!, >! and alt!/alts!
+  channel operations within the body will block (if necessary) by
+  'parking' the calling thread rather than tying up an OS thread (or
+  the only JS thread when in ClojureScript). Upon completion of the
+  operation, the body will be resumed.
+
+  Returns a channel which will receive the result of the body when
+  completed
+#+end_example
+
+We should be able to read from the channel returned by =go=; call it
+=d=:
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan)
+          d (go (>! c 42))] ;; 'let' in Clojure is sequential,
+                            ;; like 'let*' in Scheme or Common Lisp,
+                            ;; so 'd' has a value, here.
+        (println {:c-coughs-up (<!! c),  ;; won't block
+                  :d-coughs-up (<!! d)}) ;; won't block
+        (close! c)
+        (close! d))
+#+END_SRC
+
+#+RESULTS:
+: {:c-coughs-up 42, :d-coughs-up true}
+
+=d='s coughing up =true= means that the body of the =go=, namely
+=(>! c 42)= must have returned =true=, because =d= coughs up "the result
+of the body when completed." Let's see whether our deduction matches
+documentation for =>!=:
+
+#+BEGIN_SRC clojure :results output
+    (clojure.repl/doc >!)
+#+END_SRC
+
+#+RESULTS:
+: -------------------------
+: clojure.core.async/>!
+: ([port val])
+:   puts a val into port. nil values are not allowed. Must be called
+:   inside a (go ...) block. Will park if no buffer space is available.
+:   Returns true unless port is already closed.
+
+Sure enough. But something important is true and not obvious from this
+documentation. Writing to =c= inside the =go= block parks the
+pseudothread because no buffer space is available: =c= was created with
+a call to =chan= with no arguments, so no buffer space is allocated.
+Only when reading from =c= does the pseudothread unpark. How? There is
+no buffer space. Reading on the UI thread manages to short-circuit any
+need for a buffer and unpark the pseudothread. Such short-circuiting is
+called a /rendezvous/ in the ancient literature of concurrency. Would
+the pseudothread unpark if we read inside a =go= block and not on the UI
+thread?
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan)
+          d (go (>! c 42))
+          e (go (<! c))]
+        (clojure.pprint/pprint {
+          :c-channel c, :d-channel d, :e-channel e,
+          :e-coughs-up (<!! e),  ;; won't block
+          :d-coughs-up (<!! d)}) ;; won't block
+        (close! c)
+        (close! d)
+        (close! e))
+#+END_SRC
+
+#+RESULTS:
+: {:c-channel
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x55d62ca2 "clojure.core.async.impl.channels.ManyToManyChannel@55d62ca2"],
+:  :d-channel
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5ad384e2 "clojure.core.async.impl.channels.ManyToManyChannel@5ad384e2"],
+:  :e-channel
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x199e6388 "clojure.core.async.impl.channels.ManyToManyChannel@199e6388"],
+:  :e-coughs-up 42,
+:  :d-coughs-up true}
+
+Yes, the pseudothread that parked when $42$ is put on =c= via =>!=
+unparks when $42$ is taken off via =<!=. Channel =d= represents the
+parking step and channel =e= represents the unparking step. All three
+channels are different.
+
+So now we know how to short-circuit or rendezvous unbuffered channels.
+In fact, the order of reading and writing (taking and putting) does not
+matter in the nebulous, asynchronous world of pseudothreads. How
+Einsteinian is that? The following takes (reads) from =c= on =e= before
+puting (writing) to =c= on =d=. That's the same as above, only in the
+opposite order.
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan)
+          e (go (<! c))
+          d (go (>! c 42))]
+        (clojure.pprint/pprint {
+          :c-channel c, :d-channel d, :e-channel e,
+          :e-coughs-up (<!! e),  ;; won't block
+          :d-coughs-up (<!! d)}) ;; won't block
+        (close! c)
+        (close! d)
+        (close! e))
+#+END_SRC
+
+#+RESULTS:
+: {:c-channel
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x39134936 "clojure.core.async.impl.channels.ManyToManyChannel@39134936"],
+:  :d-channel
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5f14c669 "clojure.core.async.impl.channels.ManyToManyChannel@5f14c669"],
+:  :e-channel
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7e37dd0b "clojure.core.async.impl.channels.ManyToManyChannel@7e37dd0b"],
+:  :e-coughs-up 42,
+:  :d-coughs-up true}
+
+*** PUTS BEFORE TAKES CONSIDERED RISKY
+    :PROPERTIES:
+    :CUSTOM_ID: puts-before-takes-considered-risky
+    :END:
+
+=>!!=, by default, blocks if called too early on an unbuffered real
+thread. We saw above that parked pseudothreads don't block: you can read
+and write to channels in =go= blocks in any order. However, that's not
+true with threads that actually block. The documentation is obscure,
+though not incorrect, about this fact.
+
+#+BEGIN_SRC clojure :results output
+    (clojure.repl/doc >!!)
+#+END_SRC
+
+#+RESULTS:
+: -------------------------
+: clojure.core.async/>!!
+: ([port val])
+:   puts a val into port. nil values are not allowed. Will block if no
+:   buffer space is available. Returns true unless port is already closed.
+
+When is "no buffer space available?" It turns out that the default
+channel constructor makes a channel with no buffer space allocated by
+default.
+
+#+BEGIN_SRC clojure :results output
+    (clojure.repl/doc chan)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+-------------------------
+clojure.core.async/chan
+([] [buf-or-n] [buf-or-n xform] [buf-or-n xform ex-handler])
+  Creates a channel with an optional buffer, an optional transducer
+  (like (map f), (filter p) etc or a composition thereof), and an
+  optional exception-handler.  If buf-or-n is a number, will create
+  and use a fixed buffer of that size. If a transducer is supplied a
+  buffer must be specified. ex-handler must be a fn of one argument -
+  if an exception occurs during transformation it will be called with
+  the Throwable as an argument, and any non-nil return value will be
+  placed in the channel.
+#+end_example
+
+We can test the blocking-on-unbuffered case as follows. The following
+code will block at the line =(>!! c 42)=, as you'll find if you
+uncomment the code (remove =#_= at the beginning) and run it. You'll
+have to interrupt the Kernel using the "Kernel" menu at the top of the
+notebook, and you might have to restart the Kernel, but you should try
+it once.
+
+#+BEGIN_SRC clojure :results output
+    #_(let [c (chan)]
+        (>!! c 42)
+        (println (<!! c))
+        (close! c))
+#+END_SRC
+
+#+RESULTS:
+
+The following variation works fine because we made "buffer space" before
+writing to the channel. The only difference to the above is the $1$
+argument to the call of =chan=.
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan 1)]
+        (>!! c 42)
+        (println (<!! c))
+        (close! c))
+#+END_SRC
+
+#+RESULTS:
+: 42
+
+The difference between the semantics of the prior two examples is not
+subtle: one hangs the kernel and the other does not. However, the
+difference in the syntax is subtle and easy to miss.
+
+We can read on the asynchronous =go= pool from the buffered channel =c=
+because the buffered write =(>!! c)= on the UI thread doesn't block:
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan 1)]
+        (>!! c 42)
+        (println {:go-channel-coughs-up (<!! (go (<! c)))})
+        (close! c))
+#+END_SRC
+
+#+RESULTS:
+: {:go-channel-coughs-up 42}
+
+**** ORDER DOESN'T MATTER, SOMEIMES
+     :PROPERTIES:
+     :CUSTOM_ID: order-doesnt-matter-someimes
+     :END:
+
+We can do things backwards, reading before writing, even without a
+buffer. Read from channel =(<! c)= on the async =go= thread "before"
+writing to =(>!! c 42)= on the REPL / UI thread. "Before," here, of
+course, means syntactically or lexically "before," not temporally.
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan) ;; NO BUFFER!
+          d (go (<! c)) ;; park a pseudothread to read c
+          e (>!! c 42)] ;; blocking write unparks c's pseudothread
+        (println {:c-hangs '(<!! c),
+                  :d-coughs-up (<!! d),
+                  :what's-e    e})
+        (close! c) (close! d))
+#+END_SRC
+
+#+RESULTS:
+: {:c-hangs (<!! c), :d-coughs-up 42, :what's-e true}
+
+Why did =>!!= produce =true=? Look at docs again:
+
+#+BEGIN_SRC clojure :results output
+    (clojure.repl/doc >!!)
+#+END_SRC
+
+#+RESULTS:
+: -------------------------
+: clojure.core.async/>!!
+: ([port val])
+:   puts a val into port. nil values are not allowed. Will block if no
+:   buffer space is available. Returns true unless port is already closed.
+
+Ok, now I fault the documentation. =>!!= will block if there is no
+buffer space available /and/ if there is no /rendezvous/ available, that
+is, no pseudothread parked waiting for =<!=. I have an open question in
+the Google group for Clojure about this issue with the documentation.
+
+To get the value written in into =c=, we must read =d=. If we tried to
+read it from =c=, we would block forever because =>!!= blocks when there
+is no buffer space, and =c= never has buffer space. We get the value out
+of the =go= nebula by short-circuiting the buffer, by a rendezvous, as
+explained above.
+
+=e='s being true means that =c= wasn't closed. =(>!! c 42)= should hang.
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan) ;; NO BUFFER!
+          d (go (<! c)) ;; park a pseudothread to read c
+          e (>!! c 42)  ;; blocking write unparks c's pseudothread
+          f '(hangs (>!! c 43))] ;; is `c` closed?
+        (println {:c-coughs-up '(hangs (<!! c)),
+                  :d-coughs-up (<!! d),
+                  :what's-e    e,
+                  :what's-f    f})
+        (close! c) (close! d))
+#+END_SRC
+
+#+RESULTS:
+: {:c-coughs-up (hangs (<!! c)), :d-coughs-up 42, :what's-e true, :what's-f (hangs (>!! c 43))}
+
+StackOverflow reveals a way to find out whether a channel is closed by
+peeking under the covers (https://stackoverflow.com/questions/24912971):
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan) ;; NO BUFFER!
+          d (go (<! c)) ;; park a pseudothread to read c
+          e (>!! c 42)  ;; blocking write unparks c's pseudothread
+          f (clojure.core.async.impl.protocols/closed? c)]
+        (println {:c-coughs-up '(hangs (<!! c)),
+                  :d-coughs-up (<!! d),
+                  :c-is-open-at-e?  e,
+                  :c-is-open-at-f?  f})
+        (close! c) (close! d))
+#+END_SRC
+
+#+RESULTS:
+: {:c-coughs-up (hangs (<!! c)), :d-coughs-up 42, :c-is-open-at-e? true, :c-is-open-at-f? false}
+
+**** ORDER DOES MATTER, SOMETIMES
+     :PROPERTIES:
+     :CUSTOM_ID: order-does-matter-sometimes
+     :END:
+
+Order does matter this time: Writing blocks the UI thread without a
+buffer and no parked read (rendezvous) in the =go= nebula beforehand. I
+hope you can predict that the following will block even before you run
+it. To be sure, run it, but you'll have to interrupt the kernel as
+before.
+
+#+BEGIN_SRC clojure :results output
+    #_(let [c (chan)
+          e (>!! c 42) ;; blocks forever
+          d (go (<! c))]
+        (println {:c-coughs-up '(this will hang (<!! c)),
+                  :d-coughs-up (<!! d),
+                  :what's-e    e})
+        (close! c) (close! d))
+#+END_SRC
+
+#+RESULTS:
+
+*** TIMEOUTS: DON'T BLOCK FOREVER
+    :PROPERTIES:
+    :CUSTOM_ID: timeouts-dont-block-forever
+    :END:
+
+In all cases, blocking calls like
+[[https://clojuredocs.org/clojure.core.async/%3E!!][=>!!=]] to
+unbuffered channels without timeout must appear /last/ on the UI,
+non-=go=, thread, and then only if there is some parked pseudothread
+that's waiting to read the channel by short-circuit (rendezvous). If we
+block too early, we won't get to the line that launches the async =go=
+nebula and parks the short-cicuitable pseudothread---parks the
+rendezvous.
+
+The UI thread won't block forever if we add a timeout. =alts!!= is a way to do
+that. The [[https://clojuredocs.org/clojure.core.async/alts!!][documentation]] and [[https://clojuredocs.org/clojure.core.async/alts!!][examples]] are difficult, but, loosely quoting
+(emphasis and edits are mine, major ones in square brackets):
+
+#+BEGIN_QUOTE
+  =(alts!! ports & {:as opts})=
+#+END_QUOTE
+
+This destructures all keyword options into =opts=. We don't need =opts= or
+the =:as= keyword below.
+
+#+BEGIN_QUOTE
+  Completes at most one of several channel operations. [/Not for use inside a
+  (go ...) block./] *ports is a vector of channel endpoints*, [A channel
+  endpoint is] either a channel to take from or a vector of =[channel-to-put-to
+  val-to-put]= pairs, in any combination. Takes will be made as if by =<!!=, and
+  puts will be made as if by =>!!=. If more than one port operation is ready, a
+  non-deterministic choice will be made unless the =:priority= option is true.
+  If no operation is ready and a =:default= value is supplied, [=default-val
+  :default=] will be returned, otherwise =alts!!= will [/block/ xxxxpark ?]
+  until the first operation to become ready completes. *Returns =[val port]= of
+  the completed operation*, where =val= is the value taken for takes, and a
+  boolean (=true= unless already closed, as per =put!=) for puts. =opts= are
+  passed as =:key val= ... Supported options: =:default val= - the value to use
+  if none of the operations are immediately ready =:priority true= - (default
+  =nil=) when =true=, the operations will be tried in order. Note: there is no
+  guarantee that the port exps or val exprs will be used, nor in what order
+  should they be, so they should not be depended upon for side effects.
+#+END_QUOTE
+
+=(alts!! ...)= returns a =[val port]= 2-vector.
+
+=(second (alts!! ...))= is a wrapper of channel =c= We can't write to
+the resulting =timeout= channel because we didn't give it a name.
+
+That's a lot of stuff, but we can divine an idiom: pair a channel =c=
+that /might/ block with a fresh =timeout= channel in an =alts!!=. At
+most one will complete. If =c= blocks, the =timeout= will cough up. If
+=c= coughs up before the =timeout= expires, the =timeout= quietly dies
+(question, is it closed? Will it be left open and leak?)
+
+For a first example, let's make a buffered thread that won't block and
+pair it with a long timeout. You will see that it's OK to write $43$
+into this channel (the =[c 43]= term is an implied write; that's clear
+from the documentation). =c= won't block because it's buffered, it
+returns immediately, long before the =timeout= could expire.
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan 1)
+          a (alts!! ; outputs a [val port] pair; throw away the val
+                    ; here are the two channels for `alts!!`
+            [[c 43] (timeout 2500)])]
+        (clojure.pprint/pprint {:c c, :a a})
+        (let [d (go (<! c))]
+            (println {:d-returns (<!! d)}))
+        (close! c))
+#+END_SRC
+
+#+RESULTS:
+: {:c
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x31ab9c82 "clojure.core.async.impl.channels.ManyToManyChannel@31ab9c82"],
+:  :a
+:  [true
+:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x31ab9c82 "clojure.core.async.impl.channels.ManyToManyChannel@31ab9c82"]]}
+: {:d-returns 43}
+
+But, if we take away the buffer, the =timeout= channel wins. The only
+difference to the above is that instead of creating =c= via =(chan 1)=,
+that is, with a buffer of length $1$, we create it with no buffer (and
+we quoted out the blocking read of =d= with a tick mark).
+
+#+BEGIN_SRC clojure :results output
+    (let [c (chan)
+          a (alts!! ; outputs a [val port] pair; throw away the val
+                    ; here are the two channels for `alts!!`
+            [[c 43] (timeout 2500)])]
+        (clojure.pprint/pprint {:c c, :a a})
+        (let [d (go (<! c))]
+            (println {:d-is d})
+            '(println {:d-returns (<!! d)})) ;; blocks
+        (close! c))
+#+END_SRC
+
+#+RESULTS:
+: {:c
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x278676f7 "clojure.core.async.impl.channels.ManyToManyChannel@278676f7"],
+:  :a
+:  [nil
+:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x6b870646 "clojure.core.async.impl.channels.ManyToManyChannel@6b870646"]]}
+: {:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5236acde clojure.core.async.impl.channels.ManyToManyChannel@5236acde]}
+
+* ASYNC DATA STREAMS
+  :PROPERTIES:
+  :CUSTOM_ID: async-data-streams
+  :END:
+
+The following writes at random times (=>!=) to a parking channel
+=echo-chan= on an async =go= fast pseudothread. The UI thread
+block-reads (=<!!=) some data from =echo-chan=. The UI thread leaves
+values in the channel and thus leaks the channel according to the
+documentation for =close!= here
+https://clojure.github.io/core.async/api-index.html#C. To prevent the
+leak permanently, we close the channel explicitly.
+
+#+BEGIN_SRC clojure :results output
+    (def echo-chan (chan))
+
+    (doseq   [z zs] (go (Thread/sleep (rand 100)) (>! echo-chan z)))
+    (dotimes [_ 3] (println (<!! echo-chan)))
+
+    (println {:echo-chan-closed? (clojure.core.async.impl.protocols/closed? echo-chan)})
+    (close! echo-chan)
+    (println {:echo-chan-closed? (clojure.core.async.impl.protocols/closed? echo-chan)})
+#+END_SRC
+
+#+RESULTS:
+: 0.0592247
+: -0.315044
+: 0.16301
+: {:echo-chan-closed? false}
+: {:echo-chan-closed? true}
+
+We can chain channels, again with leaks that we explicitly close. Also, we must
+not =>!= (send) a nil to =repl-chan=, and =<!= can produce nil from =echo-chan=
+after the timeout and we close =echo-chan=.
+
+#+begin_src clojure :results output
+(clojure.repl/doc <!)
+#+end_src
+
+#+RESULTS:
+: -------------------------
+: clojure.core.async/<!
+: ([port])
+:   takes a val from port. Must be called inside a (go ...) block. Will
+:   return nil if closed. Will park if nothing is available.
+
+Every time you run the block of code below, you will probably get a different
+result, by design.
+
+#+BEGIN_SRC clojure :results output
+    (def echo-chan (chan))
+    (def repl-chan (chan))
+
+    ;; >! chokes on nulls. <! echo-chan can cough up nil if we time out
+    ;; and close the channel. The following line will throw an exception
+    ;; unless we don't close the channel at the end of this code-block.
+
+    ;; (dotimes [_ 10] (go (>! repl-chan (<! echo-chan))))
+
+    ;; Instead of throwing an exception, just put a random character
+    ;; like \? down the pipe after the echo-chan is closed:
+
+    (dotimes [_ 10] (go (>! repl-chan (or (<! echo-chan) \?))))
+
+    (doseq   [z zs] (go (Thread/sleep (rand 100)) (>! echo-chan z)))
+
+    (dotimes [_ 3]
+        (println (<!! (second (alts!! [repl-chan
+                                       (timeout 500)])))))
+
+    ;; Alternatively, we can avoid the exception by NOT closing echo-chan.
+    ;; Not closing echo chan will leak it, and that's a lousy idea.
+
+    (close! echo-chan)
+
+    (close! repl-chan)
+#+END_SRC
+
+#+RESULTS:
+: -0.0121089
+: 0.0592247
+: -0.676357
+
+Reading from =echo-chan= may hang the UI thread because the UI thread
+races the internal =go= thread that reads =echo-chan=, but the timeout trick
+works here as above.
+
+#+BEGIN_SRC clojure :results output
+    (def echo-chan (chan))
+    (def repl-chan (chan))
+
+    (dotimes [_ 10] (go (>! repl-chan (or (<! echo-chan) \?))))
+    (doseq   [z zs] (go (Thread/sleep (rand 100)) (>! echo-chan z)))
+    (dotimes [_ 3]
+        (println (<!! (second (alts!! [echo-chan
+                                       (timeout 500)])))))
+
+    (close! echo-chan)
+    (close! repl-chan)
+#+END_SRC
+
+#+RESULTS:
+: nil
+: nil
+: nil
+
+=println= on a =go= pseudoprocess works if we wait long enough. This, of
+course, is bad practice or "code smell."
+
+#+BEGIN_SRC clojure :results output
+    (def echo-chan (chan))
+
+    (doseq   [z zs] (go (Thread/sleep (rand 100)) (>! echo-chan z)))
+    (dotimes [_ 3]  (go (println (<! echo-chan))))
+
+    (Thread/sleep 500) ; no visible output if you remove this line.
+    (close! echo-chan)
+#+END_SRC
+
+#+RESULTS:
+: 0.0592247
+: -0.676357
+: -0.315044
+
+** ASYNC RUNNING MEAN
+   :PROPERTIES:
+   :CUSTOM_ID: async-running-mean
+   :END:
+
+*** DEFN ASYNC-RANDOMIZED-SCAN
+    :PROPERTIES:
+    :CUSTOM_ID: async-randomized-scan
+    :END:
+
+We want =running-stats= called at random times and with data in random
+order. A /transducer/, =(map mapper)=, lets us collect items off the
+buffer. The size of the buffer does not matter, but we must specify it.
+Notice that the side-effector =effector= is passed in, so
+=async-randomized-scan= remains decoupled from its environment.
+
+In this style of programming, the asynchronous stream might sometimes be
+called a /functor/, which is anything that's mappable, anything you can
+=map= over.
+
+#+BEGIN_SRC clojure :results output
+    (defn async-randomized-scan [zs mapper effector]
+        (let [transducer (map mapper)
+              ; give buffer length if there is a transducer
+              echo-chan (chan (buffer 1) transducer)]
+            (doseq [z zs]
+                (go (Thread/sleep (rand 100)) (>! echo-chan z)))
+            (dotimes [_ (count zs)] (effector (<!! echo-chan)))
+            (close! echo-chan)))
+
+    (async-randomized-scan zs (make-running-stats-mapper) println)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+{:count 1, :mean 0.0592247, :datum 0.0592247}
+{:count 2, :mean -0.13278565, :datum -0.324796}
+{:count 3, :mean 0.18757789999999994, :datum 0.828305}
+{:count 4, :mean -0.07385757500000004, :datum -0.858164}
+{:count 5, :mean -0.02648406000000003, :datum 0.16301}
+{:count 6, :mean -0.024088200000000025, :datum -0.0121089}
+{:count 7, :mean -0.0656533142857143, :datum -0.315044}
+{:count 8, :mean -0.07977840000000001, :datum -0.178654}
+{:count 9, :mean -0.23537413333333335, :datum -1.48014}
+{:count 10, :mean -0.27947242, :datum -0.676357}
+#+end_example
+
+We don't need to explicitly say =buffer=, but I prefer to do.
+
+*** DEFN MAKE SOW REAP
+    :PROPERTIES:
+    :CUSTOM_ID: sow-and-reap
+    :END:
+
+The =effector= above just prints to the console. Suppose we want to save
+the data?
+
+The following is a version of Wolfram's =Sow= and =Reap= that does not
+include tags. It uses =atom= for an effectful store because a =let=
+variable like =result= is not a =var= and =alter-var-root= won't work on
+=(let [result []] ..)=. An atom might be overkill.
+
+=make-sow-reap= returns a message dispatcher in the style of /The Little
+Schemer/. It responds to namespaced keywords =::sow= and =::reap=. In
+the case of =::sow=, it returns an =effector= function that =conj='s its
+input to the internal result atomically. In the case of =::reap=, it
+returns the value of the result accumulated so-far.
+
+#+BEGIN_SRC clojure :results value
+(do (defn make-sow-reap []
+        (let [result (atom [])]
+            (fn [msg]
+                (cond
+                    (identical? msg ::sow)
+                    (fn [x] (swap! result #(conj % x)))
+                    (identical? msg ::reap)
+                    @result))))
+
+    (let [accumulator (make-sow-reap)]
+        (async-randomized-scan zs
+                               (make-running-stats-mapper)
+                               (accumulator ::sow))
+        (last (accumulator ::reap)))   )
+#+END_SRC
+
+#+RESULTS:
+| :count | 10 | :mean | -0.27947242 | :datum | 0.16301 |
+
+Occasionally, there is some floating-point noise in the very low digits
+of the mean because =async-randomized-scan= scrambles the order of the
+inputs. The mean should always be almost equal to $-0.27947242$.
+
+*** DEFN ASYNC NON RANDOM SCAN
+    :PROPERTIES:
+    :CUSTOM_ID: not-randomized
+    :END:
+
+Of course, the =mean= of any permutation of the data =zs= is the same,
+so the order in which data arrive does not change the final result,
+except for some occasional floating-point noise as mentioned above.
+
+#+BEGIN_SRC clojure
+(do (defn async-non-random-scan [zs mapper effector]
+        (let [transducer (map mapper)
+              echo-chan (chan (buffer 1) transducer)]
+            (go (doseq [z zs] (>! echo-chan z)))
+            (dotimes [_ (count zs)] (effector (<!! echo-chan)))
+            (close! echo-chan)))
+
+    (let [accumulator (make-sow-reap)]
+        (async-non-random-scan zs (make-running-stats-mapper)
+                               (accumulator ::sow))
+        (last (accumulator ::reap)))   )
+#+END_SRC
+
+#+RESULTS:
+| :count | 10 | :mean | -0.27947242 | :datum | -0.858164 |
+
+*** DEFN SYNC SCAN: WITH TRANSDUCER
+    :PROPERTIES:
+    :CUSTOM_ID: sync-scan-with-transducer
+    :END:
+
+Here is the modern way, with =transduce=, to reduce over a sequence of
+data, in order. It's equivalent to the non-random async version above.
+The [[https://clojuredocs.org/clojure.core/transduce][documentation for
+transduce]] writes its parameters as =xform f coll=, and then says
+
+#+BEGIN_QUOTE
+  reduce with a transformation of =f (xf)=. If =init= is not supplied,
+  =(f)= will be called to produce it.
+#+END_QUOTE
+
+Our =xform= is =transducer=, or =(map mapper)=, and our =f= is =conj=,
+so this is an idiom for mapping because =(conj)=, with no arguments,
+returns =[]=, an appropriate =init=.
+
+#+BEGIN_SRC clojure
+(do (defn sync-scan [zs mapper]
+        (let [transducer (map mapper)]
+            (transduce transducer conj zs)))
+
+    (last (sync-scan zs (make-running-stats-mapper)))   )
+#+END_SRC
+
+#+RESULTS:
+| :count | 10 | :mean | -0.27947242 | :datum | -0.858164 |
+
+We now have complete symmetry between space and time, space represented by the
+vector =zs= and time represented by values on =echo-chan= in random and in
+non-random order.
+
+* RUNNING STDDEV
+  :PROPERTIES:
+  :CUSTOM_ID: running-stddev
+  :END:
+
+** BRUTE-FORCE (SCALAR VERSION)
+   :PROPERTIES:
+   :CUSTOM_ID: brute-force-scalar-version
+   :END:
+
+The definition of variance is the following, for $N>1$:
+
+$$\frac{1}{N-1}\sum\limits_{i=1}^{N}\left({z_i-\bar{z}_N}\right)^2$$
+
+The sum is the /sum of squared residuals/. Each residual is the difference
+between the $i$‑th datum $z_i$ and the mean $\bar{z}_N$ of all $N$ data in the
+sample. The outer constant, $1/(N-1)$ is [[https://en.wikipedia.org/wiki/Bessel%27s_correction][Bessel's correction]].
+
+*** DEFN SSR: SUM OF SQUARED RESIDUALS
+    :PROPERTIES:
+    :CUSTOM_ID: ssr-sum-of-squared-residuals
+    :END:
+
+The following is /brute-force/ in the sense that it requires all data
+up-front so that it can calculate the mean.
+
+#+BEGIN_SRC clojure
+(do (defn ssr [sequ]
+        (let [m (mean sequ)]
+            (reduce #(+ %1 (* (- %2 m) (- %2 m)))
+                    0 sequ)))
+    (ssr zs)   )
+#+END_SRC
+
+#+RESULTS:
+: 3.5566483654807355
+
+*** DEFN VARIANCE
+    :PROPERTIES:
+    :CUSTOM_ID: variance
+    :END:
+
+Call =ssr= to compute variance:
+
+#+BEGIN_SRC clojure
+    (do
+    (defn variance [sequ]
+        (let [n (count sequ)]
+            (case n
+                0 0
+                1 (first sequ)
+                #_default (/ (ssr sequ) (- n 1.0)))))
+    (variance zs)   )
+#+END_SRC
+
+#+RESULTS:
+: 0.3951831517200817
+
+** DEF Z2S: SMALLER EXAMPLE
+    :PROPERTIES:
+    :CUSTOM_ID: smaller-example
+    :END:
+
+Let's do a smaller example:
+
+#+BEGIN_SRC clojure
+(do (def z2s [55. 89. 144.])
+    (variance z2s)   )
+#+END_SRC
+
+#+RESULTS:
+: 2017.0
+
+** REALLY DUMB RECURRENCE
+     :PROPERTIES:
+     :CUSTOM_ID: really-dumb-recurrence
+     :END:
+
+Remember our general form for recurrences,
+$x\leftarrow{}x + K\times{}(z-x)$?
+
+We can squeeze running variance into this form in a really dumb way. The
+following is really dumb because:
+
+1. it requires the whole sequence up front, so it doesn't run in constant memory
+
+2. the intermediate values are meaningless because they refer to the final mean
+   and count, not to the intermediate ones
+
+But, the final value is correct.
+
+#+BEGIN_SRC clojure
+(do (reductions
+        (let [m (mean z2s) ; uh-oh, we refer to _all_ the data ??
+              c (count z2s)]
+            (fn [var z] (+ var (let [r (- z m)] ; residual
+                                   (/ (* r r) (- c 1.0))))))
+        0 z2s)   )
+#+END_SRC
+
+#+RESULTS:
+| 0 | 840.5 | 865.0 | 2017.0 |
+
+That was so dumb that we won't bother with a thread-safe,
+stateful, or asynchronous form.
+
+** SCHOOL VARIANCE
+     :PROPERTIES:
+     :CUSTOM_ID: school-variance
+     :END:
+
+For an easy, school-level exercise, prove the following equation:
+
+$$\frac{1}{N-1}\sum\limits_{i=1}^{N}\left({z_i-\bar{z}_N}\right)^2 =
+\frac{1}{N-1}\left(\sum\limits_{i=1}^{N}\left(z_i^2\right)-N\,{\bar{z}_N^2}\right)$$
+
+Instead of the sum of squared residuals, $ssr$, accumulate the sum of
+squares, $ssq$.
+
+/School variance/ is exposed to /catastrophic cancellation/ because
+$ssq$ grows quickly. We fix that defect below.
+
+We see that something is not best with this form because we don't use
+the old variance to compute the new variance. We do better below.
+
+Of course, the same mapper works synchronously and asynchronously.
+
+** DEFN MAKE SCHOOL STATS MAPPER
+    :PROPERTIES:
+    :CUSTOM_ID: make-school-stats-mapper
+    :END:
+
+and test it both synchronously and asynchronously, randomized and not:
+
+#+BEGIN_SRC clojure :results output
+    (defn make-school-stats-mapper []
+        (let [running-stats (atom {:count 0, :mean 0,
+                                   :variance 0, :ssq 0})]
+            (fn [z]
+                (let [{x :mean, n :count, s :ssq} @running-stats
+                      n+1 (inc n)
+                      K   (/ 1.0 n+1)
+                      r   (- z x)
+                      x'  (+ x (* K r)) ;; Isn't it nice we can use prime notation?
+                      s'  (+ s (* z z))]
+                    (swap! running-stats conj
+                           [:count    n+1]
+                           [:mean     x' ]
+                           [:ssq      s']
+                           [:variance (/ (- s' (* n+1 x' x')) (max 1 n))]))
+                @running-stats)))
+
+    (clojure.pprint/pprint (sync-scan z2s (make-school-stats-mapper)))
+
+    (async-randomized-scan z2s (make-school-stats-mapper) println)
+
+    (async-non-random-scan z2s (make-school-stats-mapper) println)
+#+END_SRC
+
+#+RESULTS:
+: [{:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
+:  {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
+:  {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}]
+: {:count 1, :mean 89.0, :variance 0.0, :ssq 7921.0}
+: {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
+: {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}
+: {:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
+: {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
+: {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}
+
+** DEFN MAKE RECURRENT STATS MAPPER
+     :PROPERTIES:
+     :CUSTOM_ID: recurrent-variance
+     :END:
+
+We already know the recurrence for the mean:
+
+$$x\leftarrow{x+K\cdot(z-x)=x+\frac{1}{n+1}(z-x)}$$
+
+We want a recurrence with a similar form for the variance. It takes a
+little work to prove, but it's still a school-level exercise. $K$
+remains $1/(n+1)$, the value needed for the new mean. We could define a
+pair of gains, one for the mean and one for the variance, but it would
+be less pretty.
+
+$$v\leftarrow\frac{\left(n-1\right)v+K\,n\,\left(z-x\right)^2}{\max(1,n)}$$
+
+#+BEGIN_SRC clojure :results output
+    (defn make-recurrent-stats-mapper []
+        (let [running-stats (atom {:count 0, :mean 0,
+                                   :variance 0})]
+            (fn [z]
+                (let [{x :mean, n :count, v :variance} @running-stats
+                      n+1 (inc n)
+                      K   (/ 1.0 (inc n))
+                      r   (- z x)
+                      x'  (+ x (* K r))
+                      ssr (+ (* (- n 1) v) ; old ssr is (* (- n 1) v)
+                             (* K n r r))]
+                    (swap! running-stats conj
+                           [:count    n+1]
+                           [:mean     x' ]
+                           [:variance (/ ssr  (max 1 n))]))
+                @running-stats)))
+
+    (async-non-random-scan z2s (make-recurrent-stats-mapper) println)
+#+END_SRC
+
+#+RESULTS:
+: {:count 1, :mean 55.0, :variance 0.0}
+: {:count 2, :mean 72.0, :variance 578.0}
+: {:count 3, :mean 96.0, :variance 2017.0}
+
+** DEFN MAKE WELFORD'S STATS MAPPER
+     :PROPERTIES:
+     :CUSTOM_ID: welfords-variance
+     :END:
+
+The above is equivalent, algebraically and numerically, to Welford's
+famous recurrence for the sum of squared residuals $S$. In recurrences,
+we want everything on the right-hand sides of equations or left arrows
+to be be old, /prior/ statistics, except for the new observation /
+measurement / input $z$. Welford's requires the new, /posterior/ mean on
+the right-hand side, so it's not as elegant as our recurrence above.
+However, it is easier to remember!
+
+$$S\leftarrow{S} + \left(z-x_N\right)\left(z-x_{N+1}\right)=S+\left(z-x\right)\left(z-\left(x+K\,\left(z-x\right)\right)\right)$$
+
+#+BEGIN_SRC clojure :results output
+(do (defn make-welfords-stats-mapper []
+        (let [running-stats (atom {:count 0, :mean 0, :variance 0})]
+            (fn [z]
+                (let [{x :mean, n :count, v :variance} @running-stats
+                      n+1 (inc n)
+                      K   (/ 1.0 n+1)
+                      r   (- z x)
+                      x'  (+ x (* K r))
+                      ssr (+ (* (- n 1) v)
+                             ;; only difference to recurrent variance:
+                             (* (- z x) (- z x')))]
+                    (swap! running-stats conj
+                           [:count    n+1]
+                           [:mean     x' ]
+                           [:variance (/ ssr  (max 1 n))]))
+                @running-stats)))
+
+    (async-non-random-scan
+      z2s (make-welfords-stats-mapper) println)   )
+#+END_SRC
+
+#+RESULTS:
+: {:count 1, :mean 55.0, :variance 0.0}
+: {:count 2, :mean 72.0, :variance 578.0}
+: {:count 3, :mean 96.0, :variance 2017.0}
+
+* WINDOWED STATISTICS
+  :PROPERTIES:
+  :CUSTOM_ID: windowed-statistics
+  :END:
+
+Suppose we want running statistics over a history of fixed, finite
+length. For example, suppose we have $N=10$ data and we want the
+statitics in a window of length $w=3$ behind the current value,
+inclusively. When the first datum arrives, the window and the total
+include one datum. The window overhangs the left until the third datum.
+When the fourth datum arrives, the window contains three data and the
+total contains four data. After the tenth datum, we may consider three
+more steps marching the window "off the cliff" to the right. The
+following figure illustrates (the first row corresponds to $n=0$, not to
+$n=1$):
+
+We won't derive the following formulas, but rather say that they have
+been vetted at least twice independently (in a C program and in a
+Mathematica program). The following table shows a unit test that we
+reproduce. The notation is explained after the table.
+
+Denote prior statistics by plain variables like $m$ and corresponding
+posteriors by the same variables with primes like $m'$. The posteriors
+$j$ and $u$ do not have a prime.
+
+| variable   | description                                                                         |
+|------------+-------------------------------------------------------------------------------------|
+| $n$        | prior count of data points; equals $0$ when considering the first point             |
+| $z$        | current data point                                                                  |
+| $w$        | fixed, constant, maximum width of window; $w\geq{1}$                                |
+| $j$        | posterior number of points left of the window; $j\geq{0}$                           |
+| $u$        | posterior number of points including $z$ in the running window; $1\leq{u}\leq{w}$   |
+| $m$        | prior mean of all points, not including $z$                                         |
+| $m'$       | posterior mean of all points including $z$                                          |
+| $m_j$      | prior mean of points left of the window, lagging $w$ behind $m$                     |
+| $m'_j$     | posterior mean of points left of the window                                         |
+| $m'_w$     | posterior mean of points in the window, including the current point $z$             |
+| $v$        | prior variance, not including $z$                                                   |
+| $v'$       | posterior variance of all points including $z$                                      |
+| $v_j$      | prior variance of points left of the window, lagging $w$ behind $u_n$               |
+| $v'_j$     | posterior variance of points left of the window                                     |
+| $v'_w$     | posterior variance of points within the window                                      |
+
+The recurrences for $m$, $v$, $m_j$, and $v_j$ have only priors (no
+primes) on their right-hand sides. The values of $m_w$ and $v_w$ are not
+recurrences because the non-primed versions do not appear on the
+right-hand sides of equations 10 and 13. Those equations are simply
+transformations of the posteriors (values with primes) $m'$, $m'_j$,
+$v'$, and $v'_j$.
+
+$$
+\begin{align}
+j     &= \max(0,n+1-w)               \\
+u     &= n-j+1                       \\
+m'    &= m+\frac{z-m}{n+1}           \\
+m'_j  &= \begin{cases}
+  m_j+\frac{z_j-m_j}{j} & j>0        \\
+  0 & \mathrm{otherwise}
+\end{cases}                          \\
+m'_w  &= \frac{(n+1)\,m'-j\,m'_j}{u} \\
+v'    &= \frac{(n-1)\,v+\frac{n}{n+1}\left(z-m\right)^2}{\max(1,n)}   \\
+v'_j  &= \begin{cases}
+  \frac{j-2}{j-1}\,v_j+\frac{1}{j}\,\left(z_j-m_j\right)^2 & j>1      \\
+  0 & \mathrm{otherwise}
+\end{cases}                                                           \\
+v'_w  &= \frac{n\,v'+(n-w)\,v'_j+(n+1)\,{m'}^2-j\,{m'_j}^2-u\,{m'_w}^2}{\max(1,u-1)}
+\end{align}
+$$
+
+Here is sample data we can compare with the unit test above.
+
+** DEF Z3S: MORE SAMPLE DATA
+#+BEGIN_SRC clojure :results none
+    (def z3s [0.857454, 0.312454, 0.705325, 0.839363, 1.63781, 0.699257, -0.340016, -0.213596, -0.0418609, 0.054705])
+#+END_SRC
+
+The best algorithm we have found for tracking historical data is to keep
+a FIFO queue in a Clojure /vector/ of length $w$. This is still constant
+memory because it depends only on the length $w$ of the window, not on
+the length of the data stream.
+
+*** DEFN PUSH TO BACK
+
+#+BEGIN_SRC clojure :results none
+    (defn push-to-back [item vek]
+        (conj (vec (drop 1 vek)) item))
+#+END_SRC
+
+** DEFN MAKE SLIDING STATS MAPPER
+
+#+BEGIN_SRC clojure :results output
+    (defn make-sliding-stats-mapper [w]
+        (let [running-stats (atom {:n 0, :m 0, :v 0,
+                                   :win (vec (repeat w 0)),
+                                   :mw 0, :vw 0,
+                                   :mj 0, :vj 0})]
+            (fn [z]
+                (let [{:keys [m n v win mj vj]} @running-stats
+                      zj   (first win)
+                      win' (push-to-back z win)
+                      n+1  (double (inc n))
+                      n-1  (double (dec n))
+                      K    (/ 1.0 n+1)
+                      Kv   (* n K)
+                      r    (- z m)
+                      j    (max 0, (- n+1 w))
+                      u    (- n+1 j)
+                      m'   (+ m (* K r))
+                      rj   (- zj mj)
+                      mj'  (if (> j 0), (+ mj (/ rj j)), 0)
+                      mw'  (/ (- (* n+1 m') (* j mj')) u)
+                      v'   (/  (+ (* n-1 v) (* Kv r r))
+                               (max 1 n))
+                      vj'  (if (> j 1)
+                               (let [j21 (/ (- j 2.0)
+                                            (- j 1.0))]
+                                   (+ (* j21 vj)
+                                      (/ (* rj rj) j)))
+                               0)
+                      vw'  (let [t1 (- (* n v')
+                                       (* (- n w) vj'))
+                                 t2 (- (* n+1 m' m')
+                                       (* j mj' mj'))
+                                 t3 (- (* u mw' mw'))]
+                               (/  (+ t1 t2 t3)
+                                   (max 1 (- u 1))))
+                      ]
+                    (swap! running-stats conj
+                           [:n    n+1 ]
+                           [:m    m'  ]
+                           [:v    v'  ]
+                           [:mj   mj' ]
+                           [:vj   vj' ]
+                           [:mw   mw' ]
+                           [:vw   vw' ]
+                           [:win  win']))
+                @running-stats)))
+
+    (clojure.pprint/print-table
+        [:n :mw :vw]
+        (sync-scan z3s (make-sliding-stats-mapper 3)))
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+|   :n |                  :mw |                  :vw |
+|------+----------------------+----------------------|
+|  1.0 |             0.857454 |                  0.0 |
+|  2.0 |             0.584954 |  0.14851250000000005 |
+|  3.0 |   0.6250776666666666 |  0.07908597588033339 |
+|  4.0 |   0.6190473333333332 |  0.07499115039433346 |
+|  5.0 |   1.0608326666666668 |   0.2541686787463333 |
+|  6.0 |              1.05881 |  0.25633817280899995 |
+|  7.0 |   0.6656836666666668 |   0.9787942981023336 |
+|  8.0 |  0.04854833333333334 |   0.3215618307563336 |
+|  9.0 | -0.19849096666666663 | 0.022395237438003604 |
+| 10.0 | -0.06691730000000007 |  0.01846722403596973 |
+#+end_example
+
+...  passing the unit test.
+
+* KALMAN FILTER
+  :PROPERTIES:
+  :CUSTOM_ID: kalman-filter
+  :END:
+
+** BASIC LINEAR ALGEBRA
+   :PROPERTIES:
+   :CUSTOM_ID: basic-linear-algebra
+   :END:
+
+Go for high performance with CUDA or Intel KML later.
+
+#+begin_comment
+Following the [[https://github.com/mikera/core.matrix/wiki/Getting-Started-Guide][getting-started guide here]], add the following lines to
+=project.clj= of =clojupyter=: [net.mikera/core.matrix "0.62.0"]
+[net.mikera/vectorz-clj "0.48.0"] [org.clojure/algo.generic "0.1.2"] Recompile
+=clojupyter= (=make= and =make install= in its directory) and restart the kernel
+in this notebook (=Kernel= menu above).
+#+end_comment
+
+Add the following lines to =project.clj= in the directory that contains this
+org file:
+
+*** TODO: FULLY LITERATE: TANGLE PROJECT.CLJ
+
+#+begin_example
+    [net.mikera/core.matrix "0.62.0"]
+    [net.mikera/vectorz-clj "0.48.0"]
+    [org.clojure/algo.generic "0.1.2"]
+#+end_example
+
+#+begin_comment
+Recompile
+=clojupyter= (=make= and =make install= in its directory) and restart the kernel
+in this notebook (=Kernel= menu above).
+#+end_comment
+
+Smoke test:
+
+#+BEGIN_SRC clojure :results none
+    (require '[clojure.core.matrix :as ccm])
+    (ccm/set-current-implementation :vectorz)
+#+END_SRC
+
+#+BEGIN_SRC clojure
+    (ccm/shape
+        (ccm/array [[1 2 3]
+                    [1 3 8]
+                    [2 7 4]]))
+#+END_SRC
+
+#+RESULTS:
+| 3 | 3 |
+
+Bits and pieces we will need:
+
+#+BEGIN_SRC clojure
+    (ccm/transpose
+        (ccm/array [[1 2 3]
+                    [1 3 8]
+                    [2 7 4]]))
+#+END_SRC
+
+#+RESULTS:
+: #vectorz/matrix [[1.0,1.0,2.0],
+: [2.0,3.0,7.0],
+: [3.0,8.0,4.0]]
+
+=mmul= is multiadic (takes more than two arguments). This is possible
+because matrix multiplication is associative.
+
+#+BEGIN_SRC clojure
+    (let [A (ccm/array [[1 2 3]
+                        [1 3 8]
+                        [2 7 4]])]
+        (ccm/mmul (ccm/transpose A) A (ccm/inverse A)))
+#+END_SRC
+
+#+RESULTS:
+: #vectorz/matrix [[1.000000000000003,1.0,2.0000000000000004],
+: [2.0000000000000093,3.000000000000001,6.999999999999998],
+: [3.000000000000006,8.0,3.999999999999999]]
+
+*** DEFN LINSPACE
+    :PROPERTIES:
+    :CUSTOM_ID: linspace
+    :END:
+
+#+BEGIN_SRC clojure :results none
+    (defn linspace
+      "A sequence of $n$ equally spaced points in the doubly closed
+     interval $[a,b]$, that is, inclusive of both ends."
+      [a b n]
+      (let [d (/ (- b a) (dec n))]
+        (map (fn [x] (+ a (* x d))) (range n))))
+#+END_SRC
+
+#+BEGIN_SRC clojure :results output
+    (clojure.pprint/pprint (linspace 2 3. 3))
+#+END_SRC
+
+#+RESULTS:
+: (2.0 2.5 3.0)
+
+** DEFN SYMMETRIC PART
+
+#+BEGIN_SRC clojure
+(do (defn symmetric-part [M]
+        (ccm/div (ccm/add M (ccm/transpose M)) 2.0))
+    (symmetric-part [[1 2 3]
+                     [1 3 8]
+                     [2 7 4]])   )
+#+END_SRC
+
+#+RESULTS:
+| 1.0 | 1.5 | 2.5 |
+| 1.5 | 3.0 | 7.5 |
+| 2.5 | 7.5 | 4.0 |
+
+** DEFN ANTI-SYMMETRIC PART
+
+#+BEGIN_SRC clojure
+(do (defn anti-symmetric-part [M]
+        (ccm/div (ccm/sub M (ccm/transpose M)) 2.0))
+    (anti-symmetric-part [[1 2 3]
+                          [1 3 8]
+                          [2 7 4]])   )
+#+END_SRC
+
+#+RESULTS:
+|  0.0 |  0.5 | 0.5 |
+| -0.5 |  0.0 | 0.5 |
+| -0.5 | -0.5 | 0.0 |
+
+#+BEGIN_SRC clojure
+    (let [M [[1 2 3]
+             [1 3 8]
+             [2 7 4]]]
+        (ccm/sub (ccm/add (symmetric-part M)
+                    (anti-symmetric-part M))
+                 M))
+#+END_SRC
+
+#+RESULTS:
+| 0.0 | 0.0 | 0.0 |
+| 0.0 | 0.0 | 0.0 |
+| 0.0 | 0.0 | 0.0 |
+
+*** DEFN MATRIX ALMOST =
+    :PROPERTIES:
+    :CUSTOM_ID: near-equality-for-matrices
+    :END:
+
+#+BEGIN_SRC clojure :results none
+    (require '[clojure.algo.generic.math-functions :as gmf])
+#+END_SRC
+
+The following isn't the best solution: neither relative nor absolute differences
+are robust. Units in Last Place (ULP) are a better criterion, however, this will
+unblock us for now.
+
+#+BEGIN_SRC clojure
+(do  (defn matrix-almost=
+        ([m1 m2 eps]
+         "Checks for near equality against a given absolute difference."
+        (mapv (fn [row1 row2]
+                  (mapv (fn [e1 e2] (gmf/approx= e1 e2 eps))
+                        row1 row2))
+              m1 m2))
+        ([m1 m2]
+         "Checks for near equality against a default absolute difference of 1.0e-9"
+         (matrix-almost= m1 m2 1.0e-9)))
+
+    (let [M [[1 2 3]
+             [1 3 8]
+             [2 7 4]]]
+        (matrix-almost= (ccm/add (symmetric-part M)
+                                 (anti-symmetric-part M))
+                        M))   )
+#+END_SRC
+
+#+RESULTS:
+| true | true | true |
+| true | true | true |
+| true | true | true |
+
+*** DEFN SIMILARITY TRANSFORM
+    :PROPERTIES:
+    :CUSTOM_ID: similarity-transform
+    :END:
+
+#+BEGIN_SRC clojure :results none
+    (defn similarity-transform [A M]
+        (ccm/mmul A M (ccm/transpose A)))
+#+END_SRC
+
+*** VECTORS, ROW VECTORS, COLUMN VECTORS
+    :PROPERTIES:
+    :CUSTOM_ID: vectors-row-vectors-column-vectors
+    :END:
+
+The library (like many others) is loose about matrices times vectors.
+
+#+BEGIN_SRC clojure
+    (ccm/mmul
+        (ccm/matrix [[1 2 3]
+                     [1 3 8]
+                     [2 7 4]])
+        (ccm/array [22 23 42]))
+#+END_SRC
+
+#+RESULTS:
+: #vectorz/vector [194.0,427.0,373.0]
+
+Pedantically, a matrix should only be allowed to left-multiply a column
+vector, i.e., a $1\times{3}$ matrix. The Clojure library handles this
+case.
+
+#+BEGIN_SRC clojure
+    (ccm/mmul
+        (ccm/matrix [[1 2 3]
+                     [1 3 8]
+                     [2 7 4]])
+        (ccm/array [[22] [23] [42]]))
+#+END_SRC
+
+#+RESULTS:
+: #vectorz/matrix [[194.0],
+: [427.0],
+: [373.0]]
+
+Non-pedantic multiplication of a vector on the right by a matrix:
+
+#+BEGIN_SRC clojure
+    (ccm/mmul
+        (ccm/array [22 23 42])
+        (ccm/matrix [[1 2 3]
+                     [1 3 8]
+                     [2 7 4]]))
+#+END_SRC
+
+#+RESULTS:
+: #vectorz/vector [129.0,407.0,418.0]
+
+Pedantic multiplication of a row vector on the right by a matrix:
+
+#+BEGIN_SRC clojure
+    (ccm/mmul
+        (ccm/array [[22 23 42]])
+        (ccm/matrix [[1 2 3]
+                     [1 3 8]
+                     [2 7 4]]))
+#+END_SRC
+
+#+RESULTS:
+: #vectorz/matrix [[129.0,407.0,418.0]]
+
+*** SOLVING INSTEAD OF INVERTING
+    :PROPERTIES:
+    :CUSTOM_ID: solving-instead-of-inverting
+    :END:
+
+Textbooks will tell you that, if you have
+$\boldsymbol{A}\boldsymbol{x}=\boldsymbol{b}$ and you want
+$\boldsymbol{x}$, you should compute
+$\boldsymbol{A}^{-1}\boldsymbol{b}$. Don't do this; the inverse is
+numerically risky and almost never needed:
+
+#+BEGIN_SRC clojure
+    (ccm/mmul
+        (ccm/inverse
+            (ccm/array [[1 2 3]
+                        [1 3 8]
+                        [2 7 4]]))
+        (ccm/array [22 23 42]))
+#+END_SRC
+
+#+RESULTS:
+: #vectorz/vector [22.05882352941177,-0.4705882352941142,0.2941176470588234]
+
+Instead, use a linear solver. Almost everywhere that you see
+$\boldsymbol{A}^{-1}\boldsymbol{b}$, visualize
+$\text{solve}(\boldsymbol{A},\boldsymbol{b})$. You will get a more
+stable answer. Notice the difference in the low-significance digits
+below. The following is a more reliable answer:
+
+#+BEGIN_SRC clojure :results none
+    (require '[clojure.core.matrix.linear :as ccml])
+#+END_SRC
+
+#+BEGIN_SRC clojure
+    (ccml/solve
+        (ccm/array [[1 2 3]
+                    [1 3 8]
+                    [2 7 4]])
+        (ccm/array [22 23 42]))
+#+END_SRC
+
+#+RESULTS:
+: #vectorz/vector [22.058823529411764,-0.4705882352941176,0.2941176470588236]
+
+#+BEGIN_SRC clojure
+    (ccml/solve
+        (ccm/matrix [[1 2 3]
+                    [1 3 8]
+                    [2 7 4]])
+        (ccm/matrix [22 23 42]))
+#+END_SRC
+
+#+RESULTS:
+: #vectorz/vector [22.058823529411764,-0.4705882352941176,0.2941176470588236]
+
+#+BEGIN_SRC clojure
+    (ccm/shape (ccm/matrix [[22] [23] [42]]))
+#+END_SRC
+
+#+RESULTS:
+| 3 | 1 |
+
+*** DEFN SOLVE MATRIX
+
+We need =solve= to work on matrices:
+
+#+BEGIN_SRC clojure :results none
+    (defn solve-matrix
+      "The 'solve' routine in clojure.core.matrix only works on Matrix times Vector.
+      We need it to work on Matrix times Matrix. The equation to solve is
+
+      Ann * Xnm = Bnm
+
+      Think of the right-hand side matrix Bnm as a sequence of columns. Iterate over
+      its transpose, treating each column as a row, then converting that row to a
+      vector, to get the transpose of the solution X."
+      [Ann Bnm]
+      (ccm/transpose (mapv (partial ccml/solve Ann) (ccm/transpose Bnm))))
+#+END_SRC
+
+#+BEGIN_SRC clojure
+    (solve-matrix
+        (ccm/matrix [[1 2 3]
+                    [1 3 8]
+                    [2 7 4]])
+        (ccm/matrix [[22] [23] [42]]   ))
+#+END_SRC
+
+#+RESULTS:
+|  22.058823529411764 |
+| -0.4705882352941176 |
+|  0.2941176470588236 |
+
+#+BEGIN_SRC clojure
+    (solve-matrix
+        (ccm/matrix [[1 2 3]
+                     [1 3 8]
+                     [2 7 4]])
+        (ccm/matrix [[22 44]
+                     [23 46]
+                     [42 84]]))
+#+END_SRC
+
+#+RESULTS:
+|  22.058823529411764 |   44.11764705882353 |
+| -0.4705882352941176 | -0.9411764705882352 |
+|  0.2941176470588236 |  0.5882352941176472 |
+
+** DEFN KALMAN UPDATE: GENERAL EXTENDED KALMAN FILTER
+   :PROPERTIES:
+   :CUSTOM_ID: general-extended-kalman-filter
+   :END:
+
+Use Clojure's destructuring to write the Kalman filter as a binary
+function. See http://vixra.org/abs/1606.0348
+
+=xn1= denotes a vector $\boldsymbol{x}$ with dimension $n\times{1}$,
+that is, a column vector of height $n$. =Pnn= denotes a covariance
+matrix of dimension $n\times{n}$, and So on.
+
+The math is as follows (notice step 6 has the same form as all earlier
+statistics calculations in this document):
+
+Letting inputs:
+
+- $\boldsymbol{x}_{n,1}$ be the current, best estimate of the
+  $n$-dimensional state of a system
+- $\boldsymbol{P}_{n,n}$ be the current, best estimate of the
+  $n\times{n}$ covariance of state $\boldsymbol{x}_{n,1}$
+- $\boldsymbol{z}_{m,1}$ be the current, $m$-dimensional observation
+- $\boldsymbol{H}_{m,n}$ be linearized observation model to be inverted:
+  $\boldsymbol{z}_{m,1}=\boldsymbol{H}_{m,n}\cdot\boldsymbol{x}_{n,1}$
+- $\boldsymbol{A}_{n,n}$ be linearized dynamics
+- $\boldsymbol{Q}_{n,n}$ be process noise (covariance) accounting for
+  uncertainty in $\boldsymbol{A}_{n,n}$
+- $\boldsymbol{R}_{m,m}$ be observation noise (covariance) accounting
+  for uncertainty in $\boldsymbol{z}_{m,1}$
+
+and intermediates and outputs:
+
+- $\boldsymbol{x}'_{n,1}$ (intermediate; /update/) be the estimate of
+  the state after enduring one time step of linearized dynamics
+- $\boldsymbol{x}''_{n,1}$ (output; /prediction/) be the estimate of the
+  state after dynamics and after information from the observation
+  $\boldsymbol{z}_{m,1}$
+- $\boldsymbol{P}'_{n,n}$ (intermediate; /update/) be the current, best
+  estimate of the $n\times{n}$ covariance of state
+  $\boldsymbol{x}_{n,1}$ after dynamics
+- $\boldsymbol{P}''_{n,n}$ (output; /prediction/) be the current, best
+  estimate of the $n\times{n}$ covariance of state
+  $\boldsymbol{x}_{n,1}$ after dynamics and oservation
+  $\boldsymbol{z}_{m,1}$
+
+The steps are:
+
+1. /Update state estimate/:
+   $\boldsymbol{x}'_{n,1} = \boldsymbol{A}_{n,n}\;\boldsymbol{x}_{n,1}$
+2. /Update state covariance/:
+   $\boldsymbol{P}'_{n,n} = \boldsymbol{Q}_{n,n} + \left(\boldsymbol{A}_{n,n}\;\boldsymbol{P}_{n,n}\;\boldsymbol{A}_{n,n}^\intercal\right)$
+3. /Covariance-update scaling matrix/:
+   $\boldsymbol{D}_{m,m} = \boldsymbol{R}_{m,m} + \left(\boldsymbol{H}_{m,n}\;\boldsymbol{P}'_{n,n}\;\boldsymbol{H}_{m,n}^\intercal\right)$
+4. /Kalman gain/:
+   $\boldsymbol{K}_{n,m}=\boldsymbol{P}_{n,n}\;\boldsymbol{H}_{m,n}^\intercal\;\boldsymbol{D}_{m,m}^{-1}$
+
+   1. written as
+      $\boldsymbol{K}_{n,m}^\intercal=\text{solve}\left(\boldsymbol{D}_{m,m}^{\intercal},\boldsymbol{H}_{m,n}\;\boldsymbol{P}_{n,n}^\intercal\right)$
+
+5. /Innovation: predicted observation residual/:
+   $\boldsymbol{r}_{m,1}=\boldsymbol{z}_{m,1} - \boldsymbol{H}_{m,n}\;\boldsymbol{x}'_{n,1}$
+6. /State prediction/:
+   $\boldsymbol{x}''_{n,1} = \boldsymbol{x}'_{n,1} + \boldsymbol{K}_{n,m}\;\boldsymbol{r}_{m,1}$
+7. /Covariance reduction matrix/:
+   $\boldsymbol{L}_{n,n}=\boldsymbol{I}_{n,n} - \boldsymbol{K}_{n,m}\;\boldsymbol{H}_{m,n}$
+8. /Covariance prediction/:
+   $\boldsymbol{P}''_{n,n}=\boldsymbol{L}_{n,n}\;\boldsymbol{P}'_{n,n}$
+
+#+BEGIN_SRC clojure :results none
+    (defn kalman-update [{:keys [xn1 Pnn]} {:keys [zm1 Hmn Ann Qnn Rmm]}]
+      (let [x'n1   (ccm/mmul Ann xn1)                    ; Predict state
+            P'nn   (ccm/add
+                    Qnn (similarity-transform Ann Pnn))  ; Predict covariance
+            Dmm    (ccm/add
+                    Rmm (similarity-transform Hmn P'nn)) ; Gain precursor
+            DTmm   (ccm/transpose Dmm)                   ; Support for "solve"
+            HP'Tmn (ccm/mmul Hmn (ccm/transpose P'nn))   ; Support for "solve"
+            KTmn   (solve-matrix DTmm HP'Tmn)            ; Eqn 3 of http://vixra.org/abs/1606.0328
+            Knm    (ccm/transpose KTmn)                  ; Kalman gain
+            rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))    ; innovation = predicted obn residual
+            x''n1  (ccm/add x'n1 (ccm/mmul Knm rm1))     ; final corrected estimate
+            n      (ccm/dimension-count xn1 0)
+            Lnn    (ccm/sub (ccm/identity-matrix n)      ; Support for new covariance ...
+                            (ccm/mmul Knm Hmn))          ; ...  ? catastrophic cancellation ?
+            P''nn  (ccm/mmul Lnn P'nn)]                  ; New covariance
+
+          {:xn1 x''n1, :Pnn P''nn}))
+#+END_SRC
+
+*** UNIT TEST
+    :PROPERTIES:
+    :CUSTOM_ID: unit-test
+    :END:
+
+Let the measurement model be a cubic:
+
+#+BEGIN_SRC clojure :results none
+    (defn Hmn-t [t]
+      (ccm/matrix [[(* t t t) (* t t) t 1]]))
+#+END_SRC
+
+Ground truth state, constant with time in this unit test:
+
+#+BEGIN_SRC clojure :results none
+    (def true-x
+        (ccm/array [-5 -4 9 -3]))
+#+END_SRC
+
+#+BEGIN_SRC clojure :results none
+    (require '[clojure.core.matrix.random :as ccmr])
+#+END_SRC
+
+#+BEGIN_SRC clojure :results none
+    (defn fake [n]
+      (let [times   (range -2.0 2.0 (/ 2.0 n))
+            Hmns    (mapv Hmn-t times)
+            true-zs (mapv #(ccm/mmul % true-x) Hmns)
+            zm1s    (mapv #(ccm/add
+                            % (ccm/array
+                               [[(ccmr/rand-gaussian)]]))
+                          true-zs)]
+        {:times times, :Hmns Hmns, :true-zs true-zs, :zm1s zm1s}))
+#+END_SRC
+
+#+BEGIN_SRC clojure :results none
+    (def test-data (fake 7))
+#+END_SRC
+
+A state cluster is a vector of $\boldsymbol{x}$ and $\boldsymbol{P}$:
+
+#+BEGIN_SRC clojure :results none
+    (def state-cluster-prior
+      {:xn1 (ccm/array [[0.0] [0.0] [0.0] [0.0]])
+       :Pnn (ccm/mul 1000.0 (ccm/identity-matrix 4))})
+#+END_SRC
+
+An obn-cluster is a vector of $\boldsymbol{z}$, $\boldsymbol{H}$,
+$\boldsymbol{A}$, $\boldsymbol{Q}$, and $\boldsymbol{R}$. /Obn/ is short
+for /observation/.
+
+#+BEGIN_SRC clojure :results none
+    (def obn-clusters
+      (let [c (count (:times test-data))]
+        (mapv (fn [zm1 Hmn Ann Qnn Rmm]
+                {:zm1 zm1, :Hmn Hmn, :Ann Ann, :Qnn Qnn, :Rmm Rmm})
+              (:zm1s test-data)
+              (:Hmns test-data)
+              (repeat c (ccm/identity-matrix 4))
+              (repeat c (ccm/zero-matrix 4 4))
+              (repeat c (ccm/identity-matrix 1))
+              )))
+#+END_SRC
+
+#+BEGIN_SRC clojure :results output
+    (clojure.pprint/pprint (reduce kalman-update state-cluster-prior obn-clusters))
+#+END_SRC
+
+#+RESULTS:
+: {:xn1 #vectorz/matrix [[-4.918270782577931],
+: [-3.817896034750373],
+: [8.404512594337637],
+: [-3.4309909818992774]],
+:  :Pnn
+:  #vectorz/matrix [[0.03208215055213958,-5.478256737134757E-15,-0.0874691388122202,-8.770761894538737E-15],
+: [-2.3568386825489895E-15,0.03637145347999561,-5.2632377622874316E-14,-0.05541947257604415],
+: [-0.08746913881223455,-2.570860191397628E-14,0.2822249372573019,-1.1334683192032458E-14],
+: [4.6455894686658894E-15,-0.05541947257607027,-6.734196533741965E-15,0.15110531309503664]]}
+
+Notice how close the estimate $x_{n\times{1}}$ is to the ground truth, $[-5, -4,
+9, -3]$ for $\boldsymbol{x}$. A chi-squared test would be appropriate to
+complete the verification (TODO).
+
+** DEFN MAKE-KALMAN-MAPPER
+    :PROPERTIES:
+    :CUSTOM_ID: make-kalman-mapper
+    :END:
+
+Just as we did before, we can convert a /foldable/ into a /mappable/
+transducer and bang on an asynchronous stream of data. This only needs
+error handling to be deployable at scale. Not to minimize error
+handling: it's a big but separable engineering task.
+
+#+BEGIN_SRC clojure
+(do (defn make-kalman-mapper [{:keys [xn1 Pnn]}]
+        ;; let-over-lambda (LOL); here are the Bayesian priors
+        (let [estimate-and-covariance (atom {:xn1 xn1, ;; prior-estimate
+                                             :Pnn Pnn, ;; prior-covariance
+                                             })]
+            ;; here is the mapper (mappable)
+            (fn [{:keys [zm1 Hmn Ann Qnn Rmm]}]
+                (let [{xn1 :xn1, Pnn :Pnn} @estimate-and-covariance]
+                    (let [ ;; out-dented so we don't go crazy reading it
+        x'n1   (ccm/mmul Ann xn1)                    ; Predict state
+        P'nn   (ccm/add
+                Qnn (similarity-transform Ann Pnn))  ; Predict covariance
+        Dmm    (ccm/add
+                Rmm (similarity-transform Hmn P'nn)) ; Gain precursor
+        DTmm   (ccm/transpose Dmm)                   ; Support for "solve"
+        HP'Tmn (ccm/mmul Hmn (ccm/transpose P'nn))   ; Support for "solve"
+        KTmn   (solve-matrix DTmm HP'Tmn)            ; Eqn 3 of http://vixra.org/abs/1606.0328
+        Knm    (ccm/transpose KTmn)                  ; Kalman gain
+        rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))    ; innovation = predicted obn residual
+        x''n1  (ccm/add x'n1 (ccm/mmul Knm rm1))     ; final corrected estimate
+        n      (ccm/dimension-count xn1 0)
+        Lnn    (ccm/sub (ccm/identity-matrix n)      ; Support for new covariance ...
+                        (ccm/mmul Knm Hmn))          ; ...  ? catastrophic cancellation ?
+        P''nn  (ccm/mmul Lnn P'nn)]
+                        (swap! estimate-and-covariance conj
+                               [:xn1 x''n1]
+                               [:Pnn P''nn])   )   )
+                @estimate-and-covariance)   ))
+
+    ;; The following line maps over a fixed sequence in memory
+    #_(clojure.pprint/pprint (last
+                               (map (make-kalman-mapper state-cluster-prior)
+                               obn-clusters)))
+
+    #_(async-randomized-scan obn-clusters
+                           (make-kalman-mapper state-cluster-prior)
+                           clojure.pprint/pprint)
+
+    (let [accumulator (make-sow-reap)]
+        (async-randomized-scan obn-clusters
+                               (make-kalman-mapper state-cluster-prior)
+                               (accumulator ::sow))
+        (last (accumulator ::reap)))   )
+#+END_SRC
+
+#+RESULTS:
+: '(:xn1 #vectorz/matrix ((-4.91827078257766)
+: (-3.81789603475064)
+: (8.404512594337113)
+: (-3.430990981898998))  :Pnn #vectorz/matrix ((0.03208215055225116 -1.9319019040758834E-13 -0.0874691388123033 9.480914317516742E-14)
+: (-2.275854692554294E-13 0.03637145348033692 1.7958339215652305E-13 -0.05541947257625426)
+: (-0.08746913881224329 5.680959175302647E-14 0.28222493725719067 -1.499494972634352E-14)
+: (9.145388981703084E-14 -0.055419472576223414 -5.673922703203216E-14 0.15110531309511158)))
+
+* OZ FOR VISUALIZATION
+    :PROPERTIES:
+    :CUSTOM_ID: oz-for-visualization
+    :END:
+
+From
+https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
+
+#+BEGIN_SRC clojure :results none
+    (require '[clojupyter.misc.helper :as helper])
+    (helper/add-dependencies '[metasoarous/oz "1.6.0-alpha2"])
+    (require '[oz.notebook.clojupyter :as oz])
+#+END_SRC
+
+** DEFN PLAY DATA
+
+#+BEGIN_SRC clojure
+(do (defn play-data [& names]
+      (for [n names
+            i (range 20)]
+        {:time i :item n :quantity (+ (Math/pow (* i (count n)) 0.8) (rand-int (count n)))}))
+
+    (def stacked-bar
+      {:data {:values (play-data "munchkin" "witch" "dog" "lion" "tiger" "bear")}
+       :mark "bar"
+       :encoding {:x {:field "time"}
+                  :y {:aggregate "sum"
+                      :field "quantity"
+                      :type "quantitative"}
+                  :color {:field "item"}}})
+    (oz/view! stacked-bar)   )
+#+END_SRC
+
+#+RESULTS:
+: #object[oz.notebook.clojupyter$view_BANG_$reify__21517 0xb6d4953 "oz.notebook.clojupyter$view_BANG_$reify__21517@b6d4953"]
+
+#+BEGIN_SRC clojure
+    ;; Create spec, then visualize
+    (def spec
+      {:data {:url "https://gist.githubusercontent.com/metasoarous/4e6f781d353322a44b9cd3e4597c532c/raw/cd633d9bb8e0bed4a5b8e66a32b9569ca2147989/cars.json"}
+       :mark "point"
+       :encoding {
+         :x {:field "Horsepower", :type "quantitative"}
+         :y {:field "Miles_per_Gallon", :type "quantitative"}
+         :color {:field "Origin", :type "nominal"}}})
+    (oz/view! spec)
+#+END_SRC
+
+#+RESULTS:
+: #'composable-statistics.core/spec#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x24e9799b "oz.notebook.clojupyter$view_BANG_$reify__21517@24e9799b"]
+
+#+BEGIN_SRC clojure
+    (oz/view!
+      [:div
+       [:h1 "A little hiccup example"]
+       [:p "Try drinking a glass of water with your head upside down"]
+       [:div {:style {:display "flex" :flex-direction "row"}}
+        [:vega-lite spec]
+        [:vega-lite stacked-bar]]])
+#+END_SRC
+
+#+RESULTS:
+: #object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x1c21218c "oz.notebook.clojupyter$view_BANG_$reify__21517@1c21218c"]
+
+* GAUSSIAN PROCESSES
+  :PROPERTIES:
+  :CUSTOM_ID: gaussian-processes
+  :END:
+
+The Extended Kalman Filter above is a generalization of linear
+regression.
+
+** RECURRENT LINEAR REGRESSION
+   :PROPERTIES:
+   :CUSTOM_ID: recurrent-linear-regression
+   :END:
+
+#+BEGIN_SRC clojure
+#+END_SRC
+
+#+RESULTS:

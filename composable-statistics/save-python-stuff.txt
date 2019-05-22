@@ -1,0 +1,441 @@
+*** PYTHON BASELINE
+    :PROPERTIES:
+    :CUSTOM_ID: python-baseline
+    :END:
+
+The above is a transcription of the following Python code, developed in
+another notebook and for cross-validation of the Clojure code above. def
+kalman\_update(x, P, z, H, A, Q, R): xm = np.dot(A, x) # (n x 1) Predict
+state Pm = A.dot(P).dot(A.T) + Q # (n x n) Predict covariance D =
+H.dot(Pm).dot(H.T) + R # (m x m) gain precursor K = (np.linalg.solve
+(D.T, H.dot(Pm.T))).T # (n x m) Kalman gain xnew = xm + K.dot(z -
+np.dot(H, xm)) # (m x 1) innovation = predicted obn residual L =
+(np.eye(3) - K.dot(H)) # (n x n) potential numerical issues Pnew =
+L.dot(Pm) # (n x n) new covariance return xnew, Pnew ## INS / BARO
+FUSION EXAMPLE (UNDONE)
+
+*** STATE $\boldsymbol{x}$
+    :PROPERTIES:
+    :CUSTOM_ID: state-boldsymbolx
+    :END:
+
+Altitude $h$, vertical velocity $\dot{h}$, and barometer bias:
+
+$$\bar{\boldsymbol{x}}=[h,\, \dot{h},\, \mathrm{bias_{baro}}]^\intercal\tag{8.2.1}$$
+
+*** PROCESS DYNAMICS $\boldsymbol{A}$, $\bar{\boldsymbol{w}}$
+    :PROPERTIES:
+    :CUSTOM_ID: process-dynamics-boldsymbola-barboldsymbolw
+    :END:
+
+$$\bar{\boldsymbol{x}}_{k+1} = \boldsymbol{A}\, \bar{\boldsymbol{x}}_k + \bar{\boldsymbol{w}}\tag{8.2.2}$$
+
+where
+$\boldsymbol{A} =\begin{bmatrix}  1 & dt & 0 \\  0 & 1 & 0 \\  0 & 0 & 1 \\ \end{bmatrix}$,
+$\boldsymbol{\bar{w}}$ is drawn from a joint normal distribution of mean
+0, covariance $\boldsymbol{Q}$, or, in notation,
+$\boldsymbol{\bar{w}}\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{Q})$
+
+#+BEGIN_SRC clojure
+    (defn A [dt] (ccm/array [[1 dt 0]
+                             [0  1 0]
+                             [0  0 1]]))
+#+END_SRC
+
+#+BEGIN_SRC clojure
+    (ccmr/sample-normal 3)
+#+END_SRC
+
+*** MEASUREMENTS $\bar{\boldsymbol{z}}$
+    :PROPERTIES:
+    :CUSTOM_ID: measurements-barboldsymbolz
+    :END:
+
+a.k.a. OBSERVATIONS, OBNS
+
+1. $h_{\mathrm{imu}}$: Altitude from the fused IMU/GNSS
+2. $\dot{h}_{\mathrm{imu}}$: vertical velocity from the IMU/GNSS
+3. $h_{\mathrm{baro}}$: altitude from the barometer
+4. a dummy observation, the average of the two height measurements, to
+   artificially make the dimensions of $\boldsymbol{H}$, namely
+   $3\times{4}$ different from the dimensions of $\boldsymbol{A}$,
+   namely $3\times{3}$, for the purpose of validating computational
+   linear algebra code.
+
+$$\bar{\boldsymbol{z}}=[h_{\mathrm{imu}},\,\dot{h}_{\mathrm{imu}},\, h_{\mathrm{baro}},\, \frac{h_{\mathrm{imu}}+h_{\mathrm{baro}}}{2}]^\intercal\tag{8.2.3}$$
+
+*** MEASUREMENT PARTIALS $\boldsymbol{H}$:
+$\partial\kern{.125em}{\boldsymbol{z}}\kern{.125em}/\kern{.125em}\partial\kern{.125em}{\boldsymbol{x}}$
+    :PROPERTIES:
+    :CUSTOM_ID: measurement-partials-boldsymbolh-partialkern.125emboldsymbolzkern.125emkern.125empartialkern.125emboldsymbolx
+    :END:
+
+Measurements $\bar{\boldsymbol{z}}$ are related to the state vector
+$\bar{\boldsymbol{x}}$ by the following linear model: 1. The measured
+imu height $h_{\mathrm{imu}}$ is equal to the height $h$ from the state.
+2. The measured vertical speed from the imu $\dot{h}_{\mathrm{imu}}$ is
+equal to $\dot{h}$ from the state. 3. The measured baro height
+$h_{\mathrm{baro}}$ is equal to the height $h$ from the state plus the
+baro bias from the state. 4. The measured dummy value is equal to the
+height from the state plus half the baro bias from the state.
+
+$\boldsymbol{\bar{\nu}}\sim\mathcal{N}(\boldsymbol{0},\boldsymbol{R})$
+noise is added to the measurements.
+
+$$\bar{\boldsymbol{z}}_k = \boldsymbol{H}\, \bar{\boldsymbol{x}}_k+\bar{\boldsymbol{\nu}}\tag{8.2.4}$$
+
+where
+$\boldsymbol{H}= \begin{bmatrix}  1 & 0 & 0 \\  0 & 1 & 0 \\  1 & 0 & 1 \\  1 & 0 & 1/2 \end{bmatrix}$
+
+#+BEGIN_SRC clojure
+    (def H (ccm/array [[1 0 0]
+                       [0 1 0]
+                       [1 0 1]
+                       [1 0 0.5]]))
+    H
+#+END_SRC
+
+This sets up the whole problem. We modify $\boldsymbol{Q}$ and
+$\boldsymbol{R}$ to "tune" the Kalman filter.
+
+*** GROUND TRUTH
+    :PROPERTIES:
+    :CUSTOM_ID: ground-truth
+    :END:
+
+#+BEGIN_SRC clojure
+    (defmacro hashup [& vars]
+      (list 'zipmap
+        (mapv keyword vars)
+        (vec vars)))
+#+END_SRC
+
+#+BEGIN_SRC clojure
+    (def ground-truth
+        (let [n              201
+              t1             2.0
+              times          (vec (linspace 0.0, t1, n))
+              wavelength     1
+              wavespeed      1
+              f              (* (/ wavespeed wavelength) 2 Math/PI)
+              dt             (- (get times 1) (get times 0))
+              amplitude      5.0
+              ground-level   10.0
+              h-true         (mapv #(+ ground-level
+                                       (* amplitude (Math/sin (* f %))))
+                                   times)
+              h-dot-true     (mapv #(* amplitude f (Math/cos (* f %)))
+                                   times)
+              baro-bias-true -3.777]
+            (hashup n times f dt h-true h-dot-true baro-bias-true)))
+#+END_SRC
+
+Here is the old Python code: N\_points = 200 t\_final = 2 time =
+np.linspace(0, t\_final, N\_points) f = 1 * 2 * np.pi dt = time[1] -
+time[0] h\_true = 5 * np.sin(f * time) + 10 hdot\_true = 5 * f *
+np.cos(f * time) baro\_bias\_true = -3.777 # just a fun value
+
+plt.plot(time, h\_true, 'r', label = 'true alt') plt.plot(time,
+hdot\_true, 'g', label = 'true speed') plt.plot(time, baro\_bias\_true +
+(time - time), 'b', label = 'true bias')
+
+plt.grid(); plt.xlabel('time [s]'); plt.ylabel('altitude [m] / hdot
+[m/s]'); plt.legend(); plt.show() Add =[quil "2.6.0"]= to =clojupyter=
+and borrow plotting code from
+[[https://github.com/daveliepmann/vdquil][VDQuil]].
+
+*** SIMULATION
+    :PROPERTIES:
+    :CUSTOM_ID: simulation
+    :END:
+
+Significant process noise must be added to the velocity measure. The
+filter cannot track velocity without it because there are no direct
+measurements of velocity: it's inferred from the height measurements.
+Try setting the second element of $\boldsymbol{Q}$ to $0$ or $1$ and
+watch the bad results.
+
+**** TODO
+     :PROPERTIES:
+     :CUSTOM_ID: todo
+     :END:
+
+This effect needs a better explanation. Q = 1 * np.diag([1, 10, 0.01]) #
+[n x n] process noise R\_sigmas = [10.0, np.sqrt(5.0), 1.0, 10.02497] #
+[m x 1] msmt. sigmas R = np.diag(map(lambda x: x * x, R\_sigmas)) # [m x
+m] measurement noise
+
+* process and measurment matrices
+  :PROPERTIES:
+  :CUSTOM_ID: process-and-measurment-matrices
+  :END:
+
+A = np.array([[1, dt, 0], [0, 1, 0], [0, 0, 1]])
+
+H = np.array([[ 1, 0, 0 ], [ 0, 1, 0 ], [ 1, 0, 1 ], [ 1, 0, 0.5]])
+
+meas = np.array([[np.random.normal (h, R\_sigmas[0]), np.random.normal
+(v, R\_sigmas[1]), np.random.normal (h + baro\_bias\_true,
+R\_sigmas[2]), np.random.normal (h + baro\_bias\_true * 0.5,
+R\_sigmas[3])] for h, v in zip(h\_true, hdot\_true)])x\_est = [] Ps = []
+
+* Hazards of non-immutable variables: if x, P initializations are in a
+  :PROPERTIES:
+  :CUSTOM_ID: hazards-of-non-immutable-variables-if-x-p-initializations-are-in-a
+  :END:
+
+* different block of code, then you can't iterate this simulation by
+  :PROPERTIES:
+  :CUSTOM_ID: different-block-of-code-then-you-cant-iterate-this-simulation-by
+  :END:
+
+* evaluating /this/ block of code, because x and P will have the last
+  :PROPERTIES:
+  :CUSTOM_ID: evaluating-this-block-of-code-because-x-and-p-will-have-the-last
+  :END:
+
+* values assigned to them instead of the initial values that you want.
+  :PROPERTIES:
+  :CUSTOM_ID: values-assigned-to-them-instead-of-the-initial-values-that-you-want.
+  :END:
+
+* THAT is why you want to "reduce" over a foldable Kalman instead of
+  :PROPERTIES:
+  :CUSTOM_ID: that-is-why-you-want-to-reduce-over-a-foldable-kalman-instead-of
+  :END:
+
+* "loop" over mutable variables (TODO).
+  :PROPERTIES:
+  :CUSTOM_ID: loop-over-mutable-variables-todo.
+  :END:
+
+x = np.array([0, 0, 0]) # we don't know anything P = 1000 * np.diag([1,
+1, 1]) # Fat a-priori
+
+* Save one iteration for comparison against C++ code
+  :PROPERTIES:
+  :CUSTOM_ID: save-one-iteration-for-comparison-against-c-code
+  :END:
+
+x\_save, P\_save = kalman\_update (x, P, meas[0], H, A, Q, R) print "FOR
+COMPARING AGAINST C++ CODE" print "x0:", x print "P0:", P print "z0:",
+meas[0] print "H:", H print "A:", A print "Q:", Q print "R:", R print
+"x1:", x\_save print "P1:", P\_save # print {"x0": x, "P0": P, "z0":
+z[0], "H": H, "A": A, "Q": Q, "R": R, "x1": x\_save, "P1": P\_save}
+
+for t, z in zip(time, meas): x, P = kalman\_update(x, P, z, H, A, Q, R)
+x\_est.append(x) Ps.append(P)
+
+x\_est = np.array(x\_est) Ps = np.array(Ps)
+
+plt.plot(time, x\_est[:,0], 'g-', label = 'Estimated alt')
+plt.plot(time, meas[:,0], 'b.', label = 'Noisy imu alt', markersize = 1)
+plt.plot(time, meas[:,2] - baro\_bias\_true, 'c.', label = 'Noisy baro -
+bias', markersize = 2) plt.plot(time, h\_true + np.sqrt(Ps[:,0,0]),
+color = 'darkorange', label = '1-sigma envelope') plt.plot(time,
+h\_true - np.sqrt(Ps[:,0,0]), color = 'darkorange') plt.grid();
+plt.xlabel('time [s]'); plt.ylabel('altitude [m]'); plt.legend();
+plt.show()
+
+plt.plot(time, x\_est[:,1], 'g-', label = 'Estimated hdot')
+plt.plot(time, meas[:,1], 'b.', label = 'Measured hdot', markersize = 1)
+plt.plot(time, hdot\_true, 'c.', label = 'hdot real', markersize = 2)
+plt.grid(); plt.xlabel('time [s]'); plt.ylabel('hdot [m/s]');
+plt.legend(); plt.show()
+
+plt.plot(time, x\_est[:,2], 'g-', label = 'estimated bias')
+plt.plot(time, meas[:,2] - h\_true, 'c.', label = 'Noisy baro\_bias',
+markersize = 2) plt.plot(time, baro\_bias\_true + np.sqrt(Ps[:,2, 2]),
+color = 'darkorange', label = '1-sigma envelope') plt.plot(time,
+baro\_bias\_true - np.sqrt(Ps[:,2, 2]), color = 'darkorange')
+plt.grid(); plt.xlabel('time [s]'); plt.ylabel('Barometer bias [m]');
+plt.show()plt.plot(time, h\_true - x\_est[:,0], 'g-', label = 'alt
+residual') plt.plot(time, np.sqrt(Ps[:,0,0]), color = 'darkorange',
+label = '1-sigma envelope') plt.plot(time, - np.sqrt(Ps[:,0,0]), color =
+'darkorange') plt.grid(); plt.xlabel('time [s]'); plt.ylabel('altitude
+residual [m]'); plt.legend(); plt.show()
+
+plt.plot(time, hdot\_true - x\_est[:,1], 'g-', label = 'hdot residual')
+plt.plot(time, np.sqrt(Ps[:,1,1]), color = 'darkorange', label =
+'1-sigma envelope') plt.plot(time, - np.sqrt(Ps[:,1,1]), color =
+'darkorange') plt.grid(); plt.xlabel('time [s]'); plt.ylabel('hdot
+residual [m/s]'); plt.legend(); plt.show()
+
+plt.plot(time, baro\_bias\_true - x\_est[:,2], 'g-', label = 'bias
+residual') plt.plot(time, np.sqrt(Ps[:,2, 2]), color = 'darkorange',
+label = '1-sigma envelope') plt.plot(time, - np.sqrt(Ps[:,2, 2]), color
+= 'darkorange') plt.grid(); plt.xlabel('time [s]');
+plt.ylabel('Barometer bias residual [m]'); plt.legend(); plt.show() ##
+VALIDATE C++ CODE import pandas as pd The files that we read in and plot
+here were created from C++ code. ground\_truth\_df =
+pd.read\_csv("../ground\_truth.csv")ground\_truth\_df.plot(x = 'times',
+y = ['h\_true','hdot\_true','baro\_bias\_true']); ### DIFFERENCES
+BETWEEN PYTHON AND C++: TODO
+
+I see differences in the fifth decimal place between Python and C++.
+This should not be. Must investigate. plt.plot (time, h\_true -
+ground\_truth\_df['h\_true']) plt.grid(); plt.xlabel('time [s]');
+plt.ylabel('Python - C++ altitude [m]'); plt.show() plt.plot(time,
+hdot\_true - ground\_truth\_df['hdot\_true']) plt.grid();
+plt.xlabel('time [s]'); plt.ylabel('Python - C++ h\_dot [m/2]');
+plt.show() There is no difference between Python and C++ in the true
+baro bias because they're both constants, namely $3.777\,\mathrm{m}$.
+plt.plot (time, baro\_bias\_true -
+ground\_truth\_df['baro\_bias\_true']) plt.grid(); plt.xlabel('time
+[s]'); plt.ylabel('Python - C++ baro bias [m]'); plt.show() ###
+NON-CLOSURE-STYLE KALMAN estimates\_df =
+pd.read\_csv("../estimates.csv")estimates\_df[0:50:10]plt.plot(estimates\_df['time'],
+estimates\_df['h'], label = 'altitude [m]');
+plt.plot(estimates\_df['time'], ground\_truth\_df['h\_true'], 'b', label
+= 'true altitude [m]'); plt.plot(estimates\_df['time'],
+ground\_truth\_df['h\_true'] + estimates\_df['sigma\_h'], color =
+'darkorange', label = '1-sigma envelope');
+plt.plot(estimates\_df['time'], ground\_truth\_df['h\_true'] -
+estimates\_df['sigma\_h'], color = 'darkorange') plt.grid();
+plt.xlabel('time [s]'); plt.ylabel('altitude [m]'); plt.legend();
+plt.show() plt.plot(estimates\_df['time'], estimates\_df['hdot'], label
+= 'vertical speed [m/s]'); plt.plot(estimates\_df['time'],
+ground\_truth\_df['hdot\_true'], 'b', label = 'true vertical speed
+[m/s]'); plt.plot(estimates\_df['time'], ground\_truth\_df['hdot\_true']
++ estimates\_df['sigma\_hdot'], color = 'darkorange', label = '1-sigma
+envelope'); plt.plot(estimates\_df['time'],
+ground\_truth\_df['hdot\_true'] - estimates\_df['sigma\_hdot'], color =
+'darkorange') plt.grid(); plt.xlabel('time [s]'); plt.ylabel('altitude
+[m]'); plt.legend(); plt.show() plt.plot(estimates\_df['time'],
+estimates\_df['baro\_bias'], label = 'baro bias [m]');
+plt.plot(estimates\_df['time'], ground\_truth\_df['baro\_bias\_true'],
+'b', label = 'true baro bias [m]'); plt.plot(estimates\_df['time'],
+ground\_truth\_df['baro\_bias\_true'] +
+estimates\_df['sigma\_baro\_bias'], color = 'darkorange', label =
+'1-sigma envelope'); plt.plot(estimates\_df['time'],
+ground\_truth\_df['baro\_bias\_true'] -
+estimates\_df['sigma\_baro\_bias'], color = 'darkorange'); plt.show()
+### RESIDUALS
+
+The following groups of plots show identical results from four styles of
+Kalman filter. There is *no significant speed difference* amongst the
+four styles, each taking about $39\pm{3}\,\mathrm{ms}$ to process 200
+samples.
+
+1. *non-closure style*: All matrices are passed in the argument list of
+   the Kalman filter. This is the most general form, but is potentially
+   not as memory-efficient as "closing" over matrices that are usually
+   constant. This is the simplest form (has the fewest moving parts) and
+   is the easiest to understand, implement, modify, and deploy.
+2. *functional closure style*: The Kalman filter is written as a
+   =std::function= of a lambda expression, in which the constant
+   matrices are not function parameters, but "free variables," that is,
+   non-parameters referenced from an "environment" of variable names
+   created by the constructor of the =std::function=. This form has
+   advantages of clarity, but *may entail dynamic heap memory* because
+   we do not have visibility or control over the memory management used
+   by =std::function= (TODO: investigate).
+
+   1. *index-loop test*: reliably produces verifiable and correct
+      results. Suffers from the small additional complications of the
+      index variable, its bound, and its =for= loop. This complication
+      is mitigated by the fact that the index-loop idiom is standard and
+      familiar to all C++ programmers.
+   2. *std::accumulate test*: This alternative is the most modern in
+      style, bypassing the index variable, its bound, and its loop. Also
+      reliably produces verifiable and correct results. Requires
+      understanding C++ lambda expressions, especially the difference
+      between the =[=]= and =[&]= options for capture of free variables.
+      It turns out that we want =[=]=, that is, copy semantics, for the
+      Kalman =std::function= itself, and =[&]=, that is, reference
+      semantics, for the accumulator lambda that saves the entire list
+      of estimates. It is a good argument that this subtle difference
+      complicates the code; in fact, it tripped us up in TAG\_009.
+      However, there is a mitigating simplicity to removing the index
+      variable, its bound, and its loop. If we can prove that the Kalman
+      filter does not use dynamic memory, this will be the *preferred
+      method* when constant matrices must not be passed in to the Kalman
+      filter every iteration.
+
+3. *object-style closure*: offers higher assurance of avoiding dynamic
+   memory, using a stack-allocated instance of a class struct to "close"
+   over the constant matrices. The free variables in the body of the
+   Kalman filter refer to instance variables that hold the constant
+   matrices. The Kalman filter itself is an ordinary member function or
+   "method." This is an *acceptable* form when constant matrices must
+   not be passed in to the Kalman filter every iteration. It is easily
+   understood by C++ programmers who don't understand lambda
+   expressions. def plot\_residuals (gt, est): plt.plot(est['time'],
+   gt['h\_true'] - est['h'], label = 'altitude residual');
+   plt.plot(est['time'], est['sigma\_h'], color = 'darkorange', label =
+   '1-sigma envelope'); plt.plot(est['time'], - est['sigma\_h'], color =
+   'darkorange', label = '') plt.grid(); plt.xlabel('time [s]');
+   plt.ylabel('altitude residual [m]'); plt.legend() plt.show()
+   plt.plot(est['time'], gt['hdot\_true'] - est['hdot'], label =
+   'vertical speed residual'); plt.plot(est['time'], est['sigma\_hdot'],
+   color = 'darkorange', label = '1-sigma envelope');
+   plt.plot(est['time'], - est['sigma\_hdot'], color = 'darkorange',
+   label = '') plt.grid(); plt.xlabel('time [s]'); plt.ylabel('vertical
+   speed residual [m/s]'); plt.legend() plt.show() plt.plot(est['time'],
+   gt['baro\_bias\_true'] - est['baro\_bias'], label = 'baro-bias
+   residual'); plt.plot(est['time'], est['sigma\_baro\_bias'], color =
+   'darkorange', label = '1-sigma envelope'); plt.plot(est['time'], -
+   est['sigma\_baro\_bias'], color = 'darkorange', label = '')
+   plt.grid(); plt.xlabel('time [s]'); plt.ylabel('baro-bias residual
+   [m]'); plt.legend() plt.show()\\
+   #### NON-CLOSURE KALMAN FILTER plot\_residuals (ground\_truth\_df,
+   estimates\_df) #### FUNCTIONAL CLOSURE, INDEX LOOP plot\_residuals
+   (ground\_truth\_df,
+   pd.read\_csv("../functional\_closure\_index\_loop\_estimates.csv"))
+   #### FUNCTIONAL CLOSURE, =std::accumulate= plot\_residuals
+   (ground\_truth\_df,
+   pd.read\_csv("../functional\_closure\_accumulated\_estimates.csv"))
+   #### OBJECT-STYLE CLOSURE, INDEX LOOP plot\_residuals
+   (ground\_truth\_df,
+   pd.read\_csv("../object\_closure\_index\_loop\_estimates.csv")) #
+   TODO
+
+** Frinj FOR UNITS OF MEASURE
+   :PROPERTIES:
+   :CUSTOM_ID: frinj-for-units-of-measure
+   :END:
+
+** VDQuil FOR PLOTTING
+   :PROPERTIES:
+   :CUSTOM_ID: vdquil-for-plotting
+   :END:
+
+** OPEN-CL
+   :PROPERTIES:
+   :CUSTOM_ID: open-cl
+   :END:
+
+#+BEGIN_SRC clojure
+    (require '[uncomplicate.clojurecl.core :as cclo])
+    (require '[uncomplicate.clojurecl.info :as ccli])
+#+END_SRC
+
+#+BEGIN_SRC clojure
+    (clojure.pprint/pprint (map ccli/info (cclo/platforms)))
+#+END_SRC
+
+#+BEGIN_SRC clojure
+    (clojure.pprint/pprint
+        (map ccli/info
+             (cclo/devices
+                 (first (cclo/platforms)))))
+#+END_SRC
+
+** CUDA / MKL
+   :PROPERTIES:
+   :CUSTOM_ID: cuda-mkl
+   :END:
+
+Cuda / MKL / Neanderthal
+
+#+BEGIN_SRC clojure
+    (require '[uncomplicate.neanderthal.core   :as uncore])
+    (require '[uncomplicate.neanderthal.native :as uncnat])
+#+END_SRC
+
+#+BEGIN_SRC clojure
+    (def xs (uncnat/dv 1 2 3))
+    (def ys (uncnat/dv 10 20))
+#+END_SRC
+
+#+end_comment
