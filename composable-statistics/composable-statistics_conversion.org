@@ -69,8 +69,6 @@
 
 #+LaTeX_HEADER: \newcommand\definedas{\stackrel{\text{\tiny def}}{=}}
 
-
-
 #+SELECT_TAGS: export
 #+STARTUP: indent
 
@@ -109,7 +107,7 @@ print(f"Python's version info: {sys.version}")
 #+END_SRC
 
 #+RESULTS:
-: Hello, today's date is Tue May 21 17:11:43 2019
+: Hello, today's date is Tue May 21 18:35:24 2019
 : Two plus two is 4
 : Python's version info: 3.7.3 (default, Mar 27 2019, 22:11:17)
 : [GCC 7.3.0]
@@ -126,9 +124,16 @@ print(f"Python's version info: {sys.version}")
   :CUSTOM_ID: composable-statistics
   :END:
 
-*Brian Beckman*
+** TODO TANGLE, NOWEB
 
-*June 2017* - *June 2019*
+This will become a fully literate program via org-babel =tangle= and
+=noweb=. At present, it is an org file converted directly from an old
+iPython (Jupyter) notebook. Jupyter proved not to scale well.
+
+** TODO GRAPHICS
+
+We still
+have to work out how to embed graphics in this file.
 
 ** CLOJURE
    :PROPERTIES:
@@ -138,6 +143,11 @@ print(f"Python's version info: {sys.version}")
 We prefer Clojure to Python for this exercise due to Clojure's
 concurrency primitives, especially atoms and core.async. Python is
 growing and improving rapidly, so we may return to it someday.
+
+*** TODO PROJECT.CLJ
+
+At present, the critical file =project.clj= is external to this
+document. It will be one of the first to tangle.
 
 #+begin_comment :deprecated
 Section [[#HOW-TO-USE-THIS-DOCUMENT][HOW TO USE THIS DOCUMENT]] explains
@@ -154,13 +164,8 @@ The best sites for learning Clojure by example are
    :CUSTOM_ID: how-to-use-this-document
    :END:
 
-   This document is adapted from an original Jupyter notebook. I moved to
-   org-mode after a catastrophic failure of Jupyter. I decided it was more
-   worthwhile to start again from org-mode than from Jupyter.
-
    Explain how to run Clojure code inside an org-mode buffer, how to tangle and
    weave, etc.
-
 
 1. Install leiningen https://leiningen.org/ (this is all you need for Clojure)
 #+begin_comment :deprecated
@@ -170,10 +175,10 @@ The best sites for learning Clojure by example are
 5. A web page will open automatically; navigate to the file you're reading right
    now
 6. Evaluate cells by typing =Shift-Enter=
-#+end_comment
 
 Consider doing all Python work in [[https://pipenv.readthedocs.io/][pipenv]]. It keeps virtual environments outside
 your local folders. It works for this =clojupyter= notebook as well.
+#+end_comment
 
 * INTRODUCTION
   :PROPERTIES:
@@ -208,7 +213,7 @@ The traditional and obvious way with =reduce= and =reductions=
 arguments: a binary function, an initial value, and a space-sequence of
 inputs.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (reduce
         (fn [count datum] (inc count)) ; binary function
         0                              ; initial value
@@ -220,7 +225,7 @@ inputs.
 
 ... with all intermediate results:
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (reductions (fn [c z] (inc c)) 0 zs)
 #+END_SRC
 
@@ -246,7 +251,7 @@ reducible, namely
 $(\textrm{estimate}, \textrm{measurement})\rightarrow\textrm{estimate}$.
 We get rid of this defect later.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (let [initial-count 0] ; Must use this twice below.
         (reduce
             ; Let-over-lambda (anonymous "object") follows.
@@ -267,7 +272,7 @@ We get rid of this defect later.
 
 Showing all intermediate results:
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (let [initial-count 0]
         (reductions ; <-- this is the only difference to above
             (let [running-count (atom initial-count)]
@@ -304,7 +309,7 @@ A subtle defect: the output is still coupled to the computing
 environment through =print=. We get rid of that, too,
 [[#REMOVING-OUTPUT-COUPLING][below]].
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (dorun ; <-- Discard 'nil's produced by "print."
         (map
             (let [running-count (atom 0)]
@@ -353,7 +358,7 @@ than either of the two above:
 
 $$x_{n+1}=x_n+K(n)\,(z_{n+1}-x_n)$$
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (dorun
         (map
             (let [running-stats (atom {:count 0, :mean 0})]
@@ -403,7 +408,7 @@ clean up the line that does the printing.
     :CUSTOM_ID: make-running-stats-mapper
     :END:
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output  :exports both
     (defn make-running-stats-mapper []
         (let [running-stats (atom {:count 0 :mean 0 :datum 0})]
             (fn [z]
@@ -443,7 +448,7 @@ an independent calculation.
 
 **** DEFN MEAN
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (defn mean [zs] (/ (reduce + zs) (count zs)))
     (println (mean zs))
 #+END_SRC
@@ -522,7 +527,7 @@ before reading unbuffered on the UI/REPL real-thread. However, we can
 write before reading on a non-blocking pseudothread, and no buffer space
 is needed.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan)]        ;; unbuffered chan
         (go (>! c 42))     ;; parks if no space in chan
         (println (<!! c))  ;; blocks UI/REPL until data on c
@@ -553,7 +558,7 @@ understand more corners of the example above.
 
 The =go= form itself returns a channel:
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (clojure.repl/doc go)
 #+END_SRC
 
@@ -582,7 +587,7 @@ official documentation between "blocking" and "parking" and between
 
 Is the channel returned by =go= the same channel as =c=?
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan)]
         (println {:c-channel c})
         (println {:go-channel (go (>! c 42))})
@@ -591,15 +596,15 @@ Is the channel returned by =go= the same channel as =c=?
 #+END_SRC
 
 #+RESULTS:
-: {:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x710fa85d clojure.core.async.impl.channels.ManyToManyChannel@710fa85d]}
-: {:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x14684a80 clojure.core.async.impl.channels.ManyToManyChannel@14684a80]}
+: {:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1c522847 clojure.core.async.impl.channels.ManyToManyChannel@1c522847]}
+: {:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x44ebf2b0 clojure.core.async.impl.channels.ManyToManyChannel@44ebf2b0]}
 : {:c-coughs-up 42}
 : {:close-c nil}
 
 No, =c= is a different channel from the one returned by =go=. Consult
 the documentation for =go= once more:
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (clojure.repl/doc go)
 #+END_SRC
 
@@ -623,7 +628,7 @@ Macro
 We should be able to read from the channel returned by =go=; call it
 =d=:
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan)
           d (go (>! c 42))] ;; 'let' in Clojure is sequential,
                             ;; like 'let*' in Scheme or Common Lisp,
@@ -642,7 +647,7 @@ We should be able to read from the channel returned by =go=; call it
 of the body when completed." Let's see whether our deduction matches
 documentation for =>!=:
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (clojure.repl/doc >!)
 #+END_SRC
 
@@ -665,7 +670,7 @@ called a /rendezvous/ in the ancient literature of concurrency. Would
 the pseudothread unpark if we read inside a =go= block and not on the UI
 thread?
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan)
           d (go (>! c 42))
           e (go (<! c))]
@@ -680,11 +685,11 @@ thread?
 
 #+RESULTS:
 : {:c-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x55d62ca2 "clojure.core.async.impl.channels.ManyToManyChannel@55d62ca2"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x71c5ab8c "clojure.core.async.impl.channels.ManyToManyChannel@71c5ab8c"],
 :  :d-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5ad384e2 "clojure.core.async.impl.channels.ManyToManyChannel@5ad384e2"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x17e4e86f "clojure.core.async.impl.channels.ManyToManyChannel@17e4e86f"],
 :  :e-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x199e6388 "clojure.core.async.impl.channels.ManyToManyChannel@199e6388"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x2adc7806 "clojure.core.async.impl.channels.ManyToManyChannel@2adc7806"],
 :  :e-coughs-up 42,
 :  :d-coughs-up true}
 
@@ -700,7 +705,7 @@ Einsteinian is that? The following takes (reads) from =c= on =e= before
 puting (writing) to =c= on =d=. That's the same as above, only in the
 opposite order.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan)
           e (go (<! c))
           d (go (>! c 42))]
@@ -715,11 +720,11 @@ opposite order.
 
 #+RESULTS:
 : {:c-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x39134936 "clojure.core.async.impl.channels.ManyToManyChannel@39134936"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3bd3c56 "clojure.core.async.impl.channels.ManyToManyChannel@3bd3c56"],
 :  :d-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5f14c669 "clojure.core.async.impl.channels.ManyToManyChannel@5f14c669"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x31122bdb "clojure.core.async.impl.channels.ManyToManyChannel@31122bdb"],
 :  :e-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7e37dd0b "clojure.core.async.impl.channels.ManyToManyChannel@7e37dd0b"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3d17fc25 "clojure.core.async.impl.channels.ManyToManyChannel@3d17fc25"],
 :  :e-coughs-up 42,
 :  :d-coughs-up true}
 
@@ -734,7 +739,7 @@ and write to channels in =go= blocks in any order. However, that's not
 true with threads that actually block. The documentation is obscure,
 though not incorrect, about this fact.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (clojure.repl/doc >!!)
 #+END_SRC
 
@@ -749,7 +754,7 @@ When is "no buffer space available?" It turns out that the default
 channel constructor makes a channel with no buffer space allocated by
 default.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (clojure.repl/doc chan)
 #+END_SRC
 
@@ -775,7 +780,7 @@ have to interrupt the Kernel using the "Kernel" menu at the top of the
 notebook, and you might have to restart the Kernel, but you should try
 it once.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     #_(let [c (chan)]
         (>!! c 42)
         (println (<!! c))
@@ -788,7 +793,7 @@ The following variation works fine because we made "buffer space" before
 writing to the channel. The only difference to the above is the $1$
 argument to the call of =chan=.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan 1)]
         (>!! c 42)
         (println (<!! c))
@@ -805,7 +810,7 @@ difference in the syntax is subtle and easy to miss.
 We can read on the asynchronous =go= pool from the buffered channel =c=
 because the buffered write =(>!! c)= on the UI thread doesn't block:
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan 1)]
         (>!! c 42)
         (println {:go-channel-coughs-up (<!! (go (<! c)))})
@@ -815,17 +820,14 @@ because the buffered write =(>!! c)= on the UI thread doesn't block:
 #+RESULTS:
 : {:go-channel-coughs-up 42}
 
-**** ORDER DOESN'T MATTER, SOMEIMES
-     :PROPERTIES:
-     :CUSTOM_ID: order-doesnt-matter-someimes
-     :END:
+**** ORDER DOESN'T MATTER, SOMETIMES
 
 We can do things backwards, reading before writing, even without a
 buffer. Read from channel =(<! c)= on the async =go= thread "before"
 writing to =(>!! c 42)= on the REPL / UI thread. "Before," here, of
 course, means syntactically or lexically "before," not temporally.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan) ;; NO BUFFER!
           d (go (<! c)) ;; park a pseudothread to read c
           e (>!! c 42)] ;; blocking write unparks c's pseudothread
@@ -840,7 +842,7 @@ course, means syntactically or lexically "before," not temporally.
 
 Why did =>!!= produce =true=? Look at docs again:
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (clojure.repl/doc >!!)
 #+END_SRC
 
@@ -864,7 +866,7 @@ explained above.
 
 =e='s being true means that =c= wasn't closed. =(>!! c 42)= should hang.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan) ;; NO BUFFER!
           d (go (<! c)) ;; park a pseudothread to read c
           e (>!! c 42)  ;; blocking write unparks c's pseudothread
@@ -882,7 +884,7 @@ explained above.
 StackOverflow reveals a way to find out whether a channel is closed by
 peeking under the covers (https://stackoverflow.com/questions/24912971):
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan) ;; NO BUFFER!
           d (go (<! c)) ;; park a pseudothread to read c
           e (>!! c 42)  ;; blocking write unparks c's pseudothread
@@ -898,9 +900,6 @@ peeking under the covers (https://stackoverflow.com/questions/24912971):
 : {:c-coughs-up (hangs (<!! c)), :d-coughs-up 42, :c-is-open-at-e? true, :c-is-open-at-f? false}
 
 **** ORDER DOES MATTER, SOMETIMES
-     :PROPERTIES:
-     :CUSTOM_ID: order-does-matter-sometimes
-     :END:
 
 Order does matter this time: Writing blocks the UI thread without a
 buffer and no parked read (rendezvous) in the =go= nebula beforehand. I
@@ -908,7 +907,7 @@ hope you can predict that the following will block even before you run
 it. To be sure, run it, but you'll have to interrupt the kernel as
 before.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     #_(let [c (chan)
           e (>!! c 42) ;; blocks forever
           d (go (<! c))]
@@ -981,7 +980,7 @@ into this channel (the =[c 43]= term is an implied write; that's clear
 from the documentation). =c= won't block because it's buffered, it
 returns immediately, long before the =timeout= could expire.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan 1)
           a (alts!! ; outputs a [val port] pair; throw away the val
                     ; here are the two channels for `alts!!`
@@ -994,10 +993,10 @@ returns immediately, long before the =timeout= could expire.
 
 #+RESULTS:
 : {:c
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x31ab9c82 "clojure.core.async.impl.channels.ManyToManyChannel@31ab9c82"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x247b5d2f "clojure.core.async.impl.channels.ManyToManyChannel@247b5d2f"],
 :  :a
 :  [true
-:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x31ab9c82 "clojure.core.async.impl.channels.ManyToManyChannel@31ab9c82"]]}
+:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x247b5d2f "clojure.core.async.impl.channels.ManyToManyChannel@247b5d2f"]]}
 : {:d-returns 43}
 
 But, if we take away the buffer, the =timeout= channel wins. The only
@@ -1005,7 +1004,7 @@ difference to the above is that instead of creating =c= via =(chan 1)=,
 that is, with a buffer of length $1$, we create it with no buffer (and
 we quoted out the blocking read of =d= with a tick mark).
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (let [c (chan)
           a (alts!! ; outputs a [val port] pair; throw away the val
                     ; here are the two channels for `alts!!`
@@ -1019,11 +1018,11 @@ we quoted out the blocking read of =d= with a tick mark).
 
 #+RESULTS:
 : {:c
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x278676f7 "clojure.core.async.impl.channels.ManyToManyChannel@278676f7"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x35d803a4 "clojure.core.async.impl.channels.ManyToManyChannel@35d803a4"],
 :  :a
 :  [nil
-:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x6b870646 "clojure.core.async.impl.channels.ManyToManyChannel@6b870646"]]}
-: {:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5236acde clojure.core.async.impl.channels.ManyToManyChannel@5236acde]}
+:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x45873142 "clojure.core.async.impl.channels.ManyToManyChannel@45873142"]]}
+: {:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x49d02e91 clojure.core.async.impl.channels.ManyToManyChannel@49d02e91]}
 
 * ASYNC DATA STREAMS
   :PROPERTIES:
@@ -1038,21 +1037,23 @@ documentation for =close!= here
 https://clojure.github.io/core.async/api-index.html#C. To prevent the
 leak permanently, we close the channel explicitly.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (def echo-chan (chan))
 
     (doseq   [z zs] (go (Thread/sleep (rand 100)) (>! echo-chan z)))
     (dotimes [_ 3] (println (<!! echo-chan)))
 
-    (println {:echo-chan-closed? (clojure.core.async.impl.protocols/closed? echo-chan)})
+    (println {:echo-chan-closed?
+              (clojure.core.async.impl.protocols/closed? echo-chan)})
     (close! echo-chan)
-    (println {:echo-chan-closed? (clojure.core.async.impl.protocols/closed? echo-chan)})
+    (println {:echo-chan-closed?
+              (clojure.core.async.impl.protocols/closed? echo-chan)})
 #+END_SRC
 
 #+RESULTS:
 : 0.0592247
-: -0.315044
-: 0.16301
+: -0.676357
+: 0.828305
 : {:echo-chan-closed? false}
 : {:echo-chan-closed? true}
 
@@ -1060,7 +1061,7 @@ We can chain channels, again with leaks that we explicitly close. Also, we must
 not =>!= (send) a nil to =repl-chan=, and =<!= can produce nil from =echo-chan=
 after the timeout and we close =echo-chan=.
 
-#+begin_src clojure :results output
+#+begin_src clojure :results output :exports both
 (clojure.repl/doc <!)
 #+end_src
 
@@ -1074,7 +1075,7 @@ after the timeout and we close =echo-chan=.
 Every time you run the block of code below, you will probably get a different
 result, by design.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (def echo-chan (chan))
     (def repl-chan (chan))
 
@@ -1104,15 +1105,15 @@ result, by design.
 #+END_SRC
 
 #+RESULTS:
-: -0.0121089
-: 0.0592247
+: -0.324796
+: -1.48014
 : -0.676357
 
 Reading from =echo-chan= may hang the UI thread because the UI thread
 races the internal =go= thread that reads =echo-chan=, but the timeout trick
 works here as above.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (def echo-chan (chan))
     (def repl-chan (chan))
 
@@ -1134,7 +1135,7 @@ works here as above.
 =println= on a =go= pseudoprocess works if we wait long enough. This, of
 course, is bad practice or "code smell."
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (def echo-chan (chan))
 
     (doseq   [z zs] (go (Thread/sleep (rand 100)) (>! echo-chan z)))
@@ -1145,9 +1146,9 @@ course, is bad practice or "code smell."
 #+END_SRC
 
 #+RESULTS:
-: 0.0592247
-: -0.676357
-: -0.315044
+: 0.828305
+: -1.48014
+: -0.178654
 
 ** ASYNC RUNNING MEAN
    :PROPERTIES:
@@ -1169,7 +1170,7 @@ In this style of programming, the asynchronous stream might sometimes be
 called a /functor/, which is anything that's mappable, anything you can
 =map= over.
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (defn async-randomized-scan [zs mapper effector]
         (let [transducer (map mapper)
               ; give buffer length if there is a transducer
@@ -1184,16 +1185,16 @@ called a /functor/, which is anything that's mappable, anything you can
 
 #+RESULTS:
 #+begin_example
-{:count 1, :mean 0.0592247, :datum 0.0592247}
-{:count 2, :mean -0.13278565, :datum -0.324796}
-{:count 3, :mean 0.18757789999999994, :datum 0.828305}
-{:count 4, :mean -0.07385757500000004, :datum -0.858164}
-{:count 5, :mean -0.02648406000000003, :datum 0.16301}
-{:count 6, :mean -0.024088200000000025, :datum -0.0121089}
-{:count 7, :mean -0.0656533142857143, :datum -0.315044}
-{:count 8, :mean -0.07977840000000001, :datum -0.178654}
-{:count 9, :mean -0.23537413333333335, :datum -1.48014}
-{:count 10, :mean -0.27947242, :datum -0.676357}
+{:count 1, :mean -0.315044, :datum -0.315044}
+{:count 2, :mean -0.24684899999999999, :datum -0.178654}
+{:count 3, :mean -0.45062066666666667, :datum -0.858164}
+{:count 4, :mean -0.50705475, :datum -0.676357}
+{:count 5, :mean -0.7016718, :datum -1.48014}
+{:count 6, :mean -0.5575581666666667, :datum 0.16301}
+{:count 7, :mean -0.3595777142857143, :datum 0.828305}
+{:count 8, :mean -0.35523, :datum -0.324796}
+{:count 9, :mean -0.3171054333333333, :datum -0.0121089}
+{:count 10, :mean -0.27947241999999994, :datum 0.0592247}
 #+end_example
 
 We don't need to explicitly say =buffer=, but I prefer to do.
@@ -1217,7 +1218,7 @@ the case of =::sow=, it returns an =effector= function that =conj='s its
 input to the internal result atomically. In the case of =::reap=, it
 returns the value of the result accumulated so-far.
 
-#+BEGIN_SRC clojure :results value
+#+BEGIN_SRC clojure :results value :exports both
 (do (defn make-sow-reap []
         (let [result (atom [])]
             (fn [msg]
@@ -1235,10 +1236,10 @@ returns the value of the result accumulated so-far.
 #+END_SRC
 
 #+RESULTS:
-| :count | 10 | :mean | -0.27947242 | :datum | 0.16301 |
+| :count | 10 | :mean | -0.27947242 | :datum | -0.858164 |
 
 Occasionally, there is some floating-point noise in the very low digits
-of the mean because =async-randomized-scan= scrambles the order of the
+of the mean because async-randomized-scan scrambles the order of the
 inputs. The mean should always be almost equal to $-0.27947242$.
 
 *** DEFN ASYNC NON RANDOM SCAN
@@ -1250,7 +1251,7 @@ Of course, the =mean= of any permutation of the data =zs= is the same,
 so the order in which data arrive does not change the final result,
 except for some occasional floating-point noise as mentioned above.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
 (do (defn async-non-random-scan [zs mapper effector]
         (let [transducer (map mapper)
               echo-chan (chan (buffer 1) transducer)]
@@ -1286,7 +1287,7 @@ Our =xform= is =transducer=, or =(map mapper)=, and our =f= is =conj=,
 so this is an idiom for mapping because =(conj)=, with no arguments,
 returns =[]=, an appropriate =init=.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
 (do (defn sync-scan [zs mapper]
         (let [transducer (map mapper)]
             (transduce transducer conj zs)))
@@ -1327,7 +1328,7 @@ sample. The outer constant, $1/(N-1)$ is [[https://en.wikipedia.org/wiki/Bessel%
 The following is /brute-force/ in the sense that it requires all data
 up-front so that it can calculate the mean.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
 (do (defn ssr [sequ]
         (let [m (mean sequ)]
             (reduce #(+ %1 (* (- %2 m) (- %2 m)))
@@ -1345,7 +1346,7 @@ up-front so that it can calculate the mean.
 
 Call =ssr= to compute variance:
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure  :exports both
     (do
     (defn variance [sequ]
         (let [n (count sequ)]
@@ -1366,7 +1367,7 @@ Call =ssr= to compute variance:
 
 Let's do a smaller example:
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure  :exports both
 (do (def z2s [55. 89. 144.])
     (variance z2s)   )
 #+END_SRC
@@ -1435,7 +1436,7 @@ Of course, the same mapper works synchronously and asynchronously.
 
 and test it both synchronously and asynchronously, randomized and not:
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (defn make-school-stats-mapper []
         (let [running-stats (atom {:count 0, :mean 0,
                                    :variance 0, :ssq 0})]
@@ -1444,7 +1445,7 @@ and test it both synchronously and asynchronously, randomized and not:
                       n+1 (inc n)
                       K   (/ 1.0 n+1)
                       r   (- z x)
-                      x'  (+ x (* K r)) ;; Isn't it nice we can use prime notation?
+                      x'  (+ x (* K r)) ;; Isn't prime notation nice?
                       s'  (+ s (* z z))]
                     (swap! running-stats conj
                            [:count    n+1]
@@ -1464,8 +1465,8 @@ and test it both synchronously and asynchronously, randomized and not:
 : [{:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
 :  {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
 :  {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}]
-: {:count 1, :mean 89.0, :variance 0.0, :ssq 7921.0}
-: {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
+: {:count 1, :mean 144.0, :variance 0.0, :ssq 20736.0}
+: {:count 2, :mean 99.5, :variance 3960.5, :ssq 23761.0}
 : {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}
 : {:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
 : {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
@@ -1488,7 +1489,7 @@ be less pretty.
 
 $$v\leftarrow\frac{\left(n-1\right)v+K\,n\,\left(z-x\right)^2}{\max(1,n)}$$
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (defn make-recurrent-stats-mapper []
         (let [running-stats (atom {:count 0, :mean 0,
                                    :variance 0})]
@@ -1529,7 +1530,7 @@ However, it is easier to remember!
 
 $$S\leftarrow{S} + \left(z-x_N\right)\left(z-x_{N+1}\right)=S+\left(z-x\right)\left(z-\left(x+K\,\left(z-x\right)\right)\right)$$
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
 (do (defn make-welfords-stats-mapper []
         (let [running-stats (atom {:count 0, :mean 0, :variance 0})]
             (fn [z]
@@ -1606,8 +1607,7 @@ right-hand sides of equations 10 and 13. Those equations are simply
 transformations of the posteriors (values with primes) $m'$, $m'_j$,
 $v'$, and $v'_j$.
 
-$$
-\begin{align}
+\begin{align*}
 j     &= \max(0,n+1-w)               \\
 u     &= n-j+1                       \\
 m'    &= m+\frac{z-m}{n+1}           \\
@@ -1622,14 +1622,14 @@ v'_j  &= \begin{cases}
   0 & \mathrm{otherwise}
 \end{cases}                                                           \\
 v'_w  &= \frac{n\,v'+(n-w)\,v'_j+(n+1)\,{m'}^2-j\,{m'_j}^2-u\,{m'_w}^2}{\max(1,u-1)}
-\end{align}
-$$
+\end{align*}
 
 Here is sample data we can compare with the unit test above.
 
 ** DEF Z3S: MORE SAMPLE DATA
 #+BEGIN_SRC clojure :results none
-    (def z3s [0.857454, 0.312454, 0.705325, 0.839363, 1.63781, 0.699257, -0.340016, -0.213596, -0.0418609, 0.054705])
+    (def z3s [0.857454,  0.312454,  0.705325,  0.8393630, 1.637810,
+              0.699257, -0.340016, -0.213596, -0.0418609, 0.054705])
 #+END_SRC
 
 The best algorithm we have found for tracking historical data is to keep
@@ -1646,7 +1646,7 @@ the length of the data stream.
 
 ** DEFN MAKE SLIDING STATS MAPPER
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (defn make-sliding-stats-mapper [w]
         (let [running-stats (atom {:n 0, :m 0, :v 0,
                                    :win (vec (repeat w 0)),
@@ -1762,7 +1762,7 @@ Smoke test:
     (ccm/set-current-implementation :vectorz)
 #+END_SRC
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (ccm/shape
         (ccm/array [[1 2 3]
                     [1 3 8]
@@ -1774,7 +1774,7 @@ Smoke test:
 
 Bits and pieces we will need:
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (ccm/transpose
         (ccm/array [[1 2 3]
                     [1 3 8]
@@ -1789,7 +1789,7 @@ Bits and pieces we will need:
 =mmul= is multiadic (takes more than two arguments). This is possible
 because matrix multiplication is associative.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (let [A (ccm/array [[1 2 3]
                         [1 3 8]
                         [2 7 4]])]
@@ -1815,7 +1815,7 @@ because matrix multiplication is associative.
         (map (fn [x] (+ a (* x d))) (range n))))
 #+END_SRC
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (clojure.pprint/pprint (linspace 2 3. 3))
 #+END_SRC
 
@@ -1824,7 +1824,7 @@ because matrix multiplication is associative.
 
 ** DEFN SYMMETRIC PART
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
 (do (defn symmetric-part [M]
         (ccm/div (ccm/add M (ccm/transpose M)) 2.0))
     (symmetric-part [[1 2 3]
@@ -1839,7 +1839,7 @@ because matrix multiplication is associative.
 
 ** DEFN ANTI-SYMMETRIC PART
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
 (do (defn anti-symmetric-part [M]
         (ccm/div (ccm/sub M (ccm/transpose M)) 2.0))
     (anti-symmetric-part [[1 2 3]
@@ -1852,7 +1852,7 @@ because matrix multiplication is associative.
 | -0.5 |  0.0 | 0.5 |
 | -0.5 | -0.5 | 0.0 |
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (let [M [[1 2 3]
              [1 3 8]
              [2 7 4]]]
@@ -1879,7 +1879,7 @@ The following isn't the best solution: neither relative nor absolute differences
 are robust. Units in Last Place (ULP) are a better criterion, however, this will
 unblock us for now.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
 (do  (defn matrix-almost=
         ([m1 m2 eps]
          "Checks for near equality against a given absolute difference."
@@ -1921,7 +1921,7 @@ unblock us for now.
 
 The library (like many others) is loose about matrices times vectors.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (ccm/mmul
         (ccm/matrix [[1 2 3]
                      [1 3 8]
@@ -1936,7 +1936,7 @@ Pedantically, a matrix should only be allowed to left-multiply a column
 vector, i.e., a $1\times{3}$ matrix. The Clojure library handles this
 case.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (ccm/mmul
         (ccm/matrix [[1 2 3]
                      [1 3 8]
@@ -1951,7 +1951,7 @@ case.
 
 Non-pedantic multiplication of a vector on the right by a matrix:
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (ccm/mmul
         (ccm/array [22 23 42])
         (ccm/matrix [[1 2 3]
@@ -1964,7 +1964,7 @@ Non-pedantic multiplication of a vector on the right by a matrix:
 
 Pedantic multiplication of a row vector on the right by a matrix:
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (ccm/mmul
         (ccm/array [[22 23 42]])
         (ccm/matrix [[1 2 3]
@@ -1986,7 +1986,7 @@ $\boldsymbol{x}$, you should compute
 $\boldsymbol{A}^{-1}\boldsymbol{b}$. Don't do this; the inverse is
 numerically risky and almost never needed:
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (ccm/mmul
         (ccm/inverse
             (ccm/array [[1 2 3]
@@ -2004,7 +2004,7 @@ $\text{solve}(\boldsymbol{A},\boldsymbol{b})$. You will get a more
 stable answer. Notice the difference in the low-significance digits
 below. The following is a more reliable answer:
 
-#+BEGIN_SRC clojure :results none
+#+BEGIN_SRC clojure :results none :exports both
     (require '[clojure.core.matrix.linear :as ccml])
 #+END_SRC
 
@@ -2019,7 +2019,7 @@ below. The following is a more reliable answer:
 #+RESULTS:
 : #vectorz/vector [22.058823529411764,-0.4705882352941176,0.2941176470588236]
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (ccml/solve
         (ccm/matrix [[1 2 3]
                     [1 3 8]
@@ -2030,7 +2030,7 @@ below. The following is a more reliable answer:
 #+RESULTS:
 : #vectorz/vector [22.058823529411764,-0.4705882352941176,0.2941176470588236]
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (ccm/shape (ccm/matrix [[22] [23] [42]]))
 #+END_SRC
 
@@ -2055,7 +2055,7 @@ We need =solve= to work on matrices:
       (ccm/transpose (mapv (partial ccml/solve Ann) (ccm/transpose Bnm))))
 #+END_SRC
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (solve-matrix
         (ccm/matrix [[1 2 3]
                     [1 3 8]
@@ -2068,7 +2068,7 @@ We need =solve= to work on matrices:
 | -0.4705882352941176 |
 |  0.2941176470588236 |
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     (solve-matrix
         (ccm/matrix [[1 2 3]
                      [1 3 8]
@@ -2160,13 +2160,16 @@ The steps are:
                     Rmm (similarity-transform Hmn P'nn)) ; Gain precursor
             DTmm   (ccm/transpose Dmm)                   ; Support for "solve"
             HP'Tmn (ccm/mmul Hmn (ccm/transpose P'nn))   ; Support for "solve"
-            KTmn   (solve-matrix DTmm HP'Tmn)            ; Eqn 3 of http://vixra.org/abs/1606.0328
+            ; Eqn 3 of http://vixra.org/abs/1606.0328:
+            KTmn   (solve-matrix DTmm HP'Tmn)
             Knm    (ccm/transpose KTmn)                  ; Kalman gain
-            rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))    ; innovation = predicted obn residual
+            ; innovation = predicted obn residual
+            rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))
             x''n1  (ccm/add x'n1 (ccm/mmul Knm rm1))     ; final corrected estimate
             n      (ccm/dimension-count xn1 0)
-            Lnn    (ccm/sub (ccm/identity-matrix n)      ; Support for new covariance ...
-                            (ccm/mmul Knm Hmn))          ; ...  ? catastrophic cancellation ?
+            ; new covariance ? catastrophic cancellation ?
+            Lnn    (ccm/sub (ccm/identity-matrix n)
+                            (ccm/mmul Knm Hmn))
             P''nn  (ccm/mmul Lnn P'nn)]                  ; New covariance
 
           {:xn1 x''n1, :Pnn P''nn}))
@@ -2236,15 +2239,15 @@ for /observation/.
               )))
 #+END_SRC
 
-#+BEGIN_SRC clojure :results output
+#+BEGIN_SRC clojure :results output :exports both
     (clojure.pprint/pprint (reduce kalman-update state-cluster-prior obn-clusters))
 #+END_SRC
 
 #+RESULTS:
-: {:xn1 #vectorz/matrix [[-4.918270782577931],
-: [-3.817896034750373],
-: [8.404512594337637],
-: [-3.4309909818992774]],
+: {:xn1 #vectorz/matrix [[-4.951034346887338],
+: [-4.385574755471751],
+: [8.535893780887523],
+: [-2.872500567323339]],
 :  :Pnn
 :  #vectorz/matrix [[0.03208215055213958,-5.478256737134757E-15,-0.0874691388122202,-8.770761894538737E-15],
 : [-2.3568386825489895E-15,0.03637145347999561,-5.2632377622874316E-14,-0.05541947257604415],
@@ -2265,7 +2268,7 @@ transducer and bang on an asynchronous stream of data. This only needs
 error handling to be deployable at scale. Not to minimize error
 handling: it's a big but separable engineering task.
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
 (do (defn make-kalman-mapper [{:keys [xn1 Pnn]}]
         ;; let-over-lambda (LOL); here are the Bayesian priors
         (let [estimate-and-covariance (atom {:xn1 xn1, ;; prior-estimate
@@ -2282,13 +2285,16 @@ handling: it's a big but separable engineering task.
                 Rmm (similarity-transform Hmn P'nn)) ; Gain precursor
         DTmm   (ccm/transpose Dmm)                   ; Support for "solve"
         HP'Tmn (ccm/mmul Hmn (ccm/transpose P'nn))   ; Support for "solve"
-        KTmn   (solve-matrix DTmm HP'Tmn)            ; Eqn 3 of http://vixra.org/abs/1606.0328
+        ; Eqn 3 of http://vixra.org/abs/1606.0328
+        KTmn   (solve-matrix DTmm HP'Tmn)
         Knm    (ccm/transpose KTmn)                  ; Kalman gain
-        rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))    ; innovation = predicted obn residual
+        ; innovation = predicted obn residual
+        rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))
         x''n1  (ccm/add x'n1 (ccm/mmul Knm rm1))     ; final corrected estimate
         n      (ccm/dimension-count xn1 0)
-        Lnn    (ccm/sub (ccm/identity-matrix n)      ; Support for new covariance ...
-                        (ccm/mmul Knm Hmn))          ; ...  ? catastrophic cancellation ?
+        ; new covariance ? catastrophic cancellation ?
+        Lnn    (ccm/sub (ccm/identity-matrix n)
+                        (ccm/mmul Knm Hmn))
         P''nn  (ccm/mmul Lnn P'nn)]
                         (swap! estimate-and-covariance conj
                                [:xn1 x''n1]
@@ -2312,13 +2318,13 @@ handling: it's a big but separable engineering task.
 #+END_SRC
 
 #+RESULTS:
-: '(:xn1 #vectorz/matrix ((-4.91827078257766)
-: (-3.81789603475064)
-: (8.404512594337113)
-: (-3.430990981898998))  :Pnn #vectorz/matrix ((0.03208215055225116 -1.9319019040758834E-13 -0.0874691388123033 9.480914317516742E-14)
-: (-2.275854692554294E-13 0.03637145348033692 1.7958339215652305E-13 -0.05541947257625426)
-: (-0.08746913881224329 5.680959175302647E-14 0.28222493725719067 -1.499494972634352E-14)
-: (9.145388981703084E-14 -0.055419472576223414 -5.673922703203216E-14 0.15110531309511158)))
+: '(:xn1 #vectorz/matrix ((-4.951034346887225)
+: (-4.385574755471978)
+: (8.53589378088752)
+: (-2.8725005673232697))  :Pnn #vectorz/matrix ((0.03208215055214633 -1.0908266477593909E-14 -0.08746913881224175 9.250196095211827E-15)
+: (-9.379553272850609E-15 0.03637145347998078 1.3160486426761625E-14 -0.055419472576076614)
+: (-0.08746913881224465 1.869598226234004E-14 0.28222493725725833 -1.5621184901171148E-14)
+: (7.270524243416232E-15 -0.05541947257607517 -1.1181702265494753E-14 0.15110531309504466)))
 
 * OZ FOR VISUALIZATION
     :PROPERTIES:
@@ -2336,7 +2342,7 @@ https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
 
 ** DEFN PLAY DATA
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
 (do (defn play-data [& names]
       (for [n names
             i (range 20)]
@@ -2354,9 +2360,9 @@ https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
 #+END_SRC
 
 #+RESULTS:
-: #object[oz.notebook.clojupyter$view_BANG_$reify__21517 0xb6d4953 "oz.notebook.clojupyter$view_BANG_$reify__21517@b6d4953"]
+: #object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x62ae5229 "oz.notebook.clojupyter$view_BANG_$reify__21517@62ae5229"]
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both
     ;; Create spec, then visualize
     (def spec
       {:data {:url "https://gist.githubusercontent.com/metasoarous/4e6f781d353322a44b9cd3e4597c532c/raw/cd633d9bb8e0bed4a5b8e66a32b9569ca2147989/cars.json"}
@@ -2369,9 +2375,9 @@ https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
 #+END_SRC
 
 #+RESULTS:
-: #'composable-statistics.core/spec#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x24e9799b "oz.notebook.clojupyter$view_BANG_$reify__21517@24e9799b"]
+: #'composable-statistics.core/spec#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x1abb4c27 "oz.notebook.clojupyter$view_BANG_$reify__21517@1abb4c27"]
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure  :exports both
     (oz/view!
       [:div
        [:h1 "A little hiccup example"]
@@ -2382,7 +2388,7 @@ https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
 #+END_SRC
 
 #+RESULTS:
-: #object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x1c21218c "oz.notebook.clojupyter$view_BANG_$reify__21517@1c21218c"]
+: #object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x34141318 "oz.notebook.clojupyter$view_BANG_$reify__21517@34141318"]
 
 * GAUSSIAN PROCESSES
   :PROPERTIES:

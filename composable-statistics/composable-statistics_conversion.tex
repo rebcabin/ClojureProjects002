@@ -1,4 +1,4 @@
-% Created 2019-05-21 Tue 17:37
+% Created 2019-05-21 Tue 19:08
 % Intended LaTeX compiler: pdflatex
 \documentclass[10pt,oneside,x11names]{article}
 \usepackage[utf8]{inputenc}
@@ -55,15 +55,30 @@
 
 \section{COMPOSABLE STATISTICS}
 \label{composable-statistics}
-\textbf{Brian Beckman}
+\subsection{{\bfseries\sffamily TODO} TANGLE, NOWEB}
+\label{sec:org892bc94}
 
-\textbf{June 2017} - \textbf{June 2019}
+This will become a fully literate program via org-babel \texttt{tangle} and
+\texttt{noweb}. At present, it is an org file converted directly from an old
+iPython (Jupyter) notebook. Jupyter proved not to scale well.
+
+\subsection{{\bfseries\sffamily TODO} GRAPHICS}
+\label{sec:orgd712c71}
+
+We still
+have to work out how to embed graphics in this file.
 
 \subsection{CLOJURE}
 \label{clojure}
 We prefer Clojure to Python for this exercise due to Clojure's
 concurrency primitives, especially atoms and core.async. Python is
 growing and improving rapidly, so we may return to it someday.
+
+\subsubsection{{\bfseries\sffamily TODO} PROJECT.CLJ}
+\label{sec:orga3f775e}
+
+At present, the critical file \texttt{project.clj} is external to this
+document. It will be one of the first to tangle.
 
 The best sites for learning Clojure by example are
 \href{http://clojuredocs.org}{clojuredocs.org} and
@@ -72,20 +87,12 @@ The best sites for learning Clojure by example are
 
 \subsection{{\bfseries\sffamily TODO} HOW TO USE THIS DOCUMENT}
 \label{how-to-use-this-document}
-This document is adapted from an original Jupyter notebook. I moved to
-org-mode after a catastrophic failure of Jupyter. I decided it was more
-worthwhile to start again from org-mode than from Jupyter.
-
 Explain how to run Clojure code inside an org-mode buffer, how to tangle and
 weave, etc.
-
 
 \begin{enumerate}
 \item Install leiningen \url{https://leiningen.org/} (this is all you need for Clojure)
 \end{enumerate}
-
-Consider doing all Python work in \href{https://pipenv.readthedocs.io/}{pipenv}. It keeps virtual environments outside
-your local folders. It works for this \texttt{clojupyter} notebook as well.
 
 \section{INTRODUCTION}
 \label{introduction}
@@ -106,7 +113,7 @@ Some sample scalar data:
 \end{verbatim}
 
 \subsection{TODO: GENERATE NEW RANDOM DATA}
-\label{sec:org0cce010}
+\label{sec:orge40f95a}
 
 \section{RUNNING COUNT}
 \label{running-count}
@@ -122,11 +129,22 @@ inputs.
     zs)                            ; space sequence
 \end{verbatim}
 
+\begin{verbatim}
+10
+\end{verbatim}
+
+
 \ldots{} with all intermediate results:
 
 \begin{verbatim}
 (reductions (fn [c z] (inc c)) 0 zs)
 \end{verbatim}
+
+\begin{center}
+\begin{tabular}{rrrrrrrrrrr}
+0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+\end{tabular}
+\end{center}
 
 \subsection{THREAD-SAFE}
 \label{thread-safe}
@@ -160,6 +178,11 @@ We get rid of this defect later.
         zs))
 \end{verbatim}
 
+\begin{verbatim}
+10
+\end{verbatim}
+
+
 Showing all intermediate results:
 
 \begin{verbatim}
@@ -172,6 +195,12 @@ Showing all intermediate results:
         initial-count
         zs))
 \end{verbatim}
+
+\begin{center}
+\begin{tabular}{rrrrrrrrrrr}
+0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+\end{tabular}
+\end{center}
 
 \subsection{AVOIDING \emph{REDUCE}}
 \label{avoiding-reduce}
@@ -201,6 +230,10 @@ environment through \texttt{print}. We get rid of that, too,
                 (swap! running-count inc)
                 (print (str @running-count " "))))
         zs))
+\end{verbatim}
+
+\begin{verbatim}
+1 2 3 4 5 6 7 8 9 10
 \end{verbatim}
 
 \section{RUNNING MEAN}
@@ -251,6 +284,19 @@ $$x_{n+1}=x_n+K(n)\,(z_{n+1}-x_n)$$
         zs))
 \end{verbatim}
 
+\begin{verbatim}
+{:count 1, :mean -0.178654}
+{:count 2, :mean 0.3248255}
+{:count 3, :mean 0.2362919}
+{:count 4, :mean 0.1741917}
+{:count 5, :mean -0.15667464000000003}
+{:count 6, :mean -0.18306953333333337}
+{:count 7, :mean -0.20331617142857145}
+{:count 8, :mean -0.262446275}
+{:count 9, :mean -0.21517335555555556}
+{:count 10, :mean -0.27947242}
+\end{verbatim}
+
 The \texttt{swap} above calls \texttt{conj} on the current contents of the atom
 \texttt{running-stats} and on the rest of the arguments, namely
 \texttt{[:count n+1, :mean ...]}. \texttt{conj} is the idiom for ``updating'' a hashmap,
@@ -282,6 +328,19 @@ clean up the line that does the printing.
 (clojure.pprint/pprint (map (make-running-stats-mapper) zs))
 \end{verbatim}
 
+\begin{verbatim}
+({:count 1, :mean -0.178654, :datum -0.178654}
+ {:count 2, :mean 0.3248255, :datum 0.828305}
+ {:count 3, :mean 0.2362919, :datum 0.0592247}
+ {:count 4, :mean 0.1741917, :datum -0.0121089}
+ {:count 5, :mean -0.15667464000000003, :datum -1.48014}
+ {:count 6, :mean -0.18306953333333337, :datum -0.315044}
+ {:count 7, :mean -0.20331617142857145, :datum -0.324796}
+ {:count 8, :mean -0.262446275, :datum -0.676357}
+ {:count 9, :mean -0.21517335555555556, :datum 0.16301}
+ {:count 10, :mean -0.27947242, :datum -0.858164})
+\end{verbatim}
+
 \subsection{NUMERICAL CHECK}
 \label{numerical-check}
 The last value of the running mean is \(-0.279...42\). Check that against
@@ -289,11 +348,15 @@ an independent calculation.
 
 \begin{enumerate}
 \item DEFN MEAN
-\label{sec:org908c085}
+\label{sec:orgfa68b63}
 
 \begin{verbatim}
 (defn mean [zs] (/ (reduce + zs) (count zs)))
 (println (mean zs))
+\end{verbatim}
+
+\begin{verbatim}
+-0.27947242
 \end{verbatim}
 \end{enumerate}
 
@@ -363,6 +426,11 @@ is needed.
     (close! c))        ;; idiom; may be harmless overkill
 \end{verbatim}
 
+\begin{verbatim}
+42
+\end{verbatim}
+
+
 In general, single-bang forms work on \texttt{go} pseudothreads, and
 double-bang forms work on real, heavyweight, Java threads like the
 UI/REPL thread behind this notebook. In the rest of this notebook,
@@ -385,6 +453,22 @@ The \texttt{go} form itself returns a channel:
 (clojure.repl/doc go)
 \end{verbatim}
 
+\begin{verbatim}
+-------------------------
+clojure.core.async/go
+([& body])
+Macro
+  Asynchronously executes the body, returning immediately to the
+  calling thread. Additionally, any visible calls to <!, >! and alt!/alts!
+  channel operations within the body will block (if necessary) by
+  'parking' the calling thread rather than tying up an OS thread (or
+  the only JS thread when in ClojureScript). Upon completion of the
+  operation, the body will be resumed.
+
+  Returns a channel which will receive the result of the body when
+  completed
+\end{verbatim}
+
 I believe ``the calling thread'' above refers to a pseudothread inside the
 \texttt{go} real-thread, but I am not sure because of the ambiguities in the
 official documentation between ``blocking'' and ``parking'' and between
@@ -401,11 +485,35 @@ Is the channel returned by \texttt{go} the same channel as \texttt{c}?
     (println {:close-c (close! c)}))
 \end{verbatim}
 
+\begin{verbatim}
+{:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3cf6790b clojure.core.async.impl.channels.ManyToManyChannel@3cf6790b]}
+{:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x319e369a clojure.core.async.impl.channels.ManyToManyChannel@319e369a]}
+{:c-coughs-up 42}
+{:close-c nil}
+\end{verbatim}
+
+
 No, \texttt{c} is a different channel from the one returned by \texttt{go}. Consult
 the documentation for \texttt{go} once more:
 
 \begin{verbatim}
 (clojure.repl/doc go)
+\end{verbatim}
+
+\begin{verbatim}
+-------------------------
+clojure.core.async/go
+([& body])
+Macro
+  Asynchronously executes the body, returning immediately to the
+  calling thread. Additionally, any visible calls to <!, >! and alt!/alts!
+  channel operations within the body will block (if necessary) by
+  'parking' the calling thread rather than tying up an OS thread (or
+  the only JS thread when in ClojureScript). Upon completion of the
+  operation, the body will be resumed.
+
+  Returns a channel which will receive the result of the body when
+  completed
 \end{verbatim}
 
 We should be able to read from the channel returned by \texttt{go}; call it
@@ -422,6 +530,11 @@ We should be able to read from the channel returned by \texttt{go}; call it
     (close! d))
 \end{verbatim}
 
+\begin{verbatim}
+{:c-coughs-up 42, :d-coughs-up true}
+\end{verbatim}
+
+
 \texttt{d}'s coughing up \texttt{true} means that the body of the \texttt{go}, namely
 \texttt{(>! c 42)} must have returned \texttt{true}, because \texttt{d} coughs up ``the result
 of the body when completed.'' Let's see whether our deduction matches
@@ -430,6 +543,16 @@ documentation for \texttt{>!}:
 \begin{verbatim}
 (clojure.repl/doc >!)
 \end{verbatim}
+
+\begin{verbatim}
+-------------------------
+clojure.core.async/>!
+([port val])
+  puts a val into port. nil values are not allowed. Must be called
+  inside a (go ...) block. Will park if no buffer space is available.
+  Returns true unless port is already closed.
+\end{verbatim}
+
 
 Sure enough. But something important is true and not obvious from this
 documentation. Writing to \texttt{c} inside the \texttt{go} block parks the
@@ -454,6 +577,18 @@ thread?
     (close! d)
     (close! e))
 \end{verbatim}
+
+\begin{verbatim}
+{:c-channel
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1646c8b9 "clojure.core.async.impl.channels.ManyToManyChannel@1646c8b9"],
+ :d-channel
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x2572d097 "clojure.core.async.impl.channels.ManyToManyChannel@2572d097"],
+ :e-channel
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x668b86b1 "clojure.core.async.impl.channels.ManyToManyChannel@668b86b1"],
+ :e-coughs-up 42,
+ :d-coughs-up true}
+\end{verbatim}
+
 
 Yes, the pseudothread that parked when \(42\) is put on \texttt{c} via \texttt{>!}
 unparks when \(42\) is taken off via \texttt{<!}. Channel \texttt{d} represents the
@@ -480,6 +615,17 @@ opposite order.
     (close! e))
 \end{verbatim}
 
+\begin{verbatim}
+{:c-channel
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5f6a8425 "clojure.core.async.impl.channels.ManyToManyChannel@5f6a8425"],
+ :d-channel
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x4de19338 "clojure.core.async.impl.channels.ManyToManyChannel@4de19338"],
+ :e-channel
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x56b8f382 "clojure.core.async.impl.channels.ManyToManyChannel@56b8f382"],
+ :e-coughs-up 42,
+ :d-coughs-up true}
+\end{verbatim}
+
 \subsubsection{PUTS BEFORE TAKES CONSIDERED RISKY}
 \label{puts-before-takes-considered-risky}
 \texttt{>!!}, by default, blocks if called too early on an unbuffered real
@@ -492,12 +638,35 @@ though not incorrect, about this fact.
 (clojure.repl/doc >!!)
 \end{verbatim}
 
+\begin{verbatim}
+-------------------------
+clojure.core.async/>!!
+([port val])
+  puts a val into port. nil values are not allowed. Will block if no
+  buffer space is available. Returns true unless port is already closed.
+\end{verbatim}
+
+
 When is ``no buffer space available?'' It turns out that the default
 channel constructor makes a channel with no buffer space allocated by
 default.
 
 \begin{verbatim}
 (clojure.repl/doc chan)
+\end{verbatim}
+
+\begin{verbatim}
+-------------------------
+clojure.core.async/chan
+([] [buf-or-n] [buf-or-n xform] [buf-or-n xform ex-handler])
+  Creates a channel with an optional buffer, an optional transducer
+  (like (map f), (filter p) etc or a composition thereof), and an
+  optional exception-handler.  If buf-or-n is a number, will create
+  and use a fixed buffer of that size. If a transducer is supplied a
+  buffer must be specified. ex-handler must be a fn of one argument -
+  if an exception occurs during transformation it will be called with
+  the Throwable as an argument, and any non-nil return value will be
+  placed in the channel.
 \end{verbatim}
 
 We can test the blocking-on-unbuffered case as follows. The following
@@ -525,6 +694,11 @@ argument to the call of \texttt{chan}.
     (close! c))
 \end{verbatim}
 
+\begin{verbatim}
+42
+\end{verbatim}
+
+
 The difference between the semantics of the prior two examples is not
 subtle: one hangs the kernel and the other does not. However, the
 difference in the syntax is subtle and easy to miss.
@@ -539,9 +713,14 @@ because the buffered write \texttt{(>!! c)} on the UI thread doesn't block:
     (close! c))
 \end{verbatim}
 
+\begin{verbatim}
+{:go-channel-coughs-up 42}
+\end{verbatim}
+
 \begin{enumerate}
-\item ORDER DOESN'T MATTER, SOMEIMES
-\label{order-doesnt-matter-someimes}
+\item ORDER DOESN'T MATTER, SOMETIMES
+\label{sec:orgbe28a28}
+
 We can do things backwards, reading before writing, even without a
 buffer. Read from channel \texttt{(<! c)} on the async \texttt{go} thread ``before''
 writing to \texttt{(>!! c 42)} on the REPL / UI thread. ``Before,'' here, of
@@ -557,11 +736,25 @@ course, means syntactically or lexically ``before,'' not temporally.
     (close! c) (close! d))
 \end{verbatim}
 
+\begin{verbatim}
+{:c-hangs (<!! c), :d-coughs-up 42, :what's-e true}
+\end{verbatim}
+
+
 Why did \texttt{>!!} produce \texttt{true}? Look at docs again:
 
 \begin{verbatim}
 (clojure.repl/doc >!!)
 \end{verbatim}
+
+\begin{verbatim}
+-------------------------
+clojure.core.async/>!!
+([port val])
+  puts a val into port. nil values are not allowed. Will block if no
+  buffer space is available. Returns true unless port is already closed.
+\end{verbatim}
+
 
 Ok, now I fault the documentation. \texttt{>!!} will block if there is no
 buffer space available \emph{and} if there is no \emph{rendezvous} available, that
@@ -588,6 +781,11 @@ explained above.
     (close! c) (close! d))
 \end{verbatim}
 
+\begin{verbatim}
+{:c-coughs-up (hangs (<!! c)), :d-coughs-up 42, :what's-e true, :what's-f (hangs (>!! c 43))}
+\end{verbatim}
+
+
 StackOverflow reveals a way to find out whether a channel is closed by
 peeking under the covers (\url{https://stackoverflow.com/questions/24912971}):
 
@@ -603,8 +801,13 @@ peeking under the covers (\url{https://stackoverflow.com/questions/24912971}):
     (close! c) (close! d))
 \end{verbatim}
 
+\begin{verbatim}
+{:c-coughs-up (hangs (<!! c)), :d-coughs-up 42, :c-is-open-at-e? true, :c-is-open-at-f? false}
+\end{verbatim}
+
 \item ORDER DOES MATTER, SOMETIMES
-\label{order-does-matter-sometimes}
+\label{sec:org703d1b0}
+
 Order does matter this time: Writing blocks the UI thread without a
 buffer and no parked read (rendezvous) in the \texttt{go} nebula beforehand. I
 hope you can predict that the following will block even before you run
@@ -691,6 +894,16 @@ returns immediately, long before the \texttt{timeout} could expire.
     (close! c))
 \end{verbatim}
 
+\begin{verbatim}
+{:c
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7fde4694 "clojure.core.async.impl.channels.ManyToManyChannel@7fde4694"],
+ :a
+ [true
+  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7fde4694 "clojure.core.async.impl.channels.ManyToManyChannel@7fde4694"]]}
+{:d-returns 43}
+\end{verbatim}
+
+
 But, if we take away the buffer, the \texttt{timeout} channel wins. The only
 difference to the above is that instead of creating \texttt{c} via \texttt{(chan 1)},
 that is, with a buffer of length \(1\), we create it with no buffer (and
@@ -706,6 +919,15 @@ we quoted out the blocking read of \texttt{d} with a tick mark).
         (println {:d-is d})
         '(println {:d-returns (<!! d)})) ;; blocks
     (close! c))
+\end{verbatim}
+
+\begin{verbatim}
+{:c
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x45064aec "clojure.core.async.impl.channels.ManyToManyChannel@45064aec"],
+ :a
+ [nil
+  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7d133eee "clojure.core.async.impl.channels.ManyToManyChannel@7d133eee"]]}
+{:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x11b15f44 clojure.core.async.impl.channels.ManyToManyChannel@11b15f44]}
 \end{verbatim}
 
 \section{ASYNC DATA STREAMS}
@@ -724,10 +946,21 @@ leak permanently, we close the channel explicitly.
 (doseq   [z zs] (go (Thread/sleep (rand 100)) (>! echo-chan z)))
 (dotimes [_ 3] (println (<!! echo-chan)))
 
-(println {:echo-chan-closed? (clojure.core.async.impl.protocols/closed? echo-chan)})
+(println {:echo-chan-closed?
+          (clojure.core.async.impl.protocols/closed? echo-chan)})
 (close! echo-chan)
-(println {:echo-chan-closed? (clojure.core.async.impl.protocols/closed? echo-chan)})
+(println {:echo-chan-closed?
+          (clojure.core.async.impl.protocols/closed? echo-chan)})
 \end{verbatim}
+
+\begin{verbatim}
+0.0592247
+-1.48014
+-0.315044
+{:echo-chan-closed? false}
+{:echo-chan-closed? true}
+\end{verbatim}
+
 
 We can chain channels, again with leaks that we explicitly close. Also, we must
 not \texttt{>!} (send) a nil to \texttt{repl-chan}, and \texttt{<!} can produce nil from \texttt{echo-chan}
@@ -736,6 +969,15 @@ after the timeout and we close \texttt{echo-chan}.
 \begin{verbatim}
 (clojure.repl/doc <!)
 \end{verbatim}
+
+\begin{verbatim}
+-------------------------
+clojure.core.async/<!
+([port])
+  takes a val from port. Must be called inside a (go ...) block. Will
+  return nil if closed. Will park if nothing is available.
+\end{verbatim}
+
 
 Every time you run the block of code below, you will probably get a different
 result, by design.
@@ -769,6 +1011,13 @@ result, by design.
 (close! repl-chan)
 \end{verbatim}
 
+\begin{verbatim}
+-0.315044
+-0.0121089
+0.828305
+\end{verbatim}
+
+
 Reading from \texttt{echo-chan} may hang the UI thread because the UI thread
 races the internal \texttt{go} thread that reads \texttt{echo-chan}, but the timeout trick
 works here as above.
@@ -787,6 +1036,13 @@ works here as above.
 (close! repl-chan)
 \end{verbatim}
 
+\begin{verbatim}
+nil
+nil
+nil
+\end{verbatim}
+
+
 \texttt{println} on a \texttt{go} pseudoprocess works if we wait long enough. This, of
 course, is bad practice or ``code smell.''
 
@@ -798,6 +1054,12 @@ course, is bad practice or ``code smell.''
 
 (Thread/sleep 500) ; no visible output if you remove this line.
 (close! echo-chan)
+\end{verbatim}
+
+\begin{verbatim}
+-0.676357
+-0.0121089
+-0.178654
 \end{verbatim}
 
 \subsection{ASYNC RUNNING MEAN}
@@ -825,6 +1087,19 @@ called a \emph{functor}, which is anything that's mappable, anything you can
         (close! echo-chan)))
 
 (async-randomized-scan zs (make-running-stats-mapper) println)
+\end{verbatim}
+
+\begin{verbatim}
+{:count 1, :mean 0.0592247, :datum 0.0592247}
+{:count 2, :mean -0.05971465, :datum -0.178654}
+{:count 3, :mean -0.04384606666666667, :datum -0.0121089}
+{:count 4, :mean 0.007867949999999999, :datum 0.16301}
+{:count 5, :mean -0.058664839999999996, :datum -0.324796}
+{:count 6, :mean -0.2955773666666667, :datum -1.48014}
+{:count 7, :mean -0.3759468857142857, :datum -0.858164}
+{:count 8, :mean -0.368334025, :datum -0.315044}
+{:count 9, :mean -0.23537413333333335, :datum 0.828305}
+{:count 10, :mean -0.27947242, :datum -0.676357}
 \end{verbatim}
 
 We don't need to explicitly say \texttt{buffer}, but I prefer to do.
@@ -862,8 +1137,14 @@ returns the value of the result accumulated so-far.
         (last (accumulator ::reap)))   )
 \end{verbatim}
 
+\begin{center}
+\begin{tabular}{lrlrlr}
+:count & 10 & :mean & -0.27947242 & :datum & -1.48014\\
+\end{tabular}
+\end{center}
+
 Occasionally, there is some floating-point noise in the very low digits
-of the mean because \texttt{async-randomized-scan} scrambles the order of the
+of the mean because async-randomized-scan scrambles the order of the
 inputs. The mean should always be almost equal to \(-0.27947242\).
 
 \subsubsection{DEFN ASYNC NON RANDOM SCAN}
@@ -885,6 +1166,12 @@ except for some occasional floating-point noise as mentioned above.
                                (accumulator ::sow))
         (last (accumulator ::reap)))   )
 \end{verbatim}
+
+\begin{center}
+\begin{tabular}{lrlrlr}
+:count & 10 & :mean & -0.27947242 & :datum & -0.858164\\
+\end{tabular}
+\end{center}
 
 \subsubsection{DEFN SYNC SCAN: WITH TRANSDUCER}
 \label{sync-scan-with-transducer}
@@ -909,6 +1196,12 @@ returns \texttt{[]}, an appropriate \texttt{init}.
 
     (last (sync-scan zs (make-running-stats-mapper)))   )
 \end{verbatim}
+
+\begin{center}
+\begin{tabular}{lrlrlr}
+:count & 10 & :mean & -0.27947242 & :datum & -0.858164\\
+\end{tabular}
+\end{center}
 
 We now have complete symmetry between space and time, space represented by the
 vector \texttt{zs} and time represented by values on \texttt{echo-chan} in random and in
@@ -939,6 +1232,10 @@ up-front so that it can calculate the mean.
     (ssr zs)   )
 \end{verbatim}
 
+\begin{verbatim}
+3.5566483654807355
+\end{verbatim}
+
 \subsubsection{DEFN VARIANCE}
 \label{variance}
 Call \texttt{ssr} to compute variance:
@@ -954,6 +1251,10 @@ Call \texttt{ssr} to compute variance:
 (variance zs)   )
 \end{verbatim}
 
+\begin{verbatim}
+0.3951831517200817
+\end{verbatim}
+
 \subsection{DEF Z2S: SMALLER EXAMPLE}
 \label{smaller-example}
 Let's do a smaller example:
@@ -961,6 +1262,10 @@ Let's do a smaller example:
 \begin{verbatim}
 (do (def z2s [55. 89. 144.])
     (variance z2s)   )
+\end{verbatim}
+
+\begin{verbatim}
+2017.0
 \end{verbatim}
 
 \subsection{REALLY DUMB RECURRENCE}
@@ -1023,7 +1328,7 @@ and test it both synchronously and asynchronously, randomized and not:
                   n+1 (inc n)
                   K   (/ 1.0 n+1)
                   r   (- z x)
-                  x'  (+ x (* K r)) ;; Isn't it nice we can use prime notation?
+                  x'  (+ x (* K r)) ;; Isn't prime notation nice?
                   s'  (+ s (* z z))]
                 (swap! running-stats conj
                        [:count    n+1]
@@ -1037,6 +1342,18 @@ and test it both synchronously and asynchronously, randomized and not:
 (async-randomized-scan z2s (make-school-stats-mapper) println)
 
 (async-non-random-scan z2s (make-school-stats-mapper) println)
+\end{verbatim}
+
+\begin{verbatim}
+[{:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
+ {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
+ {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}]
+{:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
+{:count 2, :mean 99.5, :variance 3960.5, :ssq 23761.0}
+{:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}
+{:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
+{:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
+{:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}
 \end{verbatim}
 
 \subsection{DEFN MAKE RECURRENT STATS MAPPER}
@@ -1074,6 +1391,12 @@ $$v\leftarrow\frac{\left(n-1\right)v+K\,n\,\left(z-x\right)^2}{\max(1,n)}$$
 (async-non-random-scan z2s (make-recurrent-stats-mapper) println)
 \end{verbatim}
 
+\begin{verbatim}
+{:count 1, :mean 55.0, :variance 0.0}
+{:count 2, :mean 72.0, :variance 578.0}
+{:count 3, :mean 96.0, :variance 2017.0}
+\end{verbatim}
+
 \subsection{DEFN MAKE WELFORD'S STATS MAPPER}
 \label{welfords-variance}
 The above is equivalent, algebraically and numerically, to Welford's
@@ -1106,6 +1429,12 @@ $$S\leftarrow{S} + \left(z-x_N\right)\left(z-x_{N+1}\right)=S+\left(z-x\right)\l
 
     (async-non-random-scan
       z2s (make-welfords-stats-mapper) println)   )
+\end{verbatim}
+
+\begin{verbatim}
+{:count 1, :mean 55.0, :variance 0.0}
+{:count 2, :mean 72.0, :variance 578.0}
+{:count 3, :mean 96.0, :variance 2017.0}
 \end{verbatim}
 
 \section{WINDOWED STATISTICS}
@@ -1159,8 +1488,7 @@ right-hand sides of equations 10 and 13. Those equations are simply
 transformations of the posteriors (values with primes) \(m'\), \(m'_j\),
 \(v'\), and \(v'_j\).
 
-\$\$
-\begin{align}
+\begin{align*}
 j     &= \max(0,n+1-w)               \\
 u     &= n-j+1                       \\
 m'    &= m+\frac{z-m}{n+1}           \\
@@ -1175,15 +1503,15 @@ v'_j  &= \begin{cases}
   0 & \mathrm{otherwise}
 \end{cases}                                                           \\
 v'_w  &= \frac{n\,v'+(n-w)\,v'_j+(n+1)\,{m'}^2-j\,{m'_j}^2-u\,{m'_w}^2}{\max(1,u-1)}
-\end{align}
-\$\$
+\end{align*}
 
 Here is sample data we can compare with the unit test above.
 
 \subsection{DEF Z3S: MORE SAMPLE DATA}
-\label{sec:orgbf3f789}
+\label{sec:org9c8d30d}
 \begin{verbatim}
-(def z3s [0.857454, 0.312454, 0.705325, 0.839363, 1.63781, 0.699257, -0.340016, -0.213596, -0.0418609, 0.054705])
+(def z3s [0.857454,  0.312454,  0.705325,  0.8393630, 1.637810,
+          0.699257, -0.340016, -0.213596, -0.0418609, 0.054705])
 \end{verbatim}
 
 The best algorithm we have found for tracking historical data is to keep
@@ -1192,7 +1520,7 @@ memory because it depends only on the length \(w\) of the window, not on
 the length of the data stream.
 
 \subsubsection{DEFN PUSH TO BACK}
-\label{sec:org4368c52}
+\label{sec:orgde53203}
 
 \begin{verbatim}
 (defn push-to-back [item vek]
@@ -1200,7 +1528,7 @@ the length of the data stream.
 \end{verbatim}
 
 \subsection{DEFN MAKE SLIDING STATS MAPPER}
-\label{sec:org48d19fe}
+\label{sec:orgb9e8f30}
 
 \begin{verbatim}
 (defn make-sliding-stats-mapper [w]
@@ -1255,6 +1583,22 @@ the length of the data stream.
     (sync-scan z3s (make-sliding-stats-mapper 3)))
 \end{verbatim}
 
+\begin{verbatim}
+
+|   :n |                  :mw |                  :vw |
+|------+----------------------+----------------------|
+|  1.0 |             0.857454 |                  0.0 |
+|  2.0 |             0.584954 |  0.14851250000000005 |
+|  3.0 |   0.6250776666666666 |  0.07908597588033339 |
+|  4.0 |   0.6190473333333332 |  0.07499115039433346 |
+|  5.0 |   1.0608326666666668 |   0.2541686787463333 |
+|  6.0 |              1.05881 |  0.25633817280899995 |
+|  7.0 |   0.6656836666666668 |   0.9787942981023336 |
+|  8.0 |  0.04854833333333334 |   0.3215618307563336 |
+|  9.0 | -0.19849096666666663 | 0.022395237438003604 |
+| 10.0 | -0.06691730000000007 |  0.01846722403596973 |
+\end{verbatim}
+
 \ldots{}  passing the unit test.
 
 \section{KALMAN FILTER}
@@ -1267,7 +1611,7 @@ Add the following lines to \texttt{project.clj} in the directory that contains t
 org file:
 
 \subsubsection{TODO: FULLY LITERATE: TANGLE PROJECT.CLJ}
-\label{sec:org695e119}
+\label{sec:org07f49ec}
 
 \begin{verbatim}
 [net.mikera/core.matrix "0.62.0"]
@@ -1289,6 +1633,12 @@ Smoke test:
                 [2 7 4]]))
 \end{verbatim}
 
+\begin{center}
+\begin{tabular}{rr}
+3 & 3\\
+\end{tabular}
+\end{center}
+
 Bits and pieces we will need:
 
 \begin{verbatim}
@@ -1298,6 +1648,13 @@ Bits and pieces we will need:
                 [2 7 4]]))
 \end{verbatim}
 
+\begin{verbatim}
+#vectorz/matrix [[1.0,1.0,2.0],
+[2.0,3.0,7.0],
+[3.0,8.0,4.0]]
+\end{verbatim}
+
+
 \texttt{mmul} is multiadic (takes more than two arguments). This is possible
 because matrix multiplication is associative.
 
@@ -1306,6 +1663,12 @@ because matrix multiplication is associative.
                     [1 3 8]
                     [2 7 4]])]
     (ccm/mmul (ccm/transpose A) A (ccm/inverse A)))
+\end{verbatim}
+
+\begin{verbatim}
+#vectorz/matrix [[1.000000000000003,1.0,2.0000000000000004],
+[2.0000000000000093,3.000000000000001,6.999999999999998],
+[3.000000000000006,8.0,3.999999999999999]]
 \end{verbatim}
 
 \subsubsection{DEFN LINSPACE}
@@ -1323,8 +1686,12 @@ because matrix multiplication is associative.
 (clojure.pprint/pprint (linspace 2 3. 3))
 \end{verbatim}
 
+\begin{verbatim}
+(2.0 2.5 3.0)
+\end{verbatim}
+
 \subsection{DEFN SYMMETRIC PART}
-\label{sec:org6b72186}
+\label{sec:orga8ca9e9}
 
 \begin{verbatim}
 (do (defn symmetric-part [M]
@@ -1334,8 +1701,16 @@ because matrix multiplication is associative.
                      [2 7 4]])   )
 \end{verbatim}
 
+\begin{center}
+\begin{tabular}{rrr}
+1.0 & 1.5 & 2.5\\
+1.5 & 3.0 & 7.5\\
+2.5 & 7.5 & 4.0\\
+\end{tabular}
+\end{center}
+
 \subsection{DEFN ANTI-SYMMETRIC PART}
-\label{sec:org19f56fd}
+\label{sec:org4619018}
 
 \begin{verbatim}
 (do (defn anti-symmetric-part [M]
@@ -1345,6 +1720,14 @@ because matrix multiplication is associative.
                           [2 7 4]])   )
 \end{verbatim}
 
+\begin{center}
+\begin{tabular}{rrr}
+0.0 & 0.5 & 0.5\\
+-0.5 & 0.0 & 0.5\\
+-0.5 & -0.5 & 0.0\\
+\end{tabular}
+\end{center}
+
 \begin{verbatim}
 (let [M [[1 2 3]
          [1 3 8]
@@ -1353,6 +1736,14 @@ because matrix multiplication is associative.
                 (anti-symmetric-part M))
              M))
 \end{verbatim}
+
+\begin{center}
+\begin{tabular}{rrr}
+0.0 & 0.0 & 0.0\\
+0.0 & 0.0 & 0.0\\
+0.0 & 0.0 & 0.0\\
+\end{tabular}
+\end{center}
 
 \subsubsection{DEFN MATRIX ALMOST =}
 \label{near-equality-for-matrices}
@@ -1384,6 +1775,14 @@ unblock us for now.
                         M))   )
 \end{verbatim}
 
+\begin{center}
+\begin{tabular}{lll}
+true & true & true\\
+true & true & true\\
+true & true & true\\
+\end{tabular}
+\end{center}
+
 \subsubsection{DEFN SIMILARITY TRANSFORM}
 \label{similarity-transform}
 \begin{verbatim}
@@ -1403,6 +1802,11 @@ The library (like many others) is loose about matrices times vectors.
     (ccm/array [22 23 42]))
 \end{verbatim}
 
+\begin{verbatim}
+#vectorz/vector [194.0,427.0,373.0]
+\end{verbatim}
+
+
 Pedantically, a matrix should only be allowed to left-multiply a column
 vector, i.e., a \(1\times{3}\) matrix. The Clojure library handles this
 case.
@@ -1415,6 +1819,13 @@ case.
     (ccm/array [[22] [23] [42]]))
 \end{verbatim}
 
+\begin{verbatim}
+#vectorz/matrix [[194.0],
+[427.0],
+[373.0]]
+\end{verbatim}
+
+
 Non-pedantic multiplication of a vector on the right by a matrix:
 
 \begin{verbatim}
@@ -1425,6 +1836,11 @@ Non-pedantic multiplication of a vector on the right by a matrix:
                  [2 7 4]]))
 \end{verbatim}
 
+\begin{verbatim}
+#vectorz/vector [129.0,407.0,418.0]
+\end{verbatim}
+
+
 Pedantic multiplication of a row vector on the right by a matrix:
 
 \begin{verbatim}
@@ -1433,6 +1849,10 @@ Pedantic multiplication of a row vector on the right by a matrix:
     (ccm/matrix [[1 2 3]
                  [1 3 8]
                  [2 7 4]]))
+\end{verbatim}
+
+\begin{verbatim}
+#vectorz/matrix [[129.0,407.0,418.0]]
 \end{verbatim}
 
 \subsubsection{SOLVING INSTEAD OF INVERTING}
@@ -1451,6 +1871,11 @@ numerically risky and almost never needed:
                     [2 7 4]]))
     (ccm/array [22 23 42]))
 \end{verbatim}
+
+\begin{verbatim}
+#vectorz/vector [22.05882352941177,-0.4705882352941142,0.2941176470588234]
+\end{verbatim}
+
 
 Instead, use a linear solver. Almost everywhere that you see
 \(\boldsymbol{A}^{-1}\boldsymbol{b}\), visualize
@@ -1479,11 +1904,22 @@ below. The following is a more reliable answer:
 \end{verbatim}
 
 \begin{verbatim}
+#vectorz/vector [22.058823529411764,-0.4705882352941176,0.2941176470588236]
+\end{verbatim}
+
+
+\begin{verbatim}
 (ccm/shape (ccm/matrix [[22] [23] [42]]))
 \end{verbatim}
 
+\begin{center}
+\begin{tabular}{rr}
+3 & 1\\
+\end{tabular}
+\end{center}
+
 \subsubsection{DEFN SOLVE MATRIX}
-\label{sec:orge977a21}
+\label{sec:orgf219085}
 
 We need \texttt{solve} to work on matrices:
 
@@ -1509,6 +1945,14 @@ We need \texttt{solve} to work on matrices:
     (ccm/matrix [[22] [23] [42]]   ))
 \end{verbatim}
 
+\begin{center}
+\begin{tabular}{r}
+22.058823529411764\\
+-0.4705882352941176\\
+0.2941176470588236\\
+\end{tabular}
+\end{center}
+
 \begin{verbatim}
 (solve-matrix
     (ccm/matrix [[1 2 3]
@@ -1518,6 +1962,14 @@ We need \texttt{solve} to work on matrices:
                  [23 46]
                  [42 84]]))
 \end{verbatim}
+
+\begin{center}
+\begin{tabular}{rr}
+22.058823529411764 & 44.11764705882353\\
+-0.4705882352941176 & -0.9411764705882352\\
+0.2941176470588236 & 0.5882352941176472\\
+\end{tabular}
+\end{center}
 
 \subsection{DEFN KALMAN UPDATE: GENERAL EXTENDED KALMAN FILTER}
 \label{general-extended-kalman-filter}
@@ -1601,13 +2053,16 @@ The steps are:
                 Rmm (similarity-transform Hmn P'nn)) ; Gain precursor
         DTmm   (ccm/transpose Dmm)                   ; Support for "solve"
         HP'Tmn (ccm/mmul Hmn (ccm/transpose P'nn))   ; Support for "solve"
-        KTmn   (solve-matrix DTmm HP'Tmn)            ; Eqn 3 of http://vixra.org/abs/1606.0328
+        ; Eqn 3 of http://vixra.org/abs/1606.0328:
+        KTmn   (solve-matrix DTmm HP'Tmn)
         Knm    (ccm/transpose KTmn)                  ; Kalman gain
-        rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))    ; innovation = predicted obn residual
+        ; innovation = predicted obn residual
+        rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))
         x''n1  (ccm/add x'n1 (ccm/mmul Knm rm1))     ; final corrected estimate
         n      (ccm/dimension-count xn1 0)
-        Lnn    (ccm/sub (ccm/identity-matrix n)      ; Support for new covariance ...
-                        (ccm/mmul Knm Hmn))          ; ...  ? catastrophic cancellation ?
+        ; new covariance ? catastrophic cancellation ?
+        Lnn    (ccm/sub (ccm/identity-matrix n)
+                        (ccm/mmul Knm Hmn))
         P''nn  (ccm/mmul Lnn P'nn)]                  ; New covariance
 
       {:xn1 x''n1, :Pnn P''nn}))
@@ -1678,6 +2133,19 @@ for \emph{observation}.
 (clojure.pprint/pprint (reduce kalman-update state-cluster-prior obn-clusters))
 \end{verbatim}
 
+\begin{verbatim}
+{:xn1 #vectorz/matrix [[-4.951034346887338],
+[-4.385574755471751],
+[8.535893780887523],
+[-2.872500567323339]],
+ :Pnn
+ #vectorz/matrix [[0.03208215055213958,-5.478256737134757E-15,-0.0874691388122202,-8.770761894538737E-15],
+[-2.3568386825489895E-15,0.03637145347999561,-5.2632377622874316E-14,-0.05541947257604415],
+[-0.08746913881223455,-2.570860191397628E-14,0.2822249372573019,-1.1334683192032458E-14],
+[4.6455894686658894E-15,-0.05541947257607027,-6.734196533741965E-15,0.15110531309503664]]}
+\end{verbatim}
+
+
 Notice how close the estimate \(x_{n\times{1}}\) is to the ground truth, \([-5, -4,
 9, -3]\) for \(\boldsymbol{x}\). A chi-squared test would be appropriate to
 complete the verification (TODO).
@@ -1706,13 +2174,16 @@ handling: it's a big but separable engineering task.
                 Rmm (similarity-transform Hmn P'nn)) ; Gain precursor
         DTmm   (ccm/transpose Dmm)                   ; Support for "solve"
         HP'Tmn (ccm/mmul Hmn (ccm/transpose P'nn))   ; Support for "solve"
-        KTmn   (solve-matrix DTmm HP'Tmn)            ; Eqn 3 of http://vixra.org/abs/1606.0328
+        ; Eqn 3 of http://vixra.org/abs/1606.0328
+        KTmn   (solve-matrix DTmm HP'Tmn)
         Knm    (ccm/transpose KTmn)                  ; Kalman gain
-        rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))    ; innovation = predicted obn residual
+        ; innovation = predicted obn residual
+        rm1    (ccm/sub zm1  (ccm/mmul Hmn x'n1))
         x''n1  (ccm/add x'n1 (ccm/mmul Knm rm1))     ; final corrected estimate
         n      (ccm/dimension-count xn1 0)
-        Lnn    (ccm/sub (ccm/identity-matrix n)      ; Support for new covariance ...
-                        (ccm/mmul Knm Hmn))          ; ...  ? catastrophic cancellation ?
+        ; new covariance ? catastrophic cancellation ?
+        Lnn    (ccm/sub (ccm/identity-matrix n)
+                        (ccm/mmul Knm Hmn))
         P''nn  (ccm/mmul Lnn P'nn)]
                         (swap! estimate-and-covariance conj
                                [:xn1 x''n1]
@@ -1735,6 +2206,16 @@ handling: it's a big but separable engineering task.
         (last (accumulator ::reap)))   )
 \end{verbatim}
 
+\begin{verbatim}
+'(:xn1 #vectorz/matrix ((-4.951034346887342)
+(-4.385574755471752)
+(8.535893780887571)
+(-2.872500567323389))  :Pnn #vectorz/matrix ((0.03208215055213757 -1.8726339923169633E-15 -0.0874691388122272 9.141992718397773E-16)
+(-2.447694824603275E-15 0.03637145347997802 -4.1104272763270444E-15 -0.05541947257607147)
+(-0.08746913881222558 -6.7480743215497796E-15 0.28222493725723435 3.563122019656362E-15)
+(-1.1102230246251565E-16 -0.0554194725760703 4.808653475407709E-15 0.15110531309504036)))
+\end{verbatim}
+
 \section{OZ FOR VISUALIZATION}
 \label{oz-for-visualization}
 From
@@ -1747,7 +2228,7 @@ From
 \end{verbatim}
 
 \subsection{DEFN PLAY DATA}
-\label{sec:orgd7a9800}
+\label{sec:org7ebc892}
 
 \begin{verbatim}
 (do (defn play-data [& names]
@@ -1767,6 +2248,11 @@ From
 \end{verbatim}
 
 \begin{verbatim}
+#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x7e5dfc87 "oz.notebook.clojupyter$view_BANG_$reify__21517@7e5dfc87"]
+\end{verbatim}
+
+
+\begin{verbatim}
 ;; Create spec, then visualize
 (def spec
   {:data {:url "https://gist.githubusercontent.com/metasoarous/4e6f781d353322a44b9cd3e4597c532c/raw/cd633d9bb8e0bed4a5b8e66a32b9569ca2147989/cars.json"}
@@ -1779,6 +2265,11 @@ From
 \end{verbatim}
 
 \begin{verbatim}
+#'composable-statistics.core/spec#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x2dc3eddb "oz.notebook.clojupyter$view_BANG_$reify__21517@2dc3eddb"]
+\end{verbatim}
+
+
+\begin{verbatim}
 (oz/view!
   [:div
    [:h1 "A little hiccup example"]
@@ -1786,6 +2277,10 @@ From
    [:div {:style {:display "flex" :flex-direction "row"}}
     [:vega-lite spec]
     [:vega-lite stacked-bar]]])
+\end{verbatim}
+
+\begin{verbatim}
+#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x7e0a0c2f "oz.notebook.clojupyter$view_BANG_$reify__21517@7e0a0c2f"]
 \end{verbatim}
 
 \section{GAUSSIAN PROCESSES}
