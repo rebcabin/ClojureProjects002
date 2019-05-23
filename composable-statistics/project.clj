@@ -13,6 +13,7 @@
                  [org.tensorflow/tensorflow     "1.13.1"]
                  [quil                          "3.0.0"]
                  [metasoarous/oz                "1.6.0-alpha2"]
+                 [incanter                      "1.9.3"]
                  ]
   :main ^:skip-aot composable-statistics.core
   :target-path "target/%s"

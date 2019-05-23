@@ -1,4 +1,4 @@
-% Created 2019-05-23 Thu 08:19
+% Created 2019-05-23 Thu 08:24
 % Intended LaTeX compiler: pdflatex
 \documentclass[10pt,oneside,x11names]{article}
 \usepackage[utf8]{inputenc}
@@ -56,14 +56,14 @@
 \section{COMPOSABLE STATISTICS}
 \label{composable-statistics}
 \subsection{{\bfseries\sffamily TODO} TANGLE, NOWEB}
-\label{sec:org3702f86}
+\label{sec:orgd4aab8a}
 
 This will become a fully literate program via org-babel \texttt{tangle} and
 \texttt{noweb}. At present, it is an org file converted directly from an old
 iPython (Jupyter) notebook. Jupyter proved not to scale well.
 
 \subsection{{\bfseries\sffamily TODO} GRAPHICS}
-\label{sec:org06f43c6}
+\label{sec:org44638ea}
 
 We still
 have to work out how to embed graphics in this file.
@@ -75,7 +75,7 @@ concurrency primitives, especially atoms and core.async. Python is
 growing and improving rapidly, so we may return to it someday.
 
 \subsubsection{{\bfseries\sffamily TODO} PROJECT.CLJ}
-\label{sec:orga96fdfb}
+\label{sec:orgcbc10fb}
 
 At present, the critical file \texttt{project.clj} is external to this
 document. It will be one of the first to tangle.
@@ -113,7 +113,7 @@ Some sample scalar data:
 \end{verbatim}
 
 \subsection{TODO: GENERATE NEW RANDOM DATA}
-\label{sec:org341e86b}
+\label{sec:org2cfc3af}
 
 \section{RUNNING COUNT}
 \label{running-count}
@@ -348,7 +348,7 @@ an independent calculation.
 
 \begin{enumerate}
 \item DEFN MEAN
-\label{sec:orgd97920b}
+\label{sec:org640de65}
 
 \begin{verbatim}
 (defn mean [zs] (/ (reduce + zs) (count zs)))
@@ -486,8 +486,8 @@ Is the channel returned by \texttt{go} the same channel as \texttt{c}?
 \end{verbatim}
 
 \begin{verbatim}
-{:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0xaf89904 clojure.core.async.impl.channels.ManyToManyChannel@af89904]}
-{:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x12aae339 clojure.core.async.impl.channels.ManyToManyChannel@12aae339]}
+{:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5b941432 clojure.core.async.impl.channels.ManyToManyChannel@5b941432]}
+{:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3c3d4797 clojure.core.async.impl.channels.ManyToManyChannel@3c3d4797]}
 {:c-coughs-up 42}
 {:close-c nil}
 \end{verbatim}
@@ -580,11 +580,11 @@ thread?
 
 \begin{verbatim}
 {:c-channel
- #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5479b32d "clojure.core.async.impl.channels.ManyToManyChannel@5479b32d"],
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5c01e70 "clojure.core.async.impl.channels.ManyToManyChannel@5c01e70"],
  :d-channel
- #object[clojure.core.async.impl.channels.ManyToManyChannel 0x49575da "clojure.core.async.impl.channels.ManyToManyChannel@49575da"],
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x749efaf9 "clojure.core.async.impl.channels.ManyToManyChannel@749efaf9"],
  :e-channel
- #object[clojure.core.async.impl.channels.ManyToManyChannel 0x21970642 "clojure.core.async.impl.channels.ManyToManyChannel@21970642"],
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x287f4772 "clojure.core.async.impl.channels.ManyToManyChannel@287f4772"],
  :e-coughs-up 42,
  :d-coughs-up true}
 \end{verbatim}
@@ -617,11 +617,11 @@ opposite order.
 
 \begin{verbatim}
 {:c-channel
- #object[clojure.core.async.impl.channels.ManyToManyChannel 0x79bbcb7d "clojure.core.async.impl.channels.ManyToManyChannel@79bbcb7d"],
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5807392 "clojure.core.async.impl.channels.ManyToManyChannel@5807392"],
  :d-channel
- #object[clojure.core.async.impl.channels.ManyToManyChannel 0x292870 "clojure.core.async.impl.channels.ManyToManyChannel@292870"],
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x25a60d5b "clojure.core.async.impl.channels.ManyToManyChannel@25a60d5b"],
  :e-channel
- #object[clojure.core.async.impl.channels.ManyToManyChannel 0x77beb8dc "clojure.core.async.impl.channels.ManyToManyChannel@77beb8dc"],
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x27805f00 "clojure.core.async.impl.channels.ManyToManyChannel@27805f00"],
  :e-coughs-up 42,
  :d-coughs-up true}
 \end{verbatim}
@@ -719,7 +719,7 @@ because the buffered write \texttt{(>!! c)} on the UI thread doesn't block:
 
 \begin{enumerate}
 \item ORDER DOESN'T MATTER, SOMETIMES
-\label{sec:orgf913586}
+\label{sec:org5e15d59}
 
 We can do things backwards, reading before writing, even without a
 buffer. Read from channel \texttt{(<! c)} on the async \texttt{go} thread ``before''
@@ -806,7 +806,7 @@ peeking under the covers (\url{https://stackoverflow.com/questions/24912971}):
 \end{verbatim}
 
 \item ORDER DOES MATTER, SOMETIMES
-\label{sec:org816c136}
+\label{sec:org9d40b42}
 
 Order does matter this time: Writing blocks the UI thread without a
 buffer and no parked read (rendezvous) in the \texttt{go} nebula beforehand. I
@@ -896,10 +896,10 @@ returns immediately, long before the \texttt{timeout} could expire.
 
 \begin{verbatim}
 {:c
- #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5eb1f1d2 "clojure.core.async.impl.channels.ManyToManyChannel@5eb1f1d2"],
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1f8b3abd "clojure.core.async.impl.channels.ManyToManyChannel@1f8b3abd"],
  :a
  [true
-  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5eb1f1d2 "clojure.core.async.impl.channels.ManyToManyChannel@5eb1f1d2"]]}
+  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1f8b3abd "clojure.core.async.impl.channels.ManyToManyChannel@1f8b3abd"]]}
 {:d-returns 43}
 \end{verbatim}
 
@@ -923,11 +923,11 @@ we quoted out the blocking read of \texttt{d} with a tick mark).
 
 \begin{verbatim}
 {:c
- #object[clojure.core.async.impl.channels.ManyToManyChannel 0x78891bbd "clojure.core.async.impl.channels.ManyToManyChannel@78891bbd"],
+ #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1947eeba "clojure.core.async.impl.channels.ManyToManyChannel@1947eeba"],
  :a
  [nil
-  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x6ecb4a56 "clojure.core.async.impl.channels.ManyToManyChannel@6ecb4a56"]]}
-{:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x467acbd0 clojure.core.async.impl.channels.ManyToManyChannel@467acbd0]}
+  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x32a86431 "clojure.core.async.impl.channels.ManyToManyChannel@32a86431"]]}
+{:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x587d8e6d clojure.core.async.impl.channels.ManyToManyChannel@587d8e6d]}
 \end{verbatim}
 
 \section{ASYNC DATA STREAMS}
@@ -954,9 +954,9 @@ leak permanently, we close the channel explicitly.
 \end{verbatim}
 
 \begin{verbatim}
--0.0121089
--0.315044
-0.0592247
+0.828305
+-0.178654
+-0.324796
 {:echo-chan-closed? false}
 {:echo-chan-closed? true}
 \end{verbatim}
@@ -1012,9 +1012,9 @@ result, by design.
 \end{verbatim}
 
 \begin{verbatim}
+0.16301
+-0.315044
 -0.676357
-0.0592247
--1.48014
 \end{verbatim}
 
 
@@ -1057,8 +1057,8 @@ course, is bad practice or ``code smell.''
 \end{verbatim}
 
 \begin{verbatim}
--0.0121089
--0.178654
+-0.324796
+0.828305
 -0.676357
 \end{verbatim}
 
@@ -1090,16 +1090,16 @@ called a \emph{functor}, which is anything that's mappable, anything you can
 \end{verbatim}
 
 \begin{verbatim}
-{:count 1, :mean -0.676357, :datum -0.676357}
-{:count 2, :mean -0.2566735, :datum 0.16301}
-{:count 3, :mean 0.10498600000000002, :datum 0.828305}
-{:count 4, :mean 0.07571227500000002, :datum -0.0121089}
-{:count 5, :mean 0.07241476000000002, :datum 0.0592247}
-{:count 6, :mean -0.08268169999999997, :datum -0.858164}
-{:count 7, :mean -0.2823186, :datum -1.48014}
-{:count 8, :mean -0.287628275, :datum -0.324796}
-{:count 9, :mean -0.29067446666666663, :datum -0.315044}
-{:count 10, :mean -0.27947241999999994, :datum -0.178654}
+{:count 1, :mean 0.0592247, :datum 0.0592247}
+{:count 2, :mean -0.05971465, :datum -0.178654}
+{:count 3, :mean 0.014526899999999988, :datum 0.16301}
+{:count 4, :mean -0.35913982499999997, :datum -1.48014}
+{:count 5, :mean -0.35032065999999995, :datum -0.315044}
+{:count 6, :mean -0.40466004999999994, :datum -0.676357}
+{:count 7, :mean -0.39325089999999996, :datum -0.324796}
+{:count 8, :mean -0.34560814999999995, :datum -0.0121089}
+{:count 9, :mean -0.2151733555555555, :datum 0.828305}
+{:count 10, :mean -0.27947241999999994, :datum -0.858164}
 \end{verbatim}
 
 We don't need to explicitly say \texttt{buffer}, but I prefer to do.
@@ -1139,7 +1139,7 @@ returns the value of the result accumulated so-far.
 
 \begin{center}
 \begin{tabular}{lrlrlr}
-:count & 10 & :mean & -0.27947242 & :datum & -0.858164\\
+:count & 10 & :mean & -0.27947242 & :datum & -1.48014\\
 \end{tabular}
 \end{center}
 
@@ -1349,7 +1349,7 @@ and test it both synchronously and asynchronously, randomized and not:
  {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
  {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}]
 {:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
-{:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
+{:count 2, :mean 99.5, :variance 3960.5, :ssq 23761.0}
 {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}
 {:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
 {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
@@ -1508,7 +1508,7 @@ v'_w  &= \frac{n\,v'+(n-w)\,v'_j+(n+1)\,{m'}^2-j\,{m'_j}^2-u\,{m'_w}^2}{\max(1,u
 Here is sample data we can compare with the unit test above.
 
 \subsection{DEF Z3S: MORE SAMPLE DATA}
-\label{sec:org61287de}
+\label{sec:org8f093e7}
 \begin{verbatim}
 (def z3s [0.857454,  0.312454,  0.705325,  0.8393630, 1.637810,
           0.699257, -0.340016, -0.213596, -0.0418609, 0.054705])
@@ -1520,7 +1520,7 @@ memory because it depends only on the length \(w\) of the window, not on
 the length of the data stream.
 
 \subsubsection{DEFN PUSH TO BACK}
-\label{sec:org27ab8f9}
+\label{sec:orgb0aedc1}
 
 \begin{verbatim}
 (defn push-to-back [item vek]
@@ -1528,7 +1528,7 @@ the length of the data stream.
 \end{verbatim}
 
 \subsection{DEFN MAKE SLIDING STATS MAPPER}
-\label{sec:org25a8936}
+\label{sec:org245efda}
 
 \begin{verbatim}
 (defn make-sliding-stats-mapper [w]
@@ -1611,7 +1611,7 @@ Add the following lines to \texttt{project.clj} in the directory that contains t
 org file:
 
 \subsubsection{TODO: FULLY LITERATE: TANGLE PROJECT.CLJ}
-\label{sec:orgf867d11}
+\label{sec:orgffca48b}
 
 \begin{verbatim}
 [net.mikera/core.matrix "0.62.0"]
@@ -1691,7 +1691,7 @@ because matrix multiplication is associative.
 \end{verbatim}
 
 \subsection{DEFN SYMMETRIC PART}
-\label{sec:orgb032ef9}
+\label{sec:org4dea6cb}
 
 \begin{verbatim}
 (do (defn symmetric-part [M]
@@ -1710,7 +1710,7 @@ because matrix multiplication is associative.
 \end{center}
 
 \subsection{DEFN ANTI-SYMMETRIC PART}
-\label{sec:orgb4a9eee}
+\label{sec:org0d33e2f}
 
 \begin{verbatim}
 (do (defn anti-symmetric-part [M]
@@ -1919,7 +1919,7 @@ below. The following is a more reliable answer:
 \end{center}
 
 \subsubsection{DEFN SOLVE MATRIX}
-\label{sec:orga705181}
+\label{sec:org8f1e385}
 
 We need \texttt{solve} to work on matrices:
 
@@ -2207,17 +2207,44 @@ handling: it's a big but separable engineering task.
 \end{verbatim}
 
 \begin{verbatim}
-'(:xn1 #vectorz/matrix ((-4.900886700347148)
-(-4.192294030867246)
-(8.804508118620767)
-(-2.1922826490976326))  :Pnn #vectorz/matrix ((0.032082150552151974 -2.061805587372234E-14 -0.08746913881224282 8.55739090699359E-15)
-(-2.0542053301431107E-14 0.03637145347999924 1.6667006316750665E-14 -0.055419472576077405)
-(-0.08746913881223978 1.2614909117303341E-14 0.28222493725725306 -1.032854357596591E-14)
-(3.589142871796014E-15 -0.05541947257607085 -6.630113125183357E-15 0.15110531309504277)))
+'(:xn1 #vectorz/matrix ((-4.900886700346977)
+(-4.192294030867509)
+(8.8045081186206)
+(-2.192282649097485))  :Pnn #vectorz/matrix ((0.03208215055212902 -5.7829175476031836E-15 -0.08746913881217261 -3.3405569976885374E-14)
+(3.0805239815186874E-14 0.0363714534799503 -1.0213615435177015E-13 -0.055419472576001716)
+(-0.08746913881225812 6.337638747133667E-14 0.28222493725721515 -3.8163916471489756E-16)
+(3.456436525883788E-15 -0.055419472576089764 3.8615811936981714E-14 0.15110531309502237)))
 \end{verbatim}
 
-\section{OZ FOR VISUALIZATION}
+\section{VISUALIZATION}
 \label{oz-for-visualization}
+\subsection{INCANTER}
+\label{sec:org53b414d}
+
+Hot-loading seems hopelessly broken.
+
+\begin{verbatim}
+(cljr-add-project-dependency)
+\end{verbatim}
+
+\begin{verbatim}
+(use '(incanter core charts pdf))
+;;; Create the x and y data:
+(def x-data [0.0 1.0 2.0 3.0 4.0 5.0])
+(def y-data [4.3 9.0 2.6 3.1 8.1 4.5])
+(def xy-line (xy-plot x-data y-data))
+#_(view xy-line)
+(save-pdf xy-line "incanter-xy-line.pdf")
+(save xy-line "incanter-xy-line.png")
+\end{verbatim}
+
+\begin{center}
+\includegraphics[width=.9\linewidth]{incanter-xy-line.png}
+\end{center}
+
+\subsection{OZ}
+\label{sec:org2b98fdc}
+
 From
 \url{https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb}
 
@@ -2227,8 +2254,8 @@ From
 (require '[oz.notebook.clojupyter :as oz])
 \end{verbatim}
 
-\subsection{DEFN PLAY DATA}
-\label{sec:orgd712cee}
+\subsubsection{DEFN PLAY DATA}
+\label{sec:orgc3eddeb}
 
 \begin{verbatim}
 (do (defn play-data [& names]
@@ -2248,7 +2275,7 @@ From
 \end{verbatim}
 
 \begin{verbatim}
-#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x76220794 "oz.notebook.clojupyter$view_BANG_$reify__21517@76220794"]
+#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x6473a298 "oz.notebook.clojupyter$view_BANG_$reify__21517@6473a298"]
 \end{verbatim}
 
 
@@ -2265,7 +2292,7 @@ From
 \end{verbatim}
 
 \begin{verbatim}
-#'composable-statistics.core/spec#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x31e193db "oz.notebook.clojupyter$view_BANG_$reify__21517@31e193db"]
+#'composable-statistics.core/spec#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x651a1416 "oz.notebook.clojupyter$view_BANG_$reify__21517@651a1416"]
 \end{verbatim}
 
 
@@ -2280,7 +2307,7 @@ From
 \end{verbatim}
 
 \begin{verbatim}
-#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x6479346b "oz.notebook.clojupyter$view_BANG_$reify__21517@6479346b"]
+#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x7d4aec9e "oz.notebook.clojupyter$view_BANG_$reify__21517@7d4aec9e"]
 \end{verbatim}
 
 \section{GAUSSIAN PROCESSES}

@@ -1,3 +1,5 @@
+# -*- org-image-actual-width: nil; -*-
+
 #+STARTUP: showall
 #+TITLE: Composable Statistics
 #+AUTHOR: Brian Beckman
@@ -123,7 +125,11 @@ print(f"Python's version info: {sys.version}")
 #+END_SRC
 
 #+RESULTS:
+<<<<<<< HEAD
 : Hello, today's date is Thu May 23 08:18:39 2019
+=======
+: Hello, today's date is Thu May 23 05:28:36 2019
+>>>>>>> 94a3df351c2f43f62b1c8cb3fbb89a3f3a5d15f5
 : Two plus two is 4
 : Python's version info: 3.6.7 (default, Oct 22 2018, 11:32:17)
 : [GCC 8.2.0]
@@ -611,12 +617,6 @@ Is the channel returned by =go= the same channel as =c=?
         (println {:close-c (close! c)}))
 #+END_SRC
 
-#+RESULTS:
-: {:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x9555d02 clojure.core.async.impl.channels.ManyToManyChannel@9555d02]}
-: {:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5c550f2d clojure.core.async.impl.channels.ManyToManyChannel@5c550f2d]}
-: {:c-coughs-up 42}
-: {:close-c nil}
-
 No, =c= is a different channel from the one returned by =go=. Consult
 the documentation for =go= once more:
 
@@ -699,16 +699,6 @@ thread?
         (close! e))
 #+END_SRC
 
-#+RESULTS:
-: {:c-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3d69d131 "clojure.core.async.impl.channels.ManyToManyChannel@3d69d131"],
-:  :d-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5bfc1d51 "clojure.core.async.impl.channels.ManyToManyChannel@5bfc1d51"],
-:  :e-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x595ec4c5 "clojure.core.async.impl.channels.ManyToManyChannel@595ec4c5"],
-:  :e-coughs-up 42,
-:  :d-coughs-up true}
-
 Yes, the pseudothread that parked when $42$ is put on =c= via =>!=
 unparks when $42$ is taken off via =<!=. Channel =d= represents the
 parking step and channel =e= represents the unparking step. All three
@@ -733,16 +723,6 @@ opposite order.
         (close! d)
         (close! e))
 #+END_SRC
-
-#+RESULTS:
-: {:c-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x172e52b7 "clojure.core.async.impl.channels.ManyToManyChannel@172e52b7"],
-:  :d-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3ee90d28 "clojure.core.async.impl.channels.ManyToManyChannel@3ee90d28"],
-:  :e-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x54d25324 "clojure.core.async.impl.channels.ManyToManyChannel@54d25324"],
-:  :e-coughs-up 42,
-:  :d-coughs-up true}
 
 *** PUTS BEFORE TAKES CONSIDERED RISKY
     :PROPERTIES:
@@ -1007,14 +987,6 @@ returns immediately, long before the =timeout= could expire.
         (close! c))
 #+END_SRC
 
-#+RESULTS:
-: {:c
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x61113942 "clojure.core.async.impl.channels.ManyToManyChannel@61113942"],
-:  :a
-:  [true
-:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x61113942 "clojure.core.async.impl.channels.ManyToManyChannel@61113942"]]}
-: {:d-returns 43}
-
 But, if we take away the buffer, the =timeout= channel wins. The only
 difference to the above is that instead of creating =c= via =(chan 1)=,
 that is, with a buffer of length $1$, we create it with no buffer (and
@@ -1031,14 +1003,6 @@ we quoted out the blocking read of =d= with a tick mark).
             '(println {:d-returns (<!! d)})) ;; blocks
         (close! c))
 #+END_SRC
-
-#+RESULTS:
-: {:c
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x366380a9 "clojure.core.async.impl.channels.ManyToManyChannel@366380a9"],
-:  :a
-:  [nil
-:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x2d21a766 "clojure.core.async.impl.channels.ManyToManyChannel@2d21a766"]]}
-: {:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x63ceef74 clojure.core.async.impl.channels.ManyToManyChannel@63ceef74]}
 
 * ASYNC DATA STREAMS
   :PROPERTIES:
@@ -1065,13 +1029,6 @@ leak permanently, we close the channel explicitly.
     (println {:echo-chan-closed?
               (clojure.core.async.impl.protocols/closed? echo-chan)})
 #+END_SRC
-
-#+RESULTS:
-: -0.178654
-: -0.324796
-: 0.828305
-: {:echo-chan-closed? false}
-: {:echo-chan-closed? true}
 
 We can chain channels, again with leaks that we explicitly close. Also, we must
 not =>!= (send) a nil to =repl-chan=, and =<!= can produce nil from =echo-chan=
@@ -1120,11 +1077,6 @@ result, by design.
     (close! repl-chan)
 #+END_SRC
 
-#+RESULTS:
-: -0.676357
-: -0.315044
-: 0.0592247
-
 Reading from =echo-chan= may hang the UI thread because the UI thread
 races the internal =go= thread that reads =echo-chan=, but the timeout trick
 works here as above.
@@ -1161,11 +1113,6 @@ course, is bad practice or "code smell."
     (close! echo-chan)
 #+END_SRC
 
-#+RESULTS:
-: 0.0592247
-: 0.828305
-: -0.676357
-
 ** ASYNC RUNNING MEAN
    :PROPERTIES:
    :CUSTOM_ID: async-running-mean
@@ -1198,20 +1145,6 @@ called a /functor/, which is anything that's mappable, anything you can
 
     (async-randomized-scan zs (make-running-stats-mapper) println)
 #+END_SRC
-
-#+RESULTS:
-#+begin_example
-{:count 1, :mean -0.0121089, :datum -0.0121089}
-{:count 2, :mean -0.16845245, :datum -0.324796}
-{:count 3, :mean -0.6056816333333334, :datum -1.48014}
-{:count 4, :mean -0.413508725, :datum 0.16301}
-{:count 5, :mean -0.31896204, :datum 0.0592247}
-{:count 6, :mean -0.37852786666666666, :datum -0.676357}
-{:count 7, :mean -0.36945874285714286, :datum -0.315044}
-{:count 8, :mean -0.34560815, :datum -0.178654}
-{:count 9, :mean -0.21517335555555556, :datum 0.828305}
-{:count 10, :mean -0.27947242, :datum -0.858164}
-#+end_example
 
 We don't need to explicitly say =buffer=, but I prefer to do.
 
@@ -1250,9 +1183,6 @@ returns the value of the result accumulated so-far.
                                (accumulator ::sow))
         (last (accumulator ::reap)))   )
 #+END_SRC
-
-#+RESULTS:
-| :count | 10 | :mean | -0.27947242000000005 | :datum | 0.828305 |
 
 Occasionally, there is some floating-point noise in the very low digits
 of the mean because async-randomized-scan scrambles the order of the
@@ -2259,17 +2189,6 @@ for /observation/.
     (clojure.pprint/pprint (reduce kalman-update state-cluster-prior obn-clusters))
 #+END_SRC
 
-#+RESULTS:
-: {:xn1 #vectorz/matrix [[-4.900886700347095],
-: [-4.1922940308673535],
-: [8.804508118620738],
-: [-2.1922826490975567]],
-:  :Pnn
-:  #vectorz/matrix [[0.03208215055213958,-5.478256737134757E-15,-0.0874691388122202,-8.770761894538737E-15],
-: [-2.3568386825489895E-15,0.03637145347999561,-5.2632377622874316E-14,-0.05541947257604415],
-: [-0.08746913881223455,-2.570860191397628E-14,0.2822249372573019,-1.1334683192032458E-14],
-: [4.6455894686658894E-15,-0.05541947257607027,-6.734196533741965E-15,0.15110531309503664]]}
-
 Notice how close the estimate $x_{n\times{1}}$ is to the ground truth, $[-5, -4,
 9, -3]$ for $\boldsymbol{x}$. A chi-squared test would be appropriate to
 complete the verification (TODO).
@@ -2333,19 +2252,38 @@ handling: it's a big but separable engineering task.
         (last (accumulator ::reap)))   )
 #+END_SRC
 
-#+RESULTS:
-: '(:xn1 #vectorz/matrix ((-4.900886700347167)
-: (-4.192294030867173)
-: (8.804508118620666)
-: (-2.1922826490975877))  :Pnn #vectorz/matrix ((0.03208215055213601 3.5735303605122226E-16 -0.08746913881222346 -3.5926123187479675E-15)
-: (1.0364972768961422E-16 0.03637145347996823 9.827208491408612E-16 -0.05541947257606643)
-: (-0.08746913881222403 -1.9081958235744878E-17 0.28222493725721315 1.3426759704060487E-14)
-: (-1.6202317265623378E-15 -0.0554194725760659 6.203371150093062E-15 0.15110531309503256)))
-
-* OZ FOR VISUALIZATION
+* VISUALIZATION
     :PROPERTIES:
     :CUSTOM_ID: oz-for-visualization
     :END:
+
+** INCANTER
+
+Hot-loading seems hopelessly broken.
+
+#+begin_src :evaluate never emacs-lisp
+(cljr-add-project-dependency)
+#+end_src
+
+#+RESULTS:
+: class clojure.lang.Compiler$CompilerExceptionclass clojure.lang.Compiler$CompilerExceptionSyntax error compiling at (composable-statistics:localhost:40727(clj)*:2:1).
+: Unable to resolve symbol: cljr-add-project-dependency in this context
+
+#+begin_src clojure :results none
+(use '(incanter core charts pdf))
+;;; Create the x and y data:
+(def x-data [0.0 1.0 2.0 3.0 4.0 5.0])
+(def y-data [4.3 9.0 2.6 3.1 8.1 4.5])
+(def xy-line (xy-plot x-data y-data))
+#_(view xy-line)
+(save-pdf xy-line "incanter-xy-line.pdf")
+(save xy-line "incanter-xy-line.png")
+#+end_src
+
+#+ATTR_ORG: :width 600
+[[file:incanter-xy-line.png]]
+
+** OZ
 
 From
 https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
@@ -2356,7 +2294,7 @@ https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
     (require '[oz.notebook.clojupyter :as oz])
 #+END_SRC
 
-** DEFN PLAY DATA
+*** DEFN PLAY DATA
 
 #+BEGIN_SRC clojure :exports both
 (do (defn play-data [& names]
