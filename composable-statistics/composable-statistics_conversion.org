@@ -125,11 +125,7 @@ print(f"Python's version info: {sys.version}")
 #+END_SRC
 
 #+RESULTS:
-<<<<<<< HEAD
-: Hello, today's date is Thu May 23 08:18:39 2019
-=======
-: Hello, today's date is Thu May 23 05:28:36 2019
->>>>>>> 94a3df351c2f43f62b1c8cb3fbb89a3f3a5d15f5
+: Hello, today's date is Thu May 23 13:00:07 2019
 : Two plus two is 4
 : Python's version info: 3.6.7 (default, Oct 22 2018, 11:32:17)
 : [GCC 8.2.0]
@@ -2331,7 +2327,7 @@ https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
 #+RESULTS:
 : #'composable-statistics.core/spec#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0xec0d582 "oz.notebook.clojupyter$view_BANG_$reify__21517@ec0d582"]
 
-#+BEGIN_SRC clojure  :exports both
+#+BEGIN_SRC clojure :exports both
     (oz/view!
       [:div
        [:h1 "A little hiccup example"]
@@ -2349,8 +2345,7 @@ https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
   :CUSTOM_ID: gaussian-processes
   :END:
 
-The Extended Kalman Filter above is a generalization of linear
-regression.
+The Extended Kalman Filter above is a generalization of linear regression.
 
 ** RECURRENT LINEAR REGRESSION
    :PROPERTIES:
@@ -2361,3 +2356,17 @@ regression.
 #+END_SRC
 
 #+RESULTS:
+
+* SANDBOX
+
+s" ind:1 deps:(3) type:2d with:histograms set:"yrange [0:]" file:"sandbox-plot.png"
+| Sede      | Max cites | H-index |
+|-----------+-----------+---------|
+| Chile     |    257.72 |   21.39 |
+| Leeds     |    165.77 |   19.68 |
+| Sao Paolo |     71.00 |   11.50 |
+| Stockholm |    134.19 |   14.33 |
+| Morelia  VERSION INFORMATION |    257.56 |   17.67 |
+
+#+ATTR_ORG: :width 800
+[[file:sandbox-plot.png]]
