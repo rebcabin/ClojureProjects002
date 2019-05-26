@@ -100,6 +100,25 @@
 :  of 2019-04-12
 : org version: 9.2.2
 
+#+begin_src emacs-lisp
+(require 'ob-mathematica)
+(setq org-babel-mathematica-command "wolframscript")
+#+end_src
+
+#+RESULTS:
+: wolframscript
+
+#+begin_src mathematica
+foo[x_] := x * (x + 2);
+foo[6]
+#+end_src
+
+#+RESULTS:
+: Wolfram Language 12.0.0 Engine for Linux x86 (64-bit)
+: Copyright 1988-2019 Wolfram Research, Inc.
+:
+: In[1]:=
+
 #+BEGIN_SRC python :results output
 import time
 import sys
@@ -109,7 +128,7 @@ print(f"Python's version info: {sys.version}")
 #+END_SRC
 
 #+RESULTS:
-: Hello, today's date is Thu May 23 06:14:30 2019
+: Hello, today's date is Sun May 26 05:21:46 2019
 : Two plus two is 4
 : Python's version info: 3.7.3 (default, Mar 27 2019, 22:11:17)
 : [GCC 7.3.0]
@@ -598,8 +617,8 @@ Is the channel returned by =go= the same channel as =c=?
 #+END_SRC
 
 #+RESULTS:
-: {:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x678bcb92 clojure.core.async.impl.channels.ManyToManyChannel@678bcb92]}
-: {:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x609784b2 clojure.core.async.impl.channels.ManyToManyChannel@609784b2]}
+: {:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x31fc40fd clojure.core.async.impl.channels.ManyToManyChannel@31fc40fd]}
+: {:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1c522847 clojure.core.async.impl.channels.ManyToManyChannel@1c522847]}
 : {:c-coughs-up 42}
 : {:close-c nil}
 
@@ -687,11 +706,11 @@ thread?
 
 #+RESULTS:
 : {:c-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7830be19 "clojure.core.async.impl.channels.ManyToManyChannel@7830be19"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x65647649 "clojure.core.async.impl.channels.ManyToManyChannel@65647649"],
 :  :d-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5638e70c "clojure.core.async.impl.channels.ManyToManyChannel@5638e70c"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x10f6c9b "clojure.core.async.impl.channels.ManyToManyChannel@10f6c9b"],
 :  :e-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x26b79fce "clojure.core.async.impl.channels.ManyToManyChannel@26b79fce"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x52a8df47 "clojure.core.async.impl.channels.ManyToManyChannel@52a8df47"],
 :  :e-coughs-up 42,
 :  :d-coughs-up true}
 
@@ -722,11 +741,11 @@ opposite order.
 
 #+RESULTS:
 : {:c-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1cf8bbe9 "clojure.core.async.impl.channels.ManyToManyChannel@1cf8bbe9"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7bac4f35 "clojure.core.async.impl.channels.ManyToManyChannel@7bac4f35"],
 :  :d-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3fa26079 "clojure.core.async.impl.channels.ManyToManyChannel@3fa26079"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7e4b9f07 "clojure.core.async.impl.channels.ManyToManyChannel@7e4b9f07"],
 :  :e-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x4db742d7 "clojure.core.async.impl.channels.ManyToManyChannel@4db742d7"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7cda95a "clojure.core.async.impl.channels.ManyToManyChannel@7cda95a"],
 :  :e-coughs-up 42,
 :  :d-coughs-up true}
 
@@ -995,10 +1014,10 @@ returns immediately, long before the =timeout= could expire.
 
 #+RESULTS:
 : {:c
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x4fee92b9 "clojure.core.async.impl.channels.ManyToManyChannel@4fee92b9"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x247b5d2f "clojure.core.async.impl.channels.ManyToManyChannel@247b5d2f"],
 :  :a
 :  [true
-:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x4fee92b9 "clojure.core.async.impl.channels.ManyToManyChannel@4fee92b9"]]}
+:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x247b5d2f "clojure.core.async.impl.channels.ManyToManyChannel@247b5d2f"]]}
 : {:d-returns 43}
 
 But, if we take away the buffer, the =timeout= channel wins. The only
@@ -1020,11 +1039,11 @@ we quoted out the blocking read of =d= with a tick mark).
 
 #+RESULTS:
 : {:c
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3a0a41cc "clojure.core.async.impl.channels.ManyToManyChannel@3a0a41cc"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x4e2b629e "clojure.core.async.impl.channels.ManyToManyChannel@4e2b629e"],
 :  :a
 :  [nil
-:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x6faec080 "clojure.core.async.impl.channels.ManyToManyChannel@6faec080"]]}
-: {:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x479ae9d2 clojure.core.async.impl.channels.ManyToManyChannel@479ae9d2]}
+:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5cb81d85 "clojure.core.async.impl.channels.ManyToManyChannel@5cb81d85"]]}
+: {:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3d942054 clojure.core.async.impl.channels.ManyToManyChannel@3d942054]}
 
 * ASYNC DATA STREAMS
   :PROPERTIES:
@@ -1053,9 +1072,9 @@ leak permanently, we close the channel explicitly.
 #+END_SRC
 
 #+RESULTS:
-: 0.0592247
-: -0.178654
-: 0.828305
+: -0.676357
+: -0.324796
+: -0.315044
 : {:echo-chan-closed? false}
 : {:echo-chan-closed? true}
 
@@ -1108,8 +1127,8 @@ result, by design.
 
 #+RESULTS:
 : -1.48014
+: -0.178654
 : 0.16301
-: -0.324796
 
 Reading from =echo-chan= may hang the UI thread because the UI thread
 races the internal =go= thread that reads =echo-chan=, but the timeout trick
@@ -1148,9 +1167,9 @@ course, is bad practice or "code smell."
 #+END_SRC
 
 #+RESULTS:
+: 0.828305
 : 0.0592247
-: -0.324796
-: -0.0121089
+: 0.16301
 
 ** ASYNC RUNNING MEAN
    :PROPERTIES:
@@ -1187,16 +1206,16 @@ called a /functor/, which is anything that's mappable, anything you can
 
 #+RESULTS:
 #+begin_example
-{:count 1, :mean 0.828305, :datum 0.828305}
-{:count 2, :mean 0.07597399999999999, :datum -0.676357}
-{:count 3, :mean -0.23540533333333336, :datum -0.858164}
-{:count 4, :mean -0.255315, :datum -0.315044}
-{:count 5, :mean -0.20667378, :datum -0.0121089}
-{:count 6, :mean -0.20200381666666667, :datum -0.178654}
-{:count 7, :mean -0.14985898571428571, :datum 0.16301}
-{:count 8, :mean -0.1717261125, :datum -0.324796}
-{:count 9, :mean -0.3171054333333333, :datum -1.48014}
-{:count 10, :mean -0.27947241999999994, :datum 0.0592247}
+{:count 1, :mean 0.0592247, :datum 0.0592247}
+{:count 2, :mean 0.44376485, :datum 0.828305}
+{:count 3, :mean 0.2362919, :datum -0.178654}
+{:count 4, :mean 0.1741917, :datum -0.0121089}
+{:count 5, :mean 0.17195536, :datum 0.16301}
+{:count 6, :mean 0.08916346666666668, :datum -0.324796}
+{:count 7, :mean -0.13502274285714283, :datum -1.48014}
+{:count 8, :mean -0.20268952499999998, :datum -0.676357}
+{:count 9, :mean -0.2755200222222222, :datum -0.858164}
+{:count 10, :mean -0.27947242, :datum -0.315044}
 #+end_example
 
 We don't need to explicitly say =buffer=, but I prefer to do.
@@ -1238,7 +1257,7 @@ returns the value of the result accumulated so-far.
 #+END_SRC
 
 #+RESULTS:
-| :count | 10 | :mean | -0.27947242 | :datum | -0.676357 |
+| :count | 10 | :mean | -0.27947242 | :datum | -0.858164 |
 
 Occasionally, there is some floating-point noise in the very low digits
 of the mean because async-randomized-scan scrambles the order of the
@@ -2246,10 +2265,10 @@ for /observation/.
 #+END_SRC
 
 #+RESULTS:
-: {:xn1 #vectorz/matrix [[-4.982620378275626],
-: [-4.094967055349199],
-: [9.082691455387298],
-: [-3.044611295163016]],
+: {:xn1 #vectorz/matrix [[-4.6881351375660065],
+: [-4.098904857550219],
+: [7.903839925384],
+: [-2.657281371213249]],
 :  :Pnn
 :  #vectorz/matrix [[0.03208215055213958,-5.478256737134757E-15,-0.0874691388122202,-8.770761894538737E-15],
 : [-2.3568386825489895E-15,0.03637145347999561,-5.2632377622874316E-14,-0.05541947257604415],
@@ -2320,15 +2339,18 @@ handling: it's a big but separable engineering task.
 #+END_SRC
 
 #+RESULTS:
-: '(:xn1 #vectorz/matrix ((-4.982620378275414)
-: (-4.094967055349496)
-: (9.082691455387046)
-: (-3.044611295162827))  :Pnn #vectorz/matrix ((0.032082150552138984 -1.2652639352905837E-16 -0.08746913881223435 1.0440866921035408E-15)
-: (-3.549932022601718E-16 0.03637145347996972 5.686030530964448E-16 -0.05541947257606751)
-: (-0.08746913881223427 -4.3324718812520757E-16 0.28222493725725406 -3.0401028916493544E-15)
-: (1.5175848858822727E-15 -0.0554194725760671 -5.0488042566132485E-15 0.15110531309503966)))
+: '(:xn1 #vectorz/matrix ((-4.688135137565876)
+: (-4.098904857550513)
+: (7.903839925384052)
+: (-2.6572813712131595))  :Pnn #vectorz/matrix ((0.03208215055213764 1.6263032587282567E-15 -0.08746913881223312 1.0668549377257364E-15)
+: (1.4354836763708079E-16 0.03637145347997863 -1.795005116767001E-14 -0.055419472576063805)
+: (-0.08746913881223045 -2.3380603009215406E-14 0.2822249372572839 -8.826273045769994E-15)
+: (7.771561172376096E-16 -0.05541947257606241 -1.0321604682062002E-14 0.1511053130950385)))
 
 * VISUALIZATION SANDBOX
+=======
+* VISUALIZATION
+>>>>>>> 893a63642627909f5cdb2aa3ef7083b1e89baa3f
     :PROPERTIES:
     :CUSTOM_ID: oz-for-visualization
     :END:
@@ -2450,4 +2472,16 @@ The Extended Kalman Filter above is a generalization of linear regression.
 
 #+RESULTS:
 
-* POSTAMBLE
+* SANDBOX
+
+file:"sandbox-plot.png"
+| Sede      | Max cites | H-index |
+|-----------+-----------+---------|
+| Chile     |    257.72 |   21.39 |
+| Leeds     |    165.77 |   19.68 |
+| Sao Paolo |     71.00 |   11.50 |
+| Stockholm |    134.19 |   14.33 |
+| Morelia   |    257.56 |   17.67 |
+
+#+ATTR_ORG: :width 800
+[[file:sandbox-plot.png]]
