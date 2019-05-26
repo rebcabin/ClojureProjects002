@@ -109,7 +109,7 @@ print(f"Python's version info: {sys.version}")
 #+END_SRC
 
 #+RESULTS:
-: Hello, today's date is Thu May 23 05:28:36 2019
+: Hello, today's date is Thu May 23 06:14:30 2019
 : Two plus two is 4
 : Python's version info: 3.7.3 (default, Mar 27 2019, 22:11:17)
 : [GCC 7.3.0]
@@ -598,8 +598,8 @@ Is the channel returned by =go= the same channel as =c=?
 #+END_SRC
 
 #+RESULTS:
-: {:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x701f5d04 clojure.core.async.impl.channels.ManyToManyChannel@701f5d04]}
-: {:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x426c3df3 clojure.core.async.impl.channels.ManyToManyChannel@426c3df3]}
+: {:c-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x678bcb92 clojure.core.async.impl.channels.ManyToManyChannel@678bcb92]}
+: {:go-channel #object[clojure.core.async.impl.channels.ManyToManyChannel 0x609784b2 clojure.core.async.impl.channels.ManyToManyChannel@609784b2]}
 : {:c-coughs-up 42}
 : {:close-c nil}
 
@@ -687,11 +687,11 @@ thread?
 
 #+RESULTS:
 : {:c-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x6f877d84 "clojure.core.async.impl.channels.ManyToManyChannel@6f877d84"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7830be19 "clojure.core.async.impl.channels.ManyToManyChannel@7830be19"],
 :  :d-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x4c0d18ad "clojure.core.async.impl.channels.ManyToManyChannel@4c0d18ad"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5638e70c "clojure.core.async.impl.channels.ManyToManyChannel@5638e70c"],
 :  :e-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1ac093e7 "clojure.core.async.impl.channels.ManyToManyChannel@1ac093e7"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x26b79fce "clojure.core.async.impl.channels.ManyToManyChannel@26b79fce"],
 :  :e-coughs-up 42,
 :  :d-coughs-up true}
 
@@ -722,11 +722,11 @@ opposite order.
 
 #+RESULTS:
 : {:c-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x66a14494 "clojure.core.async.impl.channels.ManyToManyChannel@66a14494"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1cf8bbe9 "clojure.core.async.impl.channels.ManyToManyChannel@1cf8bbe9"],
 :  :d-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x5efc0fe4 "clojure.core.async.impl.channels.ManyToManyChannel@5efc0fe4"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3fa26079 "clojure.core.async.impl.channels.ManyToManyChannel@3fa26079"],
 :  :e-channel
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7090c603 "clojure.core.async.impl.channels.ManyToManyChannel@7090c603"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x4db742d7 "clojure.core.async.impl.channels.ManyToManyChannel@4db742d7"],
 :  :e-coughs-up 42,
 :  :d-coughs-up true}
 
@@ -995,10 +995,10 @@ returns immediately, long before the =timeout= could expire.
 
 #+RESULTS:
 : {:c
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1abc9cff "clojure.core.async.impl.channels.ManyToManyChannel@1abc9cff"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x4fee92b9 "clojure.core.async.impl.channels.ManyToManyChannel@4fee92b9"],
 :  :a
 :  [true
-:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x1abc9cff "clojure.core.async.impl.channels.ManyToManyChannel@1abc9cff"]]}
+:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x4fee92b9 "clojure.core.async.impl.channels.ManyToManyChannel@4fee92b9"]]}
 : {:d-returns 43}
 
 But, if we take away the buffer, the =timeout= channel wins. The only
@@ -1020,11 +1020,11 @@ we quoted out the blocking read of =d= with a tick mark).
 
 #+RESULTS:
 : {:c
-:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x7a5cd212 "clojure.core.async.impl.channels.ManyToManyChannel@7a5cd212"],
+:  #object[clojure.core.async.impl.channels.ManyToManyChannel 0x3a0a41cc "clojure.core.async.impl.channels.ManyToManyChannel@3a0a41cc"],
 :  :a
 :  [nil
-:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x226c7c93 "clojure.core.async.impl.channels.ManyToManyChannel@226c7c93"]]}
-: {:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x303f5166 clojure.core.async.impl.channels.ManyToManyChannel@303f5166]}
+:   #object[clojure.core.async.impl.channels.ManyToManyChannel 0x6faec080 "clojure.core.async.impl.channels.ManyToManyChannel@6faec080"]]}
+: {:d-is #object[clojure.core.async.impl.channels.ManyToManyChannel 0x479ae9d2 clojure.core.async.impl.channels.ManyToManyChannel@479ae9d2]}
 
 * ASYNC DATA STREAMS
   :PROPERTIES:
@@ -1053,9 +1053,9 @@ leak permanently, we close the channel explicitly.
 #+END_SRC
 
 #+RESULTS:
-: -0.324796
+: 0.0592247
+: -0.178654
 : 0.828305
-: -0.0121089
 : {:echo-chan-closed? false}
 : {:echo-chan-closed? true}
 
@@ -1107,8 +1107,8 @@ result, by design.
 #+END_SRC
 
 #+RESULTS:
-: -0.178654
-: -0.676357
+: -1.48014
+: 0.16301
 : -0.324796
 
 Reading from =echo-chan= may hang the UI thread because the UI thread
@@ -1148,8 +1148,8 @@ course, is bad practice or "code smell."
 #+END_SRC
 
 #+RESULTS:
-: 0.828305
-: 0.16301
+: 0.0592247
+: -0.324796
 : -0.0121089
 
 ** ASYNC RUNNING MEAN
@@ -1187,16 +1187,16 @@ called a /functor/, which is anything that's mappable, anything you can
 
 #+RESULTS:
 #+begin_example
-{:count 1, :mean -0.324796, :datum -0.324796}
-{:count 2, :mean -0.16845244999999998, :datum -0.0121089}
-{:count 3, :mean -0.09256006666666666, :datum 0.0592247}
-{:count 4, :mean -0.14818104999999998, :datum -0.315044}
-{:count 5, :mean -0.29017764, :datum -0.858164}
-{:count 6, :mean -0.2715903666666667, :datum -0.178654}
-{:count 7, :mean -0.20950460000000004, :datum 0.16301}
-{:count 8, :mean -0.07977840000000003, :datum 0.828305}
-{:count 9, :mean -0.23537413333333337, :datum -1.48014}
-{:count 10, :mean -0.27947242000000005, :datum -0.676357}
+{:count 1, :mean 0.828305, :datum 0.828305}
+{:count 2, :mean 0.07597399999999999, :datum -0.676357}
+{:count 3, :mean -0.23540533333333336, :datum -0.858164}
+{:count 4, :mean -0.255315, :datum -0.315044}
+{:count 5, :mean -0.20667378, :datum -0.0121089}
+{:count 6, :mean -0.20200381666666667, :datum -0.178654}
+{:count 7, :mean -0.14985898571428571, :datum 0.16301}
+{:count 8, :mean -0.1717261125, :datum -0.324796}
+{:count 9, :mean -0.3171054333333333, :datum -1.48014}
+{:count 10, :mean -0.27947241999999994, :datum 0.0592247}
 #+end_example
 
 We don't need to explicitly say =buffer=, but I prefer to do.
@@ -1467,8 +1467,8 @@ and test it both synchronously and asynchronously, randomized and not:
 : [{:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
 :  {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
 :  {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}]
-: {:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
-: {:count 2, :mean 99.5, :variance 3960.5, :ssq 23761.0}
+: {:count 1, :mean 89.0, :variance 0.0, :ssq 7921.0}
+: {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
 : {:count 3, :mean 96.0, :variance 2017.0, :ssq 31682.0}
 : {:count 1, :mean 55.0, :variance 0.0, :ssq 3025.0}
 : {:count 2, :mean 72.0, :variance 578.0, :ssq 10946.0}
@@ -2246,10 +2246,10 @@ for /observation/.
 #+END_SRC
 
 #+RESULTS:
-: {:xn1 #vectorz/matrix [[-4.878073796444608],
-: [-4.454774394044769],
-: [8.921242883308693],
-: [-2.440478244320896]],
+: {:xn1 #vectorz/matrix [[-4.982620378275626],
+: [-4.094967055349199],
+: [9.082691455387298],
+: [-3.044611295163016]],
 :  :Pnn
 :  #vectorz/matrix [[0.03208215055213958,-5.478256737134757E-15,-0.0874691388122202,-8.770761894538737E-15],
 : [-2.3568386825489895E-15,0.03637145347999561,-5.2632377622874316E-14,-0.05541947257604415],
@@ -2320,40 +2320,61 @@ handling: it's a big but separable engineering task.
 #+END_SRC
 
 #+RESULTS:
-: '(:xn1 #vectorz/matrix ((-4.8780737964449745)
-: (-4.454774394044124)
-: (8.921242883308931)
-: (-2.4404782443212425))  :Pnn #vectorz/matrix ((0.03208215055211709 1.7074666333605215E-14 -0.08746913881218234 -2.2500230845157176E-14)
-: (3.718203587903257E-14 0.03637145347993556 -7.876262576173021E-14 -0.055419472576032615)
-: (-0.08746913881222369 2.0842702563861337E-15 0.28222493725720704 1.9009099849753852E-14)
-: (-1.2272301230797922E-14 -0.05541947257606109 3.672236126295303E-14 0.15110531309502373)))
+: '(:xn1 #vectorz/matrix ((-4.982620378275414)
+: (-4.094967055349496)
+: (9.082691455387046)
+: (-3.044611295162827))  :Pnn #vectorz/matrix ((0.032082150552138984 -1.2652639352905837E-16 -0.08746913881223435 1.0440866921035408E-15)
+: (-3.549932022601718E-16 0.03637145347996972 5.686030530964448E-16 -0.05541947257606751)
+: (-0.08746913881223427 -4.3324718812520757E-16 0.28222493725725406 -3.0401028916493544E-15)
+: (1.5175848858822727E-15 -0.0554194725760671 -5.0488042566132485E-15 0.15110531309503966)))
 
-* VISUALIZATION
+* VISUALIZATION SANDBOX
     :PROPERTIES:
     :CUSTOM_ID: oz-for-visualization
     :END:
 
-** INCANTER
+** CLJ-REFACTOR
 
-Hot-loading seems hopelessly broken.
+#+begin_src emacs-lisp
+  (list org-babel-default-header-args
+        org-babel-default-inline-header-args
+        org-babel-default-lob-header-args)
+#+end_src
+
+#+RESULTS:
+| (:session . none)    | (:results . replace) | (:exports . code)    | (:cache . no)   | (:noweb . no) | (:hlines . no) | (:tangle . no) |
+| (:session . none)    | (:results . replace) | (:exports . results) | (:hlines . yes) |               |                |                |
+| (:exports . results) |                      |                      |                 |               |                |                |
+
+#+begin_src :eval never emacs-lisp
+  (require 'clj-refactor)
+
+  (defun my-clojure-mode-hook ()
+      (clj-refactor-mode 1)
+      (yas-minor-mode 1) ; for adding require/use/import statements
+      ;; This choice of keybinding leaves cider-macroexpand-1 unbound
+      (cljr-add-keybindings-with-prefix "C-c C-m"))
+
+  (add-hook 'clojure-mode-hook #'my-clojure-mode-hook)
+#+end_src
+
+Hot-loading seems hopelessly broken from org mode (might work in .clj files).
 
 #+begin_src :evaluate never emacs-lisp
 (cljr-add-project-dependency)
 #+end_src
 
-#+RESULTS:
-: class clojure.lang.Compiler$CompilerExceptionclass clojure.lang.Compiler$CompilerExceptionSyntax error compiling at (composable-statistics:localhost:40727(clj)*:2:1).
-: Unable to resolve symbol: cljr-add-project-dependency in this context
+** INCANTER
 
 #+begin_src clojure :results none
-(use '(incanter core charts pdf))
-;;; Create the x and y data:
-(def x-data [0.0 1.0 2.0 3.0 4.0 5.0])
-(def y-data [4.3 9.0 2.6 3.1 8.1 4.5])
-(def xy-line (xy-plot x-data y-data))
-#_(view xy-line)
-(save-pdf xy-line "incanter-xy-line.pdf")
-(save xy-line "incanter-xy-line.png")
+  (use '(incanter core charts pdf))
+  ;;; Create the x and y data:
+  (def x-data [0.0 1.0 2.0 3.0 4.0 5.0])
+  (def y-data [4.3 9.0 2.6 3.1 8.1 4.5])
+  (def xy-line (xy-plot x-data y-data))
+  #_(view xy-line)
+  (save-pdf xy-line "incanter-xy-line.pdf")
+  (save xy-line "incanter-xy-line.png")
 #+end_src
 
 #+ATTR_ORG: :width 600
@@ -2365,49 +2386,44 @@ From
 https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
 
 #+BEGIN_SRC clojure :results none
-    (require '[clojupyter.misc.helper :as helper])
-    (helper/add-dependencies '[metasoarous/oz "1.6.0-alpha2"])
-    (require '[oz.notebook.clojupyter :as oz])
+  (require '[clojupyter.misc.helper :as helper])
+  (helper/add-dependencies '[metasoarous/oz "1.6.0-alpha2"])
+  (require '[oz.notebook.clojupyter :as oz])
 #+END_SRC
 
 *** DEFN PLAY DATA
 
-#+BEGIN_SRC clojure :exports both
-(do (defn play-data [& names]
-      (for [n names
-            i (range 20)]
-        {:time i :item n :quantity (+ (Math/pow (* i (count n)) 0.8) (rand-int (count n)))}))
-
-    (def stacked-bar
-      {:data {:values (play-data "munchkin" "witch" "dog" "lion" "tiger" "bear")}
-       :mark "bar"
-       :encoding {:x {:field "time"}
-                  :y {:aggregate "sum"
-                      :field "quantity"
-                      :type "quantitative"}
-                  :color {:field "item"}}})
-    (oz/view! stacked-bar)   )
+#+BEGIN_SRC clojure :results none :exports code
+    (do (defn play-data [& names]
+          (for [n names
+                i (range 20)]
+            {:time i :item n
+             :quantity (+ (Math/pow (* i (count n)) 0.8)
+                          (rand-int (count n)))}   ))
+        (def stacked-bar
+          {:data {:values (play-data "munchkin" "witch"
+                                     "dog" "lion" "tiger" "bear")}
+           :mark "bar"
+           :encoding {:x {:field "time"}
+                      :y {:aggregate "sum"
+                          :field "quantity"
+                          :type "quantitative"}
+                      :color {:field "item"}}})
+        (oz/view! stacked-bar)   )
 #+END_SRC
 
-#+RESULTS:
-: #object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x62ae5229 "oz.notebook.clojupyter$view_BANG_$reify__21517@62ae5229"]
-
-#+BEGIN_SRC clojure :exports both
-    ;; Create spec, then visualize
-    (def spec
-      {:data {:url "https://gist.githubusercontent.com/metasoarous/4e6f781d353322a44b9cd3e4597c532c/raw/cd633d9bb8e0bed4a5b8e66a32b9569ca2147989/cars.json"}
-       :mark "point"
-       :encoding {
-         :x {:field "Horsepower", :type "quantitative"}
-         :y {:field "Miles_per_Gallon", :type "quantitative"}
-         :color {:field "Origin", :type "nominal"}}})
-    (oz/view! spec)
+#+BEGIN_SRC clojure :exports code :results none
+  (def spec
+    {:data {:url "https://gist.githubusercontent.com/metasoarous/4e6f781d353322a44b9cd3e4597c532c/raw/cd633d9bb8e0bed4a5b8e66a32b9569ca2147989/cars.json"}
+     :mark "point"
+     :encoding
+     {:x {:field "Horsepower", :type "quantitative"}
+      :y {:field "Miles_per_Gallon", :type "quantitative"}
+      :color {:field "Origin", :type "nominal"}}})
+  (oz/view! spec)
 #+END_SRC
 
-#+RESULTS:
-: #'composable-statistics.core/spec#object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x1abb4c27 "oz.notebook.clojupyter$view_BANG_$reify__21517@1abb4c27"]
-
-#+BEGIN_SRC clojure  :exports both
+#+BEGIN_SRC clojure  :exports code :results none
     (oz/view!
       [:div
        [:h1 "A little hiccup example"]
@@ -2417,16 +2433,12 @@ https://github.com/metasoarous/oz/blob/master/examples/clojupyter-example.ipynb
         [:vega-lite stacked-bar]]])
 #+END_SRC
 
-#+RESULTS:
-: #object[oz.notebook.clojupyter$view_BANG_$reify__21517 0x34141318 "oz.notebook.clojupyter$view_BANG_$reify__21517@34141318"]
-
 * GAUSSIAN PROCESSES
   :PROPERTIES:
   :CUSTOM_ID: gaussian-processes
   :END:
 
-The Extended Kalman Filter above is a generalization of linear
-regression.
+The Extended Kalman Filter above is a generalization of linear regression.
 
 ** RECURRENT LINEAR REGRESSION
    :PROPERTIES:
@@ -2437,3 +2449,5 @@ regression.
 #+END_SRC
 
 #+RESULTS:
+
+* POSTAMBLE
