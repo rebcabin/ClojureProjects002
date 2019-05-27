@@ -102,13 +102,13 @@
 
 #+begin_src emacs-lisp
 (require 'ob-mathematica)
-(setq org-babel-mathematica-command "wolframscript")
+(setq org-babel-mathematica-command "wolframscript -f")
 #+end_src
 
 #+RESULTS:
 : wolframscript
 
-#+begin_src mathematica
+#+begin_src mathematica :results output
 foo[x_] := x * (x + 2);
 foo[6]
 #+end_src
