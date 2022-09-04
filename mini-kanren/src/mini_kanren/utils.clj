@@ -164,15 +164,16 @@ unique solutions"
   )
 
 (defn memberrevo
-  "Succeeds if x is a member of proper list l, and produces all unique
-solutions in reverse order (however, this does not work in clojure since
-we don't have an order-preserving 'conde'."
+  "Succeeds if x is a member of proper list l, and produces
+  all unique solutions in reverse order (however, this does
+  not work in clojure since we don't have an
+  order-preserving 'conde'."
   [x l]
   (conde
    ((emptyo l) u#)
    (s# (fresh [d]
-              (resto l d)
-              (memberrevo x d)))
+         (resto l d)
+         (memberrevo x d)))
    (s# (eq-caro l x))
    ))
 

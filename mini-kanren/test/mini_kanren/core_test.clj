@@ -1,19 +1,22 @@
 (ns mini-kanren.core-test
   (:refer-clojure :exclude [==])
   (:require [clojure.test      :as     test]
-            ;; Normally, we would (:require [clojure.test :refer :all ...
-            ;; except, the symbol "is" is already define in the mini-kanren.core
-            ;; ... probably. In any event, the compilation fails when we try to
-            ;; import all the symbols from clojure.test
+            ;; Normally, we would (:require [clojure.test
+            ;; :refer :all ...]) except, the symbol "is"
+            ;; is already define in the mini-kanren.core
+            ;; ... probably. In any event, the compilation
+            ;; fails when we try to import all the symbols
+            ;; from clojure.test
             [mini-kanren.core  :refer :all ]
             [swiss-arrows.core :refer :all ])
   (:use [clojure.core.logic]))
 
-;;; These are tests derived from "The Reasoned Schemer, Second Edition, by
-;;; Daniel P. Friedman, William E. Byrd, Oleg Kiselyov, and Jason Hemann, MIT
-;;; Press, ISBN 978-0-262-53551-9. When not specifically marked, references
-;;; pertain to the first edition, which doesn't seem to be easy to find
-;;; nowadays.
+;;; These are tests derived from "The Reasoned Schemer, Second
+;;; Edition, by Daniel P. Friedman, William E. Byrd, Oleg
+;;; Kiselyov, and Jason Hemann, MIT Press, ISBN 978-0-262-53551-9.
+;;; When not specifically marked as from the 2d ed. (or 2E),
+;;; frame, references pertain to the first edition, which doesn't
+;;; seem to be easy to find nowadays.
 
 ;;;   ___ _              _             _
 ;;;  / __| |_  __ _ _ __| |_ ___ _ _  / |
@@ -297,12 +300,12 @@
            "frame 1-55")
   )
 
-(defn teacup [x] (conde
+(defn teacup "with symbols" [x] (conde
                   ((== 'tea x) s#)
                   ((== 'cup x) s#)
                   (s#          u#)))
 
-(defn teacup2 [x] (conde
+(defn teacup2 "with keywords" [x] (conde
                    ((== :tea x) s#)
                    ((== :cup x) s#)
                    (s#          u#)))
@@ -847,8 +850,8 @@
                    (listo (llist 'a 'b 'c x))))
            "frame 3-11")
 
-  ;; Don't run* the next one: it finds an infinite number of solutions
-  ;; and does not terminate:
+  ;; Don't run* the next one: it finds an infinite
+  ;; number of solutions and does not terminate:
   (test/is (= '(() (_0) (_0 _1) (_0 _1 _2) (_0 _1 _2 _3))
               (run 5 [x] (listo (llist 'a 'b 'c x))))
            "frame 3-14")
@@ -1181,8 +1184,8 @@
               (first-value '(pasta e fagioli)))
            "frame 3.96")
 
-  ;; Frame 3-100 -- Our conde doesn't have the same order as the book's
-  ;; conde.
+  ;; Frame 3-100 -- Our conde doesn't have the same order
+  ;; as the book's conde.
   (test/is
    (= '(pasta e fagioli)
       (run* [x] (memberrevo x '(pasta e fagioli))))
@@ -1326,8 +1329,8 @@
   (test/is
    (= '((b a d _0 e)
         (a b d _0 e)
-        ((a b d _0 e) :- (!= (_1 a)) (!= (_1 b)))
-        ((a b _0 d e) :- (!= (_0 a)) (!= (_0 b)) (!= (_0 _0)) (!= (_0 d))))
+        ((a b d _0 e) :- (!= (_1 b)) (!= (_1 a)))
+        ((a b _0 d e) :-  (!= (_0 _0)) (!= (_0 b)) (!= (_0 d)) (!= (_0 a))))
       (run* [out]
             (fresh [y z]
                    (rembero y (list 'a 'b y 'd z 'e) out))))
