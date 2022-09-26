@@ -98,8 +98,11 @@ main0()
   [sym-or-string]
 
   (keyword "asr.core" (name (csk/->kebab-case sym-or-string)))
-  ;; Found by experiment that ->> doesn't work, here.
-  #_(->> sym csk/->kebab-case #(keyword "asr" %)) )
+  ;; Found by experiment that ->> doesn't work, here. Something
+  ;; to do with macros.
+  #_(->> sym csk/->kebab-case #(keyword "asr.core" %)) )
+
+;;; Spec for nskw-kebab-from
 
 (s/fdef nskw-kebab-from
   :args (s/alt :str string? :sym symbol?)
@@ -573,14 +576,13 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
   left-hand side (term) and right-hand side (bunch of *forms*, one
   per head).
 
-  All forms in a speclet have the same kind, composite, symconst,
-  or tuple. There won't be a mixture of coposites and speclets,
+  All forms in a speclet have the same kind: composite, symconst,
+  or tuple. There won't be a mixture of composites and symconsts,
   for instance, on the right-hand side of any term.
 
-  qIn addition to the 3 kinds, it turns out there are (at one
-  count) 28 terms and speclets, and 227 heads, forms, and
-  clojure.specs when we're done. The number grows slowly as we add
-  features to AS.
+  In addition to the 3 kinds, it turns out there are about 28
+  terms and speclets, and 227 heads, forms, and clojure.specs when
+  we're done. The number grows slowly as we add features to ASR.
   "
 
   "MODULE         = SPC* <'module'> SPC* IDENT LBRACE SPEC RBRACE
@@ -641,13 +643,15 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
 
 
 (defn shallow-map-from-speclet
-  "Convert an ASDL-DEF into a map from :ASDL-TERM to the name of
-  the speclet and from :ASDL-FORMS into a list of alternative forms."
+  "Convert an ASDL-DEF into a map from :ASDL-TERM to the name of the
+  term of the speclet and from :ASDL-FORMS into a list of
+  alternative forms, still in hiccup format awaiting deeper
+  conversion."
   [speclet]
-  (let [[sign asdl-term asdl-forms] speclet
-        _ (assert (= sign :ASDL-DEF)) ;; TODO: replace with s/fspec
-        [sign & forms] asdl-forms     ;; listify forms
-        _ (assert (= sign :ASDL-FORMS))
+  (let [[signal asdl-term asdl-forms] speclet
+        _ (assert (= signal :ASDL-DEF)) ;; TODO: replace with s/fspec
+        [signal & forms] asdl-forms     ;; listify forms
+        _ (assert (= signal :ASDL-FORMS))
         renested [asdl-term [:ASDL-FORMS forms]]
         denested (mapcat identity renested)]
     (apply hash-map denested)))
@@ -659,10 +663,10 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
     TODO: Rewrite argument validation with s/fdef."
   [decl-hiccup]
   (let [_ (assert (= (decl-hiccup 0) :ASDL-DECL))
-        [sign type-nym & opt] (decl-hiccup 1)
-        _ (assert (= sign :ASDL-TYPE))
-        [sign decl-nym] (decl-hiccup 2)
-        _ (assert (= sign :ASDL-NYM))]
+        [signal type-nym & opt] (decl-hiccup 1)
+        _ (assert (= signal :ASDL-TYPE))
+        [signal decl-nym] (decl-hiccup 2)
+        _ (assert (= signal :ASDL-NYM))]
     {:ASDL-TYPE type-nym
      :MULTIPLICITY (case opt
                      (([:STAR])) ::zero-or-more
@@ -703,7 +707,7 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
 
 
 (defn map-pair-from-speclet-map [speclet-map]
-  [(keyword "asr" (:ASDL-TERM speclet-map)) ;; no kebab'bing
+  [(keyword "asr.core" (:ASDL-TERM speclet-map)) ;; no kebab'bing
    (:ASDL-FORMS speclet-map)])
 
 (def big-map-of-speclets-from-terms
@@ -739,7 +743,7 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
 (defn stuff-from-term-form [term form]
   (let [kind (-> form kind-from-form)
         ghead (head-from-kind-form kind form)
-        kwh (keyword "asr" ghead)] ;; no kebab'bing
+        kwh (keyword "asr.core" ghead)] ;; no kebab'bing
     {:head kwh,:term term,:kind kind,:form,form}))
 
 (def big-list-of-stuff
@@ -826,7 +830,9 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
   tolerate a defective termsspec for `::symbol-table` that we
   backpatch later.
 
-Construct and install all (approximately) 72 symconst head-specs:"
+  Construct and install all (approximately) 72 symconst
+  head-specs:
+  "
   [symconst-stuff]
   (let [symconst (-> symconst-stuff :form :ASDL-SYMCONST)
         nskw (nskw-kebab-from symconst)]
@@ -885,7 +891,7 @@ discarded. We save it as a lesson in this kind of dead end.
 
 #_(def identifier-re #"[a-zA-Z_][a-zA-Z0-9_]*")
 
-#_(s/def ::identifier
+#_ (s/def ::identifier
   (s/with-gen
     symbol?
     (fn []
@@ -946,13 +952,16 @@ discarded. We save it as a lesson in this kind of dead end.
       (fn [] (generator-for-heads heads)))))
 
 
+;;  __ _ _ _ __ _ ___
+;; / _` | '_/ _` (_-<
+;; \__,_|_| \__, /__/
+;;          |___/
+
+
 (defn spec-from-arg
   "### Spec Fragment from Arg, Args
 
-  Illiterates of the world, unite! Here is some \"how-to\" before
-  the \"what-for.\"
-
-  Convert multiplicities into clojure.spec equivalents;
+  Convert multiplicities into clojure.spec equivalents.
   "
   [arg]
   (let [type (nskw-kebab-from (:ASDL-TYPE arg))
@@ -969,6 +978,13 @@ discarded. We save it as a lesson in this kind of dead end.
         specules (->> args (map spec-from-arg) #_echo)
         riffle (-> (interleave kyms specules) #_echo)]
     `(s/cat ~@riffle)))
+
+
+;;  _             _
+;; | |_ _  _ _ __| |___ ___
+;; |  _| || | '_ \ / -_|_-<
+;;  \__|\_,_| .__/_\___/__/
+;;          |_|
 
 
 (defn spec-from-tuple-stuff! [tuple-stuff]
@@ -1011,6 +1027,13 @@ discarded. We save it as a lesson in this kind of dead end.
     `(s/def ~term-nskw (s/spec ~head))))
 
 
+;;                _         _     _        _    _
+;;  ____  _ _ __ | |__  ___| |___| |_ __ _| |__| |___
+;; (_-< || | '  \| '_ \/ _ \ |___|  _/ _` | '_ \ / -_)
+;; /__/\_, |_|_|_|_.__/\___/_|    \__\__,_|_.__/_\___|
+;;     |__/
+
+
 ;; # Hand-Written Term Spec for SymbolTable
 
 ;; ASDL doesn't offer an easy way to specify maps, but
@@ -1039,17 +1062,12 @@ discarded. We save it as a lesson in this kind of dead end.
 
   # First Composite Spec: `TranslationUnit`
 
-  We write specs as data lists and `eval` them later. Turns out
-  it's necessary to do that, and it's a beneficial accident lest
-  we clutter up the namespace of specs.
-
-  As usual, because this is illiterate programming, we must define
-  things before we can use them. Read the code backwards to get
-  the big picture.
+  Write specs as data lists and `eval` them later. Turns out it's
+  necessary to do that, and it's a beneficial accident lest we
+  clutter up the namespace of specs.
 
   Composites and tuples have lists of type-var pairs, that is, of
-  args. We've already handled arg lists by defining
-  `spec-from-args` above.
+  args. We've already handled arg lists in `spec-from-args` above.
 
   Specs for all tuples' heads and terms have already been
   installed.
@@ -1062,6 +1080,35 @@ discarded. We save it as a lesson in this kind of dead end.
         nskw (-> head nskw-kebab-from #_echo)
         args (-> composite :ASDL-ARGS)]
     `(s/def ~nskw ~(spec-from-args args))))
+
+
+;;                       _        _
+;;  ____ __  ___ __   __| |_ __ _| |_ ___
+;; (_-< '_ \/ -_) _| (_-<  _/ _` |  _(_-<
+;; /__/ .__/\___\__| /__/\__\__,_|\__/__/
+;;    |_|
+
+
+(defn only-asr-specs []
+  (filter
+   #(= (namespace %) "asr.core")
+   (keys (s/registry))))
+
+
+(defn check-registry
+  "Print specs defined in the namespace 'asr.core.'"
+  []
+  (pprint (only-asr-specs)))
+
+
+(defn count-asr-specs []
+  (count (only-asr-specs)))
+
+
+;;             _
+;;  _ __  __ _(_)_ _
+;; | '  \/ _` | | ' \
+;; |_|_|_\__,_|_|_||_|
 
 
 (defn -main
@@ -1095,5 +1142,8 @@ discarded. We save it as a lesson in this kind of dead end.
        (map tuple-spec-for-term)
        echo
        (map eval))
+
+  (pprint (s/exercise ::identifier))
+  ;;(pprint (s/exercise ::dimension))
 
   (println "Please see the tests. Main doesn't do a whole lot ... yet."))
