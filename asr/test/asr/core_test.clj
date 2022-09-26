@@ -452,13 +452,19 @@
                   :asr.core/lt-e
                   :asr.core/gt
                   :asr.core/gt-e))
-
            (->> symconst-stuffs
                 (map spec-from-symconst-stuff)
                 (map eval)
-                set))
-        )))
+                set)))))
 
+(deftest all-heads-for-symbols-test
+  (testing "all 13 heads for symbols"
+    (is (= '#{Block               Function            GenericProcedure
+              ExternalSymbol      CustomOperator      ClassProcedure
+              ClassType           Module              EnumType
+              DerivedType         AssociateBlock      Variable
+              Program}
+           (heads-for-composite :asr.core/symbol)))))
 
 (deftest all-heads-for-stmts-test
   (testing "all 42 heads for composite stmts"
@@ -511,8 +517,7 @@
               StringItem              StringConcat    SetLen
               ComplexCompare          ArrayBound      ComplexRe
               ComplexBinOp}
-           (heads-for-composite :asr.core/expr)
-           ))))
+           (heads-for-composite :asr.core/expr)))))
 
 
 (deftest count-of-big-list-of-stuff
@@ -576,7 +581,7 @@
 
 (deftest install-symconst-stuffss-by-term-test
   (testing "installing symconst stuffss by term"
-    (is (= (set '(:asr.core/deftype ; why is this indented?
+    (is (= (set '(:asr.core/deftype     ; why is this indented?
                      :asr.core/arraybound
                      :asr.core/storage-type
                      :asr.core/binop
@@ -589,6 +594,7 @@
                      :asr.core/intent
                      :asr.core/access
                      :asr.core/cmpop))
-           (set (->> symconst-stuffss-by-term
-                     (map symconst-spec-for-term)
-                     (map eval)))))))
+           (->> symconst-stuffss-by-term
+                (map symconst-spec-for-term)
+                (map eval)
+                set)))))

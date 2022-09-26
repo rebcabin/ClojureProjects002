@@ -981,6 +981,16 @@ discarded. We save it as a lesson in this kind of dead end.
          (fn [lyst] (-> lyst count (>= 1)))
          (fn [lyst] (-> lyst first heads))))
 
+
+;;                        __                         _         _                _
+;;  ____ __  ___ __ ___  / _|___ _ _   ____  _ _ __ | |__  ___| |  __ _ _ _  __| |
+;; (_-< '_ \/ -_) _(_-< |  _/ _ \ '_| (_-< || | '  \| '_ \/ _ \ | / _` | ' \/ _` |
+;; /__/ .__/\___\__/__/ |_| \___/_|   /__/\_, |_|_|_|_.__/\___/_| \__,_|_||_\__,_|
+;;    |_|                                 |__/
+
+
+;;; Try (s/exercise ::symbol) and (s/exercise ::expr in the REPL.
+
 (let [heads (heads-for-composite ::symbol)]
   (s/def ::symbol
     (s/with-gen
@@ -989,6 +999,12 @@ discarded. We save it as a lesson in this kind of dead end.
 
 (let [heads (heads-for-composite ::expr)]
   (s/def ::expr
+    (s/with-gen
+      (lpred heads)
+      (fn [] (generator-for-heads heads)))))
+
+(let [heads (heads-for-composite ::stmt)]
+  (s/def ::stmt
     (s/with-gen
       (lpred heads)
       (fn [] (generator-for-heads heads)))))
