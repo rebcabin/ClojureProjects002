@@ -538,6 +538,9 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
   separated by vertical bar characters. The meaning of an ASDL-DEF
   is an *alternation*, a list of alternative ASDL-FORMs.
 
+  There are about 28 terms. See all-terms-test in core_test.clj.
+  They are things like ::array_index, ::ttype, ::expr, etc.
+
   3. There are three *kinds* of ASDL-FORM or speclet: a
   ***composite***, a ***symconst***, or a ***tuple***.
 
@@ -658,9 +661,10 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
 
 
 (defn decl-map
-  "Convert [:ASDL-DECL [:ASDL-TYPE ...] [:ASDL-NYM ...]]
-    into {:ASDL-TYPE ..., :MULTIPLICITY ..., :ASDL-NYM ...}.
-    TODO: Rewrite argument validation with s/fdef."
+  "Convert [:ASDL-DECL [:ASDL-TYPE ...] [:ASDL-NYM ...]] into
+  {:ASDL-TYPE ..., :MULTIPLICITY ..., :ASDL-NYM ...}.
+  Used to convert ASDL-COMPOSITES and ASDL-TUPLES.
+  TODO: Rewrite argument validation with s/fdef."
   [decl-hiccup]
   (let [_ (assert (= (decl-hiccup 0) :ASDL-DECL))
         [signal type-nym & opt] (decl-hiccup 1)
@@ -673,6 +677,12 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
                      (([:QUES])) ::at-most-once
                      ::once) ;; default
      :ASDL-NYM decl-nym}))
+
+
+;;              _ _      __
+;;  __ _ ___ __| | |___ / _|___ _ _ _ __
+;; / _` (_-</ _` | |___|  _/ _ \ '_| '  \
+;; \__,_/__/\__,_|_|   |_| \___/_| |_|_|_|
 
 
 (defmulti asdl-form first)
@@ -693,8 +703,21 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
      :ASDL-ARGS (map decl-map decls)}))
 
 
+;;  _            _                           __                   _     _
+;; | |_  __ _ __| |_  _ __  __ _ _ __   ___ / _|  ____ __  ___ __| |___| |_ ___
+;; | ' \/ _` (_-< ' \| '  \/ _` | '_ \ / _ \  _| (_-< '_ \/ -_) _| / -_)  _(_-<
+;; |_||_\__,_/__/_||_|_|_|_\__,_| .__/ \___/_|   /__/ .__/\___\__|_\___|\__/__/
+;;                              |_|                 |_|
+;;   __                 _
+;;  / _|_ _ ___ _ __   | |_ ___ _ _ _ __  ___
+;; |  _| '_/ _ \ '  \  |  _/ -_) '_| '  \(_-<
+;; |_| |_| \___/_|_|_|  \__\___|_| |_|_|_/__/
+
+
 (defn hashmap-from-speclet
   "## Hashmap from Speclet, Itself
+
+  A speclet is, roughly, ASDL-TERM '=' ASDL-FORM*
 
   One entire speclet to a hashmap:
   "
@@ -707,7 +730,7 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
 
 
 (defn map-pair-from-speclet-map [speclet-map]
-  [(keyword "asr.core" (:ASDL-TERM speclet-map)) ;; no kebab'bing
+  [(keyword "asr.core" (:ASDL-TERM speclet-map)) ;; no kebab'bing!
    (:ASDL-FORMS speclet-map)])
 
 (def big-map-of-speclets-from-terms
@@ -729,6 +752,13 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
                   (comp map-pair-from-speclet-map
                         hashmap-from-speclet)
                   speclets))))
+
+
+;;  _    _        _ _    _          __      _         __  __
+;; | |__(_)__ _  | (_)__| |_   ___ / _|  __| |_ _  _ / _|/ _|
+;; | '_ \ / _` | | | (_-<  _| / _ \  _| (_-<  _| || |  _|  _|
+;; |_.__/_\__, | |_|_/__/\__| \___/_|   /__/\__|\_,_|_| |_|
+;;        |___/
 
 
 (defn kind-from-form [form]
