@@ -547,6 +547,11 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
   4. A *composite* is a ASDL-HEAD ***head*** followed by
   ASDL-ARGSs args. Args are identical in shape to a tuple.
 
+  There are about 227 heads, about six of which are asr-tuples
+  with gensymmed names. They are things like ::GetPointer,
+  ::FileClose, ::TypeParameter, etc. See all-heads-test in
+  core_test.clj.
+
   5. A *symconst* is just an identifier, reckoned as the *head* of
   the symconst.
 
@@ -921,7 +926,7 @@ discarded. We save it as a lesson in this kind of dead end.
 
 #_(def identifier-re #"[a-zA-Z_][a-zA-Z0-9_]*")
 
-#_ (s/def ::identifier
+#_(s/def ::identifier
   (s/with-gen
     symbol?
     (fn []
@@ -931,7 +936,9 @@ discarded. We save it as a lesson in this kind of dead end.
          (name %))
        (gen/symbol)))))
 
-;;; Better solution that, sadly but harmlessly, lacks underscores:
+;;; Better solution that, sadly but harmlessly, lacks underscores
+;;; because gen/char-alpha doesn't generate underscores. TODO: fix
+;;; this.
 
 (let [alpha-re #"[a-zA-Z]"  ;; The famous "let over lambda."
       alphameric-re #"[a-zA-Z0-9]*"]
@@ -952,8 +959,13 @@ discarded. We save it as a lesson in this kind of dead end.
       (fn [] identifier-generator))))
 
 
-(defn heads-for-composite [term]
-  (->> (term big-map-of-speclets-from-terms)
+(defn heads-for-composite
+  "Produce a list of symbolic heads (like 'RealUnaryMinus and
+  'ArraySection), from a term like :asr.core/expr. See
+  all-heads-for-exprs-test in core_test.clj."
+  [term]
+  (->> big-map-of-speclets-from-terms
+       term
        (map :ASDL-COMPOSITE)
        (map :ASDL-HEAD)
        (map symbol)
@@ -1174,6 +1186,7 @@ discarded. We save it as a lesson in this kind of dead end.
        (map eval))
 
   (pprint (s/exercise ::identifier))
+  (pprint (s/exercise ::expr))
   ;;(pprint (s/exercise ::dimension))
 
   (println "Please see the tests. Main doesn't do a whole lot ... yet."))

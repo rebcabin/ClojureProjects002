@@ -101,6 +101,7 @@
 
 (deftest all-terms-test
   (testing "check all 28 terms"
+    (is (= 28 (->> big-list-of-stuff (map :term) set count)))
     (is (= #{:asr.core/array_index
              :asr.core/cast_kind
              :asr.core/ttype
@@ -142,7 +143,13 @@
   (not (re-matches #"asr-tuple[0-9]+" (name kw))))
 
 (deftest all-heads-test
-  (testing "check all 227 heads"
+  (testing "check all 227 heads, minus 6 asr-tuples"
+    (is (= (- 227 6)
+           (->> big-list-of-stuff
+                (map :head)
+                (filter not-asr-tuple)
+                set
+                count)))
     (is (= #{:asr.core/ArrayPack
              :asr.core/WhileLoop
              :asr.core/Interactive
@@ -371,7 +378,8 @@
 
 
 (deftest install-all-symconst-specs-test
-  (testing "install all symconst specs"
+  (testing "install all 72 symconst specs"
+    (is (= 72 (->> symconst-stuffs set count)))
     (is (= (set '(:asr.core/implementation ; why is this not indented?
                   :asr.core/interface
                   :asr.core/l-bound
@@ -445,10 +453,85 @@
                   :asr.core/gt
                   :asr.core/gt-e))
 
-           (set (->> symconst-stuffs
-                     (map spec-from-symconst-stuff)
-                     (map eval))))
+           (->> symconst-stuffs
+                (map spec-from-symconst-stuff)
+                (map eval)
+                set))
         )))
+
+
+(deftest all-heads-for-stmts-test
+  (testing "all 42 heads for composite stmts"
+    (is (= '#{ListClear           Print               ExplicitDeallocate
+              SetRemove           SetInsert           Select
+              SubroutineCall      Where               FileRewind
+              FileInquire         CPtrToPointer       Assert
+              ListAppend          Stop                ListInsert
+
+              ForAllSingle        ImplicitDeallocate  Allocate
+              GoTo                AssociateBlockCall  BlockCall
+              Nullify             Exit                Cycle
+              Assignment          Assign              If
+              Flush               WhileLoop           ListRemove
+
+              FileOpen            Associate           FileRead
+              DictInsert          DoLoop              FileWrite
+              GoToTarget          Return              ErrorStop
+              DoConcurrentLoop    FileClose           IfArithmetic}
+           (heads-for-composite :asr.core/stmt)))))
+
+(deftest all-heads-for-exprs-test
+  (testing "all 73 heads for expr composite"
+    (is (= '#{ComplexConstructor  ListConstant        Var
+              IntegerBinOp        IntegerUnaryMinus   ComplexUnaryMinus
+              RealCompare         IntegerBitNot       IntegerBitLen
+              IfExp               ImpliedDoLoop       RealConstant
+              NamedExpr           ArrayTranspose      DictConstant
+
+              EnumRef             StringSection       FunctionCall
+              PointerToCPtr       ListLen             DictLen
+              DerivedRef          StringCompare       StringLen
+              StringConstant      StringOrd           IntegerCompare
+              ListItem            TupleConstant       LogicalCompare
+
+              ListPop             TupleLen            OverloadedBinOp
+              ArrayMatMul         RealBinOp           SetConstant
+              IntegerBOZ          OverloadedCompare   BitCast
+              EnumTypeConstructor ArrayReshape        LogicalConstant
+              LogicalBinOp        Cast                ListConcat
+
+              SetPop              TupleItem           StringChr
+              GetPointer          CLoc                TemplateBinOp
+              ArraySize           ArrayItem           ComplexIm
+              DictPop             DictItem            ArrayPack
+              ComplexConstant     ArrayConstant       LogicalNot
+
+              DerivedTypeConstructor  RealUnaryMinus  IntegerConstant
+              StringRepeat            ArraySection    ListSection
+              StringItem              StringConcat    SetLen
+              ComplexCompare          ArrayBound      ComplexRe
+              ComplexBinOp}
+           (heads-for-composite :asr.core/expr)
+           ))))
+
+
+(deftest count-of-big-list-of-stuff
+  (testing "count of big list of stuff"
+    (is (= 227 (count big-list-of-stuff)))))
+
+
+(deftest count-of-big-map-of-speclets
+  (testing "count of big map of speclets"
+    (is (= 28 (count big-map-of-speclets-from-terms)))))
+
+
+(deftest count-of-composite-exprs
+  (testing "count of composite exprs"
+    (is (= 73
+           (->> big-map-of-speclets-from-terms
+                :asr.core/expr
+                (map :ASDL-COMPOSITE)
+                count)))))
 
 
 ;;; Ongoing experiment with fixtures.
