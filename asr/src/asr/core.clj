@@ -10,6 +10,12 @@
             [clojure.test.check.generators :as tgen]
             ))
 
+(println "**************************")
+(println "*******  HEY YOU!  *******")
+(println "Instructions at the REPL:\n(-main)\n(s/exercise ::binop)\n")
+(println "**************************")
+(println "**************************")
+
 
 (defn echo [x]
   (pprint x) x)  ;; TODO: macro?
