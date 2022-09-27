@@ -1,29 +1,32 @@
 (ns asr.core
   (:gen-class)
-  (:require [clojure.spec.alpha :as s]
-            [clojure.pprint :refer [pprint]]
-            [instaparse.core :as insta]
-            [clojure.zip :as zip]
-            [camel-snake-kebab.core :as csk]
-            [clojure.spec.gen.alpha :as gen]
-            [clojure.spec.test.alpha :as stest]
+  (:require [clojure.spec.alpha            :as s]
+            [clojure.pprint                :refer [pprint]]
+            [instaparse.core               :as insta]
+            [clojure.zip                   :as zip]
+            [camel-snake-kebab.core        :as csk]
+            [clojure.spec.gen.alpha        :as gen]
+            [clojure.spec.test.alpha       :as stest]
             [clojure.test.check.generators :as tgen]
             ))
 
-(println "**************************")
-(println "*******  HEY YOU!  *******")
-(println "Instructions at the REPL:\n(-main)\n(s/exercise ::binop)\n")
-(println "**************************")
-(println "**************************")
-
+(println "+-------------------------------+")
+(println "|                               |")
+(println "|     Try this at the REPL:     |")
+(println "|                               |")
+(println "|     (-main)                   |")
+(println "|     (s/exercise ::binop)      |")
+(println "|     (s/describe ::binop)      |")
+(println "|                               |")
+(println "+-------------------------------+")
 
 (defn echo [x]
   (pprint x) x)  ;; TODO: macro?
 
 
 (def expr-01-211000
-  "By the way, here is the Python that generates the ASR below,
-  from <https://github.com/lcompilers/lpython/blob/84a073ce44a9a74213a4ac5648ee783bd38fc90f/tests/expr_01.py>.
+  "Here is the Python that generates the ASR below, from
+  <https://github.com/lcompilers/lpython/blob/84a073ce44a9a74213a4ac5648ee783bd38fc90f/tests/expr_01.py>.
 
 ```python id=f1020f8e-d252-4b90-b78a-e74a366b580e
 def main0():
@@ -977,12 +980,20 @@ discarded. We save it as a lesson in this kind of dead end.
        (map symbol)
        set))
 
-(defn generator-for-heads [heads]
+(defn dummy-generator-for-heads
+  "A dummy generator for argument lists for heads which just
+  inserts a list of random length of random identifiers. Not
+  suitable long-term."
+  [heads]
   (tgen/let [head (s/gen heads)
              rest (gen/list (s/gen ::identifier))]
     (cons head rest)))
 
-(defn lpred [heads]
+(defn dummy-lpred
+  "A predicate for dummy specs that checks simply that the
+  instance is a list with an appropriate head and zero or
+  more items of any type. Not suitable long-term."
+  [heads]
   (s/and seq?
          (fn [lyst] (-> lyst count (>= 1)))
          (fn [lyst] (-> lyst first heads))))
@@ -1000,20 +1011,20 @@ discarded. We save it as a lesson in this kind of dead end.
 (let [heads (heads-for-composite ::symbol)]
   (s/def ::symbol
     (s/with-gen
-      (lpred heads)
-      (fn [] (generator-for-heads heads)))))
+      (dummy-lpred heads)
+      (fn [] (dummy-generator-for-heads heads)))))
 
 (let [heads (heads-for-composite ::expr)]
   (s/def ::expr
     (s/with-gen
-      (lpred heads)
-      (fn [] (generator-for-heads heads)))))
+      (dummy-lpred heads)
+      (fn [] (dummy-generator-for-heads heads)))))
 
 (let [heads (heads-for-composite ::stmt)]
   (s/def ::stmt
     (s/with-gen
-      (lpred heads)
-      (fn [] (generator-for-heads heads)))))
+      (dummy-lpred heads)
+      (fn [] (dummy-generator-for-heads heads)))))
 
 
 ;;  __ _ _ _ __ _ ___
@@ -1210,13 +1221,15 @@ discarded. We save it as a lesson in this kind of dead end.
   "Please see the tests. Main doesn't do a whole lot ... yet."
   [& args]
 
+  ;; Function specs for nskw-kebab-from.
+
   (s/fdef nskw-kebab-from
     :args (s/alt :str string? :sym symbol?)
     :ret keyword?)
 
   (stest/instrument `nskw-kebab-from)
 
-  ;; SIDE-EFFECTs!
+  ;; Building up the spec registry by side-effect.
 
   (print "symconst head specs: ")
 
@@ -1241,10 +1254,14 @@ discarded. We save it as a lesson in this kind of dead end.
 
   (do-one-tuple-spec-head-and-term! ::dimension)
 
+  (println "tuple heads and terms are 1-to-1, unlike symconsts an composites.")
+  (print "tuple head specs: ")
+
   (->> tuple-stuffs
        (map tuple-head-spec-from-stuff)
        (map eval)
-       count)
+       count
+       echo)
 
   (print "tuple term specs: ")
 
@@ -1255,26 +1272,73 @@ discarded. We save it as a lesson in this kind of dead end.
        count
        echo)
 
+;;  _ _               _         _
+;; (_|_)____  _ _ __ | |__  ___| |
+;;  _ _(_-< || | '  \| '_ \/ _ \ |
+;; (_|_)__/\_, |_|_|_|_.__/\___/_|
+;;         |__/
+
+  (println "dummy spec for symbol: ")
+
   (let [heads (heads-for-composite ::symbol)]
     (->> (s/def ::symbol
            (s/with-gen
-             (lpred heads)
-             (fn [] (generator-for-heads heads))))
+             (dummy-lpred heads)
+             (fn [] (dummy-generator-for-heads heads))))
          echo))
+  (pprint (s/describe ::symbol))
+
+;;  _ _
+;; (_|_)_____ ___ __ _ _
+;;  _ _/ -_) \ / '_ \ '_|
+;; (_|_)___/_\_\ .__/_|
+;;             |_|
+
+  (println "dummy spec for expr: ")
 
   (let [heads (heads-for-composite ::expr)]
     (->> (s/def ::expr
            (s/with-gen
-             (lpred heads)
-             (fn [] (generator-for-heads heads))))
+             (dummy-lpred heads)
+             (fn [] (dummy-generator-for-heads heads))))
          echo))
+  (pprint (s/describe ::expr))
+
+;;  _ _    _        _
+;; (_|_)__| |_ _ __| |_
+;;  _ _(_-<  _| '  \  _|
+;; (_|_)__/\__|_|_|_\__|
+
+  (println "dummy spec for stmt: ")
 
   (let [heads (heads-for-composite ::stmt)]
     (->> (s/def ::stmt
            (s/with-gen
-             (lpred heads)
-             (fn [] (generator-for-heads heads))))
+             (dummy-lpred heads)
+             (fn [] (dummy-generator-for-heads heads))))
          echo))
+  (pprint (s/describe ::stmt))
+
+;;  _ _ _   _
+;; (_|_) |_| |_ _  _ _ __  ___
+;;  _ _|  _|  _| || | '_ \/ -_)
+;; (_|_)\__|\__|\_, | .__/\___|
+;;              |__/|_|
+
+  (println "dummy spec for ttupe: ")
+
+  (let [heads (heads-for-composite ::ttype)]
+    (->> (s/def ::ttype
+           (s/with-gen
+             (dummy-lpred heads)
+             (fn [] (dummy-generator-for-heads heads))))
+         echo))
+  (pprint (s/describe ::ttype))
+
+;;  _       _        _                   _
+;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_
+;; |  _/ _ \  _/ _` | | / _/ _ \ || | ' \  _|
+;;  \__\___/\__\__,_|_| \__\___/\_,_|_||_\__|
 
   (print "total number of specs registered: ")
   (println (count-asr-specs))
@@ -1282,5 +1346,7 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; (pprint (s/exercise ::identifier))
   ;; (pprint (s/exercise ::expr))
   ;; (pprint (s/exercise ::dimension))
+
+
 
   (println "Please see the tests. Main doesn't do a whole lot ... yet."))
