@@ -6,11 +6,11 @@
 
 ;;; Ongoing experiment with fixtures.
 
-(defn symconst-stuffs-fixture [f]
-  (-main)
-  (f))
+;; (defn symconst-stuffs-fixture [f]
+;;   (-main)
+;;   (f))
 
-(use-fixtures :once symconst-stuffs-fixture)
+;; (use-fixtures :once symconst-stuffs-fixture)
 
 
 (deftest kebab-test

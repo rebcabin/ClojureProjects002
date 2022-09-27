@@ -1031,10 +1031,10 @@ discarded. We save it as a lesson in this kind of dead end.
 
 
 (defn spec-from-args [args]
-  (let [nyms (->> args (map :ASDL-NYM) #_echo)
+  (let [nyms (->> args (map :ASDL-NYM)           #_echo)
         kyms (->> nyms (map (comp keyword name)) #_echo)
-        specules (->> args (map spec-from-arg) #_echo)
-        riffle (-> (interleave kyms specules) #_echo)]
+        specules (->> args (map spec-from-arg)   #_echo)
+        riffle (-> (interleave kyms specules)    #_echo)]
     `(s/cat ~@riffle)))
 
 
@@ -1103,17 +1103,16 @@ discarded. We save it as a lesson in this kind of dead end.
 (defn do-one-tuple-spec-head-and-term!
   "Spec one tuple type, head-spec and term-spec, by term."
   [term]
+
   (->> tuple-stuffs
       (filter #(= term (-> % :term)))
       (map tuple-head-spec-from-stuff)
-      echo
       (map eval)
       echo)
 
  (->> tuple-stuffss-by-term
       (filter #(= term (-> % first :term)))
       (map tuple-term-spec-from-stuffs)
-      echo
       (map eval)
       echo))
 
@@ -1217,7 +1216,6 @@ discarded. We save it as a lesson in this kind of dead end.
 
   (->> symconst-stuffs
        (map spec-from-symconst-stuff)
-       #_echo
        (map eval)
        count
        echo)
@@ -1226,7 +1224,6 @@ discarded. We save it as a lesson in this kind of dead end.
 
   (->> symconst-stuffss-by-term
        (map symconst-spec-for-term)
-       #_echo
        (map eval)
        count
        echo)
@@ -1234,27 +1231,16 @@ discarded. We save it as a lesson in this kind of dead end.
   ;;; We need a cycle-breaking spec for dimension to bootstrap the
   ;;; following constructions.
 
+  (println "cycle-breaking with ::dimension")
+
   (do-one-tuple-spec-head-and-term! ::dimension)
-
-  ;; (->> tuple-stuffs
-  ;;      (filter #(= ::dimension (-> % :term)))
-  ;;      (map tuple-head-spec-from-stuff)
-  ;;      #_echo
-  ;;      (map eval)
-  ;;      echo)
-
-  ;; (->> tuple-stuffss-by-term
-  ;;      (filter #(= ::dimension (-> % first :term)))
-  ;;      (map tuple-term-spec-from-stuffs)
-  ;;      (map eval)
-  ;;      echo)
 
   (->> tuple-stuffs
        (map tuple-head-spec-from-stuff)
-       #_echo
        (map eval)
-       count
-       echo)
+       count)
+
+  (print "tuple term specs: ")
 
   (->> tuple-stuffss-by-term
        (map tuple-term-spec-from-stuffs)
