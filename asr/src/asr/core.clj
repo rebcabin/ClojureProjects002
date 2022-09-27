@@ -846,26 +846,26 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
 (defn spec-from-symconst-stuff
   "## Symconst-Head-Specs
 
-  This next code block INSTALLS the (about) 72 head-specs by
+  This next code block REGISTERS the (about) 72 head-specs by
   `eval`'ing the `s/defs` written by `` `(s/def ...) ``. A spec is
-  *installed* into a hidden Clojure Spec Registry by side-effect
+  *registered* into a hidden Clojure Spec Registry by side-effect
   and is associated with the namespaced keyword produced by
   `nskw-kebab-from`. Once this next code block runs, we'll
-  have (about) 72 head-specs magically installed and we can refer
+  have (about) 72 head-specs magically registered and we can refer
   to them by namespaced kebab'bed keyword name. For example,
-  `::implementation` will be installed and we can refer to it
+  `::implementation` will be registered and we can refer to it
   via `(s/spec ::implementation)`.
 
-  All specs, head-specs and term-specs alike must be installed
+  All specs, head-specs and term-specs alike must be registered
   before being referred-to. Later, we'll break co-recursive cycles
-  by installing defective specs then backpatching them. For
+  by registering defective specs then backpatching them. For
   example, the term-spec for `::symbol` refers to the term-spec
   for `::symbol-table`, which refers to the term-spec for
   `::symbol`. Clojure.spec can't tolerate that, but it can
-  tolerate a defective termsspec for `::symbol-table` that we
+  tolerate a defective term-spec for `::symbol-table` that we
   backpatch later.
 
-  Construct and install all (approximately) 72 symconst
+  Construct and register all (approximately) 72 symconst
   head-specs:
   "
   [symconst-stuff]
@@ -982,11 +982,11 @@ discarded. We save it as a lesson in this kind of dead end.
          (fn [lyst] (-> lyst first heads))))
 
 
-;;                        __                         _         _                _
-;;  ____ __  ___ __ ___  / _|___ _ _   ____  _ _ __ | |__  ___| |  __ _ _ _  __| |
-;; (_-< '_ \/ -_) _(_-< |  _/ _ \ '_| (_-< || | '  \| '_ \/ _ \ | / _` | ' \/ _` |
-;; /__/ .__/\___\__/__/ |_| \___/_|   /__/\_, |_|_|_|_.__/\___/_| \__,_|_||_\__,_|
-;;    |_|                                 |__/
+;;                        __                                     _ _
+;;  ____ __  ___ __ ___  / _|___ _ _   __ ___ _ __  _ __  ___ __(_) |_ ___ ___
+;; (_-< '_ \/ -_) _(_-< |  _/ _ \ '_| / _/ _ \ '  \| '_ \/ _ (_-< |  _/ -_|_-<
+;; /__/ .__/\___\__/__/ |_| \___/_|   \__\___/_|_|_| .__/\___/__/_|\__\___/__/
+;;    |_|                                          |_|
 
 
 ;;; Try (s/exercise ::symbol) and (s/exercise ::expr in the REPL.
@@ -1045,16 +1045,15 @@ discarded. We save it as a lesson in this kind of dead end.
 ;;          |_|
 
 
-(defn spec-from-tuple-stuff! [tuple-stuff]
-  (let [nskw (nskw-kebab-from (name (:head tuple-stuff)))
-        args (-> tuple-stuff :form :ASDL-ARGS)]
+(defn tuple-head-spec-from-stuff [tuple-stuff]
+  #_(println "tuple-head-spec-from-stuff")
+  (let [nskw (-> tuple-stuff :head name nskw-kebab-from #_echo)
+        args (-> tuple-stuff :form :ASDL-ARGS           #_echo)]
     `(s/def ~nskw ~(spec-from-args args))))  ;; side effect!
 
 
 (def tuple-stuffs
   "# Tuple Specs
-
-  What do we want to see for a tuple head-spec? How about an `s/cat`?
 
   There are six tuple heads. Their names will change from
   run-to-run because the names are gensymmed.
@@ -1069,20 +1068,54 @@ discarded. We save it as a lesson in this kind of dead end.
   As before, we really need clojure.specs for the terms
   corresponding to the heads.
 
-  ### Tuple Stuffss [sic] by Term
+  ### Tuple Stuffss [sic] by Term (one extra level of lists)
   "
   (partition-by :term tuple-stuffs))
 
 
-;; ### Install
+;; ### Register
 
-;; To install the 6 term-specs, `eval` them.
+;; To register the 6 term-specs, `eval` them.
 
-(defn tuple-spec-for-term [stuffs]
-  (let [term (-> stuffs first :term)
-        term-nskw (nskw-kebab-from (name term))
-        head (-> stuffs first :head name nskw-kebab-from)]
-    `(s/def ~term-nskw (s/spec ~head))))
+(defn tuple-term-spec-from-stuffs [stuffs]
+  #_(println "tuple-term-spec-from-stuffs")
+  (let [term (-> stuffs first :term                      #_echo)
+        nskw (-> term name nskw-kebab-from               #_echo)
+        head (-> stuffs first :head name nskw-kebab-from #_echo)]
+    `(s/def ~nskw (s/spec ~head))))
+
+
+;;   __            __                   __
+;;  / /___ _____  / /__   ______ ______/ /__
+;; / __/ // / _ \/ / -_) / __/ // / __/ / -_)
+;; \__/\_,_/ .__/_/\__/  \__/\_, /\__/_/\__/
+;;        /_/               /___/
+;;    __                __    _
+;;   / /  _______ ___ _/ /__ (_)__  ___ _
+;;  / _ \/ __/ -_) _ `/  '_// / _ \/ _ `/
+;; /_.__/_/  \__/\_,_/_/\_\/_/_//_/\_, /
+;;                                /___/
+
+
+;;; Manual topological sort shows we must spec ::dimension before
+;;; the others.
+
+(defn do-one-tuple-spec-head-and-term!
+  "Spec one tuple type, head-spec and term-spec, by term."
+  [term]
+  (->> tuple-stuffs
+      (filter #(= term (-> % :term)))
+      (map tuple-head-spec-from-stuff)
+      echo
+      (map eval)
+      echo)
+
+ (->> tuple-stuffss-by-term
+      (filter #(= term (-> % first :term)))
+      (map tuple-term-spec-from-stuffs)
+      echo
+      (map eval)
+      echo))
 
 
 ;;                _         _     _        _    _
@@ -1109,7 +1142,6 @@ discarded. We save it as a lesson in this kind of dead end.
    :head #(= % 'SymbolTable)
    :unique-id int?
    :symbols (s/map-of keyword?
-                      #_#(do % true)
                       (s/spec ::symbol))))
 
 
@@ -1128,10 +1160,10 @@ discarded. We save it as a lesson in this kind of dead end.
   args. We've already handled arg lists in `spec-from-args` above.
 
   Specs for all tuples' heads and terms have already been
-  installed.
+  registered.
 
   Specs for all symconsts' heads and terms have already been
-  installed.
+  registered.
   "
   [composite]
   (let [head (-> composite :ASDL-HEAD symbol)
@@ -1181,28 +1213,82 @@ discarded. We save it as a lesson in this kind of dead end.
 
   ;; SIDE-EFFECTs!
 
+  (print "symconst head specs: ")
+
   (->> symconst-stuffs
        (map spec-from-symconst-stuff)
-       echo
-       (map eval))
+       #_echo
+       (map eval)
+       count
+       echo)
+
+  (print "symconst term specs: ")
 
   (->> symconst-stuffss-by-term
        (map symconst-spec-for-term)
-       echo
-       (map eval))
+       #_echo
+       (map eval)
+       count
+       echo)
+
+  ;;; We need a cycle-breaking spec for dimension to bootstrap the
+  ;;; following constructions.
+
+  (do-one-tuple-spec-head-and-term! ::dimension)
+
+  ;; (->> tuple-stuffs
+  ;;      (filter #(= ::dimension (-> % :term)))
+  ;;      (map tuple-head-spec-from-stuff)
+  ;;      #_echo
+  ;;      (map eval)
+  ;;      echo)
+
+  ;; (->> tuple-stuffss-by-term
+  ;;      (filter #(= ::dimension (-> % first :term)))
+  ;;      (map tuple-term-spec-from-stuffs)
+  ;;      (map eval)
+  ;;      echo)
 
   (->> tuple-stuffs
-       (map spec-from-tuple-stuff!)
-       echo
-       (map eval))
+       (map tuple-head-spec-from-stuff)
+       #_echo
+       (map eval)
+       count
+       echo)
 
   (->> tuple-stuffss-by-term
-       (map tuple-spec-for-term)
-       echo
-       (map eval))
+       (map tuple-term-spec-from-stuffs)
+       #_echo
+       (map eval)
+       count
+       echo)
 
-  (pprint (s/exercise ::identifier))
-  (pprint (s/exercise ::expr))
-  ;;(pprint (s/exercise ::dimension))
+  (let [heads (heads-for-composite ::symbol)]
+    (->> (s/def ::symbol
+           (s/with-gen
+             (lpred heads)
+             (fn [] (generator-for-heads heads))))
+         echo))
+
+  (let [heads (heads-for-composite ::expr)]
+    (->> (s/def ::expr
+           (s/with-gen
+             (lpred heads)
+             (fn [] (generator-for-heads heads))))
+         echo))
+
+  (let [heads (heads-for-composite ::stmt)]
+    (->> (s/def ::stmt
+           (s/with-gen
+             (lpred heads)
+             (fn [] (generator-for-heads heads))))
+         echo))
+
+  (print "total number of specs registered: ")
+  (println (count-asr-specs))
+
+  ;; (pprint (s/exercise ::identifier))
+  ;; (pprint (s/exercise ::expr))
+  ;; (pprint (s/exercise ::dimension))
 
   (println "Please see the tests. Main doesn't do a whole lot ... yet."))

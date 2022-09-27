@@ -4,6 +4,15 @@
             [clojure.spec.alpha :as s]))
 
 
+;;; Ongoing experiment with fixtures.
+
+(defn symconst-stuffs-fixture [f]
+  (-main)
+  (f))
+
+(use-fixtures :once symconst-stuffs-fixture)
+
+
 (deftest kebab-test
   (testing "kebab-case"
     (is (= (nskw-kebab-from 'TranslationUnit)
@@ -539,31 +548,27 @@
                 count)))))
 
 
+(deftest
+  count-asr-specs-test
+  (is (= 103 (count-asr-specs))))
+
+
+;;   __ _     _
+;;  / _(_)_ _| |_ _  _ _ _ ___ ___
+;; |  _| \ \ /  _| || | '_/ -_|_-<
+;; |_| |_/_\_\\__|\_,_|_| \___/__/
+
+
 ;;; Ongoing experiment with fixtures.
 
-#_(defn symconst-stuffs-fixture [f]
-    (->> symconst-stuffs
-         (map spec-from-symconst-stuff)
-         (map eval))
-    (->> symconst-stuffss-by-term
-         (map symconst-spec-for-term)
-         (map eval))
-    (->> tuple-stuffs
-         (map spec-from-tuple-stuff!)
-         (map eval))
-    (->> tuple-stuffss-by-term
-         (map tuple-spec-for-term)
-         (map eval))
-    (f))
+(defn symconst-stuffs-fixture [f]
+  (-main)
+  (f))
 
-#_(use-fixtures :once symconst-stuffs-fixture)
+(use-fixtures :once symconst-stuffs-fixture)
 
 
-;;; The following test fails in lein test at the because
-;;; console the spec :asr.core/add cannot be found. The
-;;; test passes in CIDER. TODO: Investigate. Write better
-;;; test. Fixtures?
-#_(deftest add-conforms-test
+(deftest add-conforms-test
   (is (= 'Add
        (s/conform (s/spec :asr.core/add) 'Add))))
 
