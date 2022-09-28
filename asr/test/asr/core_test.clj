@@ -363,7 +363,7 @@
 
 
 (deftest count-asr-specs-test
-  (is (= 105 (count-asr-specs))))
+  (is (= 109 (count-asr-specs))))
 
 
 ;;   __ _     _

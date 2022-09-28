@@ -8,6 +8,7 @@
             [clojure.spec.gen.alpha        :as gen]
             [clojure.spec.test.alpha       :as stest]
             [clojure.test.check.generators :as tgen]
+            [clojure.math.numeric-tower    :refer [expt]]
             ))
 
 (println "+-------------------------------+")
@@ -1334,7 +1335,7 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; (_|_)\__|\__|\_, | .__/\___|
   ;;              |__/|_|
 
-  (println "dummy spec for ttupe: ")
+  (println "dummy spec for ttype: ")
 
   (let [heads (heads-for-composite ::ttype)]
     (->> (s/def ::ttype
@@ -1347,6 +1348,28 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; This isn't good enough. Let's write some head specs for it by
   ;; hand.
 
+  (s/def ::int   int?)
+  (s/def ::float float?)
+  (s/def ::bool  (s/or :clj-bool boolean?
+                       :asr-bool #(or (= % '.true.) (= % '.false))))
+
+  ;; ttype
+  ;;     = Integer(int kind, dimension* dims)
+  ;;     | ...
+
+  ;; head spec for Integer ~~> integer (nskw-kebab-from 'Integer)
+
+  (s/def ::integer
+    (s/cat :head      #{'Integer}
+           :kind      (s/spec ::int)
+           :dimension (s/* (s/spec ::dimension))))
+
+  ;;  _ _ _     _                        _    _
+  ;; (_|_|_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __
+  ;;  _ _| | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \
+  ;; (_|_)_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/
+  ;;                   |___/                               |_|
+
   (let [integer-bin-op-stuff
         (filter #(= (:head %) :asr.core/IntegerBinOp)
                 big-list-of-stuff)]
@@ -1358,6 +1381,8 @@ discarded. We save it as a lesson in this kind of dead end.
              echo))
         echo
         eval))
+
+
 
   ;;  _       _        _                   _
   ;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_
