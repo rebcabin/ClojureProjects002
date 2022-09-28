@@ -1055,6 +1055,15 @@ discarded. We save it as a lesson in this kind of dead end.
     `(s/cat ~@riffle)))
 
 
+(defn spec-from-head-and-args [head args]
+  (let [nyms (->> args (map :ASDL-NYM)           #_echo)
+        kyms (->> nyms (map (comp keyword name)) #_echo)
+        specules (->> args (map spec-from-arg)   #_echo)
+        riffle (-> (interleave kyms specules)    #_echo)
+        lpred  #(= % head)
+        headed (cons :head (cons lpred riffle))]
+    `(s/cat ~@headed)))
+
 ;;  _             _
 ;; | |_ _  _ _ __| |___ ___
 ;; |  _| || | '_ \ / -_|_-<
@@ -1182,10 +1191,10 @@ discarded. We save it as a lesson in this kind of dead end.
   registered.
   "
   [composite]
-  (let [head (-> composite :ASDL-HEAD symbol)
-        nskw (-> head nskw-kebab-from #_echo)
-        args (-> composite :ASDL-ARGS)]
-    `(s/def ~nskw ~(spec-from-args args))))
+  (let [head (-> composite :ASDL-HEAD symbol echo)
+        nskw (-> head nskw-kebab-from        echo)
+        args (-> composite :ASDL-ARGS        #_echo)]
+    `(s/def ~nskw ~(spec-from-head-and-args head args))))
 
 
 ;;                       _        _
@@ -1247,8 +1256,8 @@ discarded. We save it as a lesson in this kind of dead end.
        count
        echo)
 
-  ;;; We need a cycle-breaking spec for dimension to bootstrap the
-  ;;; following constructions.
+;;; We need a cycle-breaking spec for dimension to bootstrap the
+;;; following constructions.
 
   (println "cycle-breaking with ::dimension")
 
@@ -1272,11 +1281,11 @@ discarded. We save it as a lesson in this kind of dead end.
        count
        echo)
 
-;;  _ _               _         _
-;; (_|_)____  _ _ __ | |__  ___| |
-;;  _ _(_-< || | '  \| '_ \/ _ \ |
-;; (_|_)__/\_, |_|_|_|_.__/\___/_|
-;;         |__/
+  ;;  _ _               _         _
+  ;; (_|_)____  _ _ __ | |__  ___| |
+  ;;  _ _(_-< || | '  \| '_ \/ _ \ |
+  ;; (_|_)__/\_, |_|_|_|_.__/\___/_|
+  ;;         |__/
 
   (println "dummy spec for symbol: ")
 
@@ -1288,11 +1297,11 @@ discarded. We save it as a lesson in this kind of dead end.
          echo))
   (pprint (s/describe ::symbol))
 
-;;  _ _
-;; (_|_)_____ ___ __ _ _
-;;  _ _/ -_) \ / '_ \ '_|
-;; (_|_)___/_\_\ .__/_|
-;;             |_|
+  ;;  _ _
+  ;; (_|_)_____ ___ __ _ _
+  ;;  _ _/ -_) \ / '_ \ '_|
+  ;; (_|_)___/_\_\ .__/_|
+  ;;             |_|
 
   (println "dummy spec for expr: ")
 
@@ -1304,10 +1313,10 @@ discarded. We save it as a lesson in this kind of dead end.
          echo))
   (pprint (s/describe ::expr))
 
-;;  _ _    _        _
-;; (_|_)__| |_ _ __| |_
-;;  _ _(_-<  _| '  \  _|
-;; (_|_)__/\__|_|_|_\__|
+  ;;  _ _    _        _
+  ;; (_|_)__| |_ _ __| |_
+  ;;  _ _(_-<  _| '  \  _|
+  ;; (_|_)__/\__|_|_|_\__|
 
   (println "dummy spec for stmt: ")
 
@@ -1319,11 +1328,11 @@ discarded. We save it as a lesson in this kind of dead end.
          echo))
   (pprint (s/describe ::stmt))
 
-;;  _ _ _   _
-;; (_|_) |_| |_ _  _ _ __  ___
-;;  _ _|  _|  _| || | '_ \/ -_)
-;; (_|_)\__|\__|\_, | .__/\___|
-;;              |__/|_|
+  ;;  _ _ _   _
+  ;; (_|_) |_| |_ _  _ _ __  ___
+  ;;  _ _|  _|  _| || | '_ \/ -_)
+  ;; (_|_)\__|\__|\_, | .__/\___|
+  ;;              |__/|_|
 
   (println "dummy spec for ttupe: ")
 
@@ -1335,10 +1344,25 @@ discarded. We save it as a lesson in this kind of dead end.
          echo))
   (pprint (s/describe ::ttype))
 
-;;  _       _        _                   _
-;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_
-;; |  _/ _ \  _/ _` | | / _/ _ \ || | ' \  _|
-;;  \__\___/\__\__,_|_| \__\___/\_,_|_||_\__|
+  ;; This isn't good enough. Let's write some head specs for it by
+  ;; hand.
+
+  (let [integer-bin-op-stuff
+        (filter #(= (:head %) :asr.core/IntegerBinOp)
+                big-list-of-stuff)]
+    (-> (spec-from-composite
+         (-> integer-bin-op-stuff
+             first
+             :form
+             :ASDL-COMPOSITE
+             echo))
+        echo
+        eval))
+
+  ;;  _       _        _                   _
+  ;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_
+  ;; |  _/ _ \  _/ _` | | / _/ _ \ || | ' \  _|
+  ;;  \__\___/\__\__,_|_| \__\___/\_,_|_||_\__|
 
   (print "total number of specs registered: ")
   (println (count-asr-specs))
@@ -1346,7 +1370,6 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; (pprint (s/exercise ::identifier))
   ;; (pprint (s/exercise ::expr))
   ;; (pprint (s/exercise ::dimension))
-
 
 
   (println "Please see the tests. Main doesn't do a whole lot ... yet."))

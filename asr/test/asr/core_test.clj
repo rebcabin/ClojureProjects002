@@ -354,8 +354,16 @@
                 count)))))
 
 
+;;  _       _        _                   _
+;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_
+;; |  _/ _ \  _/ _` | | / _/ _ \ || | ' \  _|
+;;  \__\___/\__\__,_|_| \__\___/\_,_|_||_\__|
+
+;; Every time a spec is added, must bump this number.
+
+
 (deftest count-asr-specs-test
-  (is (= 104 (count-asr-specs))))
+  (is (= 105 (count-asr-specs))))
 
 
 ;;   __ _     _
@@ -431,9 +439,11 @@
                     (IntegerConstant
                      25 (Integer 4 [])))]
   (deftest IntegerBinop-conformance-test
-    (testing "IntegerBinop conforms to dummy expr spec"
+    (testing "IntegerBinop conforms to dummy expr spec and
+              to evolving integer-bin-op spec."
       (is (= test-vector
-             (s/conform :asr.core/expr test-vector))))))
+             (s/conform :asr.core/expr test-vector)))
+      (is (s/valid? :asr.core/integer-bin-op test-vector)))))
 
 ;; However, there is no spec for IntegerBinOp, yet. We have a dummy term spec
 ;; for ::expr and need a head spec for ::IntegerBinOp
