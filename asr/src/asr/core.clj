@@ -1409,14 +1409,6 @@ discarded. We save it as a lesson in this kind of dead end.
            :kind       #{1 2 4 8} ;; i8, i16, i32, i64
            :dimensions (s/* (s/spec ::dimension))))
 
-  (s/valid? ::integer-semnasr '(Integer 4 [])                )
-  (s/valid? ::integer-semnasr '(Integer 4 [1 2])             )
-  (s/valid? ::integer-semnasr '(Integer 4 [] [1 2] [] [3 4]) )
-  (s/valid? ::integer-semnasr '(Integer 4)                   )
-  (s/valid? ::integer-semnasr '(Integer 2 ())                )
-  (s/valid? ::integer-semnasr '(Integer 2 (1 2))             )
-  (s/valid? ::integer-semnasr '(Integer 2 () (1 2) () (3 4)) )
-
   (letfn [(b [e] (expt 2 (- e 1)))
           (gmkr [e]
             (let [b_ (b e)]

@@ -1,7 +1,8 @@
 (ns asr.core-test
   (:require [clojure.test :refer :all]
             [asr.core :refer :all]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [clojure.spec.gen.alpha :as gen]))
 
 
 (deftest kebab-test
@@ -480,4 +481,10 @@
     (is (s/valid? :asr.core/integer-semnasr '(Integer 4)                   ))
     (is (s/valid? :asr.core/integer-semnasr '(Integer 2 ())                ))
     (is (s/valid? :asr.core/integer-semnasr '(Integer 2 (1 2))             ))
-    (is (s/valid? :asr.core/integer-semnasr '(Integer 2 () (1 2) () (3 4)) )) ))
+    (is (s/valid? :asr.core/integer-semnasr '(Integer 2 () (1 2) () (3 4)) ))
+
+    (is (every?
+         (partial s/valid? :asr.core/integer-semnasr)
+         (for [_ (range 25)]
+           (gen/generate (s/gen :asr.core/integer-semnasr)))))
+    ))
