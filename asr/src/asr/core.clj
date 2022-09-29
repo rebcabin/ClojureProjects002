@@ -21,7 +21,10 @@
 (println "|                               |")
 (println "+-------------------------------+")
 
-(defn echo [x]
+(defn echo
+  "Print and return argument. Convenient for debugging -> call
+  chains."
+  [x]
   (pprint x) x)  ;; TODO: macro?
 
 
@@ -112,7 +115,7 @@ main0()
   ;; to do with macros.
   #_(->> sym csk/->kebab-case #(keyword "asr.core" %)) )
 
-;;; Spec for nskw-kebab-from
+;;; Experimental Spec for nskw-kebab-from:
 
 (s/fdef nskw-kebab-from
   :args (s/alt :str string? :sym symbol?)
@@ -899,7 +902,7 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
 
 
 (defn symconst-spec-for-term
-  "### Symconst Spec for Term sic
+  "### Symconst Spec for Term [sic]
 
   For each term, write a `set` containing its alternative heads,
   e.g., the term `binop` is one of the ten heads `Add`, `Sub`, and
@@ -1172,7 +1175,7 @@ discarded. We save it as a lesson in this kind of dead end.
 
 
 (defn spec-from-composite
-  "# Backpatching Symbol
+  "# Back-patching Symbol
 
   TODO
 
@@ -1205,19 +1208,24 @@ discarded. We save it as a lesson in this kind of dead end.
 ;;    |_|
 
 
-(defn only-asr-specs []
+(defn only-asr-specs
+  "Filter non-asr specs from the keys of the spec registry."
+  []
   (filter
    #(= (namespace %) "asr.core")
    (keys (s/registry))))
 
 
 (defn check-registry
-  "Print specs defined in the namespace 'asr.core.'"
+  "Print specs defined in the namespace 'asr.core.' Call this at the
+  REPL."
   []
   (pprint (only-asr-specs)))
 
 
-(defn count-asr-specs []
+(defn count-asr-specs
+  "Count the asr specs. Call this at the REPL."
+  []
   (count (only-asr-specs)))
 
 
@@ -1228,7 +1236,9 @@ discarded. We save it as a lesson in this kind of dead end.
 
 
 (defn postprocess-integer-semnasr-example
-  "See the tests for examples."
+  "Formatting for output to C/C++, mostly replacing empty lists with
+  empty square brackets and round brackets with square brackets.
+  See the tests for examples."
   [ex]
   (let [[key kind & dims] ex
         redims (map vec dims)]
@@ -1251,14 +1261,6 @@ discarded. We save it as a lesson in this kind of dead end.
 (defn -main
   "Please see the tests. Main doesn't do a whole lot ... yet."
   [& args]
-
-  ;; Function specs for nskw-kebab-from.
-
-  (s/fdef nskw-kebab-from
-    :args (s/alt :str string? :sym symbol?)
-    :ret keyword?)
-
-  (stest/instrument `nskw-kebab-from)
 
   ;; Building up the spec registry by side-effect.
 
@@ -1367,7 +1369,6 @@ discarded. We save it as a lesson in this kind of dead end.
   (pprint (s/describe ::ttype))
 
 
-
   ;; This isn't good enough. Let's write some head specs for it by
   ;; hand.
 
@@ -1380,7 +1381,12 @@ discarded. We save it as a lesson in this kind of dead end.
   ;;     = Integer(int kind, dimension* dims)
   ;;     | ...
 
-  ;; temporary redef; try (s/exercise ::dimension
+  ;;  _ _    _ _                   _
+  ;; (_|_)__| (_)_ __  ___ _ _  __(_)___ _ _
+  ;;  _ _/ _` | | '  \/ -_) ' \(_-< / _ \ ' \
+  ;; (_|_)__,_|_|_|_|_\___|_||_/__/_\___/_||_|
+
+  ;; Redefinition; try (s/exercise ::dimension
 
   (defn bigint? [n]
     (instance? clojure.lang.BigInt n))
@@ -1434,13 +1440,63 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; write the specs. Our first example of SemNASR will be
   ;; IntegerBinOp.
 
+  ;;  ___     _                      _   _
+  ;; |_ _|_ _| |_ ___ __ _ ___ _ _  | |_| |_ _  _ _ __  ___
+  ;;  | || ' \  _/ -_) _` / -_) '_| |  _|  _| || | '_ \/ -_)
+  ;; |___|_||_\__\___\__, \___|_|    \__|\__|\_, | .__/\___|
+  ;;                 |___/                   |__/|_|
 
-  ;; head spec for 'Integer ~~nskw-kebab-from~~> 'integer
+  ;; Head spec for ttype [sic]
+  ;; 'Integer ~~nskw-kebab-from~~> 'integer
+
 
   (s/def ::integer-semnasr
     (s/cat :head       #{'Integer}
            :kind       #{1 2 4 8} ;; i8, i16, i32, i64
            :dimensions (s/* (s/spec ::dimension))))
+
+  ;; Often, we need a scalar that has no dimension.
+
+  (s/def ::integer-scalar-ttype-semnasr
+    (s/cat :head #{'Integer}
+           :kind #{1 2 4 8}
+           :dimensions #{[]}))
+
+  ;; Particular ones so we can match the "kind," i8 thru i64.
+  ;; Written in this funny way for test-generation.
+
+  (s/def ::i8-scalar-ttype-semnasr
+    (s/cat :head #{'Integer}
+           :kind #{1}
+           :dimensions #{[]}))
+
+  (s/def ::i16-scalar-ttype-semnasr
+    (s/cat :head #{'Integer}
+           :kind #{2}
+           :dimensions #{[]}))
+
+  (s/def ::i32-scalar-ttype-semnasr
+    (s/cat :head #{'Integer}
+           :kind #{4}
+           :dimensions #{[]}))
+
+  (s/def ::i64-scalar-ttype-semnasr
+    (s/cat :head #{'Integer}
+           :kind #{8}
+           :dimensions #{[]}))
+
+  (->> ::i64-scalar-ttype-semnasr
+       s/gen
+       gen/generate)
+
+  ;;  _     _                               _
+  ;; (_)_ _| |_ ___ __ _ ___ _ _  __ ____ _| |_  _ ___ ___
+  ;; | | ' \  _/ -_) _` / -_) '_| \ V / _` | | || / -_|_-<
+  ;; |_|_||_\__\___\__, \___|_|    \_/\__,_|_|\_,_\___/__/
+  ;;               |___/
+
+
+  ;; Mid-level specs for fixed-width integers.
 
   (letfn [(b [e] (expt 2 (- e 1)))     ; ::i8, ::i16, ::i32, ::i64
           (gmkr [e]
@@ -1463,9 +1519,10 @@ discarded. We save it as a lesson in this kind of dead end.
       (s/def ::i64 (s/with-gen si64 gi64))))
 
   (s/def ::bounded-integer-value
-    ;; The order matters, here. We want 127 to be marked :i8 even
-    ;; though it satisfies the specs for larger integers.
-    ;; Spot-check this with `(s/exercise ::bounded-integer-value)`.
+    ;; The order matters, here. We want 127, for example, to be
+    ;; marked :i8 most of the time even though it satisfies the
+    ;; specs for larger integers. Spot-check this
+    ;; with `(s/exercise ::bounded-integer-value)`.
     ;;
     ;; LIMITATION: We might never get an :i16 with a value that is
     ;; also an :i8. However, the spec ::i16 does occasionally
@@ -1475,9 +1532,93 @@ discarded. We save it as a lesson in this kind of dead end.
           :i32 ::i32
           :i64 ::i64))
 
+  ;;  _     _                                       _            _
+  ;; (_)_ _| |_ ___ __ _ ___ _ _ ___ __ ___ _ _  __| |_ __ _ _ _| |_
+  ;; | | ' \  _/ -_) _` / -_) '_|___/ _/ _ \ ' \(_-<  _/ _` | ' \  _|
+  ;; |_|_||_\__\___\__, \___|_|     \__\___/_||_/__/\__\__,_|_||_\__|
+  ;;               |___/
 
-  ;; The following provisional (ansatz) spec has meta-semantics;
-  ;; the ttype must be of integer kind. This ansatz is
+  (s/def ::i8-constant-semnasr
+    (s/tuple #{'IntegerConstant}
+             ::i8
+             ::i8-scalar-ttype-semnasr))
+
+  (s/def ::i16-constant-semnasr
+    (s/tuple #{'IntegerConstant}
+             ::i16
+             ::i16-scalar-ttype-semnasr))
+
+  (s/def ::i32-constant-semnasr
+    (s/tuple #{'IntegerConstant}
+             ::i32
+             ::i32-scalar-ttype-semnasr))
+
+  (s/def ::i64-constant-semnasr
+    (s/tuple #{'IntegerConstant}
+             ::i64
+             ::i64-scalar-ttype-semnasr))
+
+  (s/def ::integer-constant-semnasr
+    (s/or :i8  ::i8-constant-semnasr
+          :i16 ::i16-constant-semnasr
+          :i32 ::i32-constant-semnasr
+          :i64 ::i64-constant-semnasr))
+
+  (->> ::integer-constant-semnasr
+       s/gen
+       gen/generate
+       (apply list))
+
+
+  ;;  _     _                        _    _                    ___ ___ __  __
+  ;; (_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __  / __| __|  \/  |
+  ;; | | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \ \__ \ _|| |\/| |
+  ;; |_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/ |___/___|_|  |_|
+  ;;               |___/                               |_|
+
+  (s/def ::i8-bin-op-base-semnasr ; recursive base case
+    (s/tuple #{'IntegerBinOp}
+             ::i8-constant-semnasr
+             ::binop
+             ::i8-constant-semnasr
+             ::i8-scalar-ttype-semnasr))
+
+  (s/def ::i16-bin-op-base-semnasr ; recursive base case
+    (s/tuple #{'IntegerBinOp}
+             ::i16-constant-semnasr
+             ::binop
+             ::i16-constant-semnasr
+             ::i16-scalar-ttype-semnasr))
+
+  (s/def ::i32-bin-op-base-semnasr ; recursive base case
+    (s/tuple #{'IntegerBinOp}
+             ::i32-constant-semnasr
+             ::binop
+             ::i32-constant-semnasr
+             ::i32-scalar-ttype-semnasr))
+
+  (s/def ::i64-bin-op-base-semnasr ; recursive base case
+    (s/tuple #{'IntegerBinOp}
+             ::i64-constant-semnasr
+             ::binop
+             ::i64-constant-semnasr
+             ::i64-scalar-ttype-semnasr))
+
+  (s/def ::integer-bin-op-mixed-kind-base-semnasr
+    (s/tuple
+     #{'IntegerBinOp}
+     ::integer-constant-semnasr ; stack overflow if integer-bin-op-semnsasr
+     ::binop
+     ::integer-constant-semnasr
+     ::integer-scalar-ttype-semnasr))
+
+  (->> ::integer-bin-op-mixed-kind-base-semnasr
+       s/gen
+       gen/generate)
+
+  ;; The following provisional (ansatz) spec has
+  ;; meta-semantics (it's a semantical nonsense ASR fragment); the
+  ;; ttype must be of integer kind. This ansatz is
   ;; work-in-progress.
 
   (s/def ::integer-bin-op-semnasr

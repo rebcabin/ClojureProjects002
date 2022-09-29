@@ -5,7 +5,7 @@
             [clojure.spec.gen.alpha :as gen]))
 
 
-(def NSPECS 116) ;; Bump this number as specs are added to core.clj.
+(def NSPECS 131) ;; Bump this number as specs are added to core.clj.
 
 
 (deftest kebab-test
