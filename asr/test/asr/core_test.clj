@@ -5,7 +5,7 @@
             [clojure.spec.gen.alpha :as gen]))
 
 
-(def NSPECS 131) ;; Bump this number as specs are added to core.clj.
+(def NSPECS 132) ;; Bump this number as specs are added to core.clj.
 
 
 (deftest kebab-test
@@ -477,30 +477,37 @@
 ;; We have a spec for ::ttype --- (s/exercise :asr.core/ttype).
 
 (let [NTESTS 25]
-  (deftest integer-semnasr-conformance
+  (deftest integer-ttype-semnasr-conformance
          (testing "Integer ttype conformance"
-           (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [])                ))
-           (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [1 2])             ))
-           (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [] [1 2] [] [3 4]) ))
-           (is (s/valid? :asr.core/integer-semnasr '(Integer 4)                   ))
-           (is (s/valid? :asr.core/integer-semnasr '(Integer 2 ())                ))
-           (is (s/valid? :asr.core/integer-semnasr '(Integer 2 (1 2))             ))
-           (is (s/valid? :asr.core/integer-semnasr '(Integer 2 () (1 2) () (3 4)) ))
+           (is (s/valid? :asr.core/integer-ttype-semnasr
+                         '(Integer 4 [])                ))
+           (is (s/valid? :asr.core/integer-ttype-semnasr
+                         '(Integer 4 [1 2])             ))
+           (is (s/valid? :asr.core/integer-ttype-semnasr
+                         '(Integer 4 [] [1 2] [] [3 4]) ))
+           (is (s/valid? :asr.core/integer-ttype-semnasr
+                         '(Integer 4)                   ))
+           (is (s/valid? :asr.core/integer-ttype-semnasr
+                         '(Integer 2 ())                ))
+           (is (s/valid? :asr.core/integer-ttype-semnasr
+                         '(Integer 2 (1 2))             ))
+           (is (s/valid? :asr.core/integer-ttype-semnasr
+                         '(Integer 2 () (1 2) () (3 4)) ))
 
            (is (every?
-                (partial s/valid? :asr.core/integer-semnasr)
+                (partial s/valid? :asr.core/integer-ttype-semnasr)
                 (for [_ (range NTESTS)]
-                  (gen/generate (s/gen :asr.core/integer-semnasr)))))
+                  (gen/generate (s/gen :asr.core/integer-ttype-semnasr)))))
            ))
 
- (deftest integer-semnasr-postprocessing
+ (deftest integer-ttype-semnasr-postprocessing
    (testing "Integer ttype post-processing"
      (is (= '(Integer 4 [] [1 2] [] [3 4])
-            (postprocess-integer-semnasr-example
+            (postprocess-integer-ttype-semnasr-example
              '(Integer 4 () (1 2) () (3 4)))))
 
      (is (= '(Integer 4 [])
-            (postprocess-integer-semnasr-example
+            (postprocess-integer-ttype-semnasr-example
              '(Integer 4 ()))))
 
      ;; Turns out that Clojure is pretty permissive and reckons
@@ -508,26 +515,26 @@
      ;; https://clojure.org/guides/equality
 
      #_(is (not (= '(Integer 4 ())
-                   (postprocess-integer-semnasr-example
+                   (postprocess-integer-ttype-semnasr-example
                     '(Integer 4 ())))))
 
      (is (= '(Integer 4 [])
-            (postprocess-integer-semnasr-example
+            (postprocess-integer-ttype-semnasr-example
              '(Integer 4 []))))
 
      (is (= '(Integer 4 [])
-            (postprocess-integer-semnasr-example
+            (postprocess-integer-ttype-semnasr-example
              '(Integer 4))))
 
      (is (not (= '(Integer 4)
-                 (postprocess-integer-semnasr-example
+                 (postprocess-integer-ttype-semnasr-example
                   '(Integer 4)))))
 
      (is (every?
-          (partial s/valid? :asr.core/integer-semnasr)
+          (partial s/valid? :asr.core/integer-ttype-semnasr)
           (for [_ (range NTESTS)]
-            (-> :asr.core/integer-semnasr
+            (-> :asr.core/integer-ttype-semnasr
                 s/gen
                 gen/generate
-                postprocess-integer-semnasr-example))))
+                postprocess-integer-ttype-semnasr-example))))
      )))

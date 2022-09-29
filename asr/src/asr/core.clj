@@ -1235,7 +1235,7 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; |_|_|_\__,_|_|_||_|
 
 
-(defn postprocess-integer-semnasr-example
+(defn postprocess-integer-ttype-semnasr-example
   "Formatting for output to C/C++, mostly replacing empty lists with
   empty square brackets and round brackets with square brackets.
   See the tests for examples."
@@ -1450,10 +1450,16 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; 'Integer ~~nskw-kebab-from~~> 'integer
 
 
-  (s/def ::integer-semnasr
+  (s/def ::integer-ttype-semnasr
     (s/cat :head       #{'Integer}
            :kind       #{1 2 4 8} ;; i8, i16, i32, i64
            :dimensions (s/* (s/spec ::dimension))))
+
+  ;; for interactive testing in CIDER:
+  ;; C-x C-e after the closing parenthesis
+  (->> ::integer-ttype-semnasr
+       s/gen
+       gen/generate)
 
   ;; Often, we need a scalar that has no dimension.
 
@@ -1532,6 +1538,7 @@ discarded. We save it as a lesson in this kind of dead end.
           :i32 ::i32
           :i64 ::i64))
 
+
   ;;  _     _                                       _            _
   ;; (_)_ _| |_ ___ __ _ ___ _ _ ___ __ ___ _ _  __| |_ __ _ _ _| |_
   ;; | | ' \  _/ -_) _` / -_) '_|___/ _/ _ \ ' \(_-<  _/ _` | ' \  _|
@@ -1576,28 +1583,28 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; |_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/ |___/___|_|  |_|
   ;;               |___/                               |_|
 
-  (s/def ::i8-bin-op-base-semnasr ; recursive base case
+  (s/def ::i8-bin-op-base-semnasr       ; recursive base case
     (s/tuple #{'IntegerBinOp}
              ::i8-constant-semnasr
              ::binop
              ::i8-constant-semnasr
              ::i8-scalar-ttype-semnasr))
 
-  (s/def ::i16-bin-op-base-semnasr ; recursive base case
+  (s/def ::i16-bin-op-base-semnasr      ; recursive base case
     (s/tuple #{'IntegerBinOp}
              ::i16-constant-semnasr
              ::binop
              ::i16-constant-semnasr
              ::i16-scalar-ttype-semnasr))
 
-  (s/def ::i32-bin-op-base-semnasr ; recursive base case
+  (s/def ::i32-bin-op-base-semnasr      ; recursive base case
     (s/tuple #{'IntegerBinOp}
              ::i32-constant-semnasr
              ::binop
              ::i32-constant-semnasr
              ::i32-scalar-ttype-semnasr))
 
-  (s/def ::i64-bin-op-base-semnasr ; recursive base case
+  (s/def ::i64-bin-op-base-semnasr      ; recursive base case
     (s/tuple #{'IntegerBinOp}
              ::i64-constant-semnasr
              ::binop
@@ -1615,6 +1622,21 @@ discarded. We save it as a lesson in this kind of dead end.
   (->> ::integer-bin-op-mixed-kind-base-semnasr
        s/gen
        gen/generate)
+
+  (s/def ::i8-bin-op-semnasr
+    (s/or
+     :base-case
+     ::i8-bin-op-base-semnasr
+     :recur
+     (s/tuple
+      #{'IntegerBinOp}
+      ::i8-bin-op-semnasr ; stack overflow if integer-bin-op-semnsasr
+      ::binop
+      ::iu-bin-op-semnasr
+      ::i8-scalar-ttype-semnasr)))
+
+
+
 
   ;; The following provisional (ansatz) spec has
   ;; meta-semantics (it's a semantical nonsense ASR fragment); the
