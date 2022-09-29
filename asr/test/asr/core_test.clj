@@ -363,7 +363,7 @@
 
 
 (deftest count-asr-specs-test
-  (is (= 109 (count-asr-specs))))
+  (is (= 111 (count-asr-specs))))
 
 
 ;;   __ _     _
@@ -471,3 +471,13 @@
 
 ;; We have a spec for ::binop --- (s/exercise :asr.core/binop).
 ;; We have a spec for ::ttype --- (s/exercise :asr.core/ttype).
+
+(deftest integer-semnasr-unit
+  (testing "Integer ttype conformance"
+    (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [])                ))
+    (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [1 2])             ))
+    (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [] [1 2] [] [3 4]) ))
+    (is (s/valid? :asr.core/integer-semnasr '(Integer 4)                   ))
+    (is (s/valid? :asr.core/integer-semnasr '(Integer 2 ())                ))
+    (is (s/valid? :asr.core/integer-semnasr '(Integer 2 (1 2))             ))
+    (is (s/valid? :asr.core/integer-semnasr '(Integer 2 () (1 2) () (3 4)) )) ))

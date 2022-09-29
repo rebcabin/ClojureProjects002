@@ -1345,6 +1345,8 @@ discarded. We save it as a lesson in this kind of dead end.
          echo))
   (pprint (s/describe ::ttype))
 
+
+
   ;; This isn't good enough. Let's write some head specs for it by
   ;; hand.
 
@@ -1357,12 +1359,11 @@ discarded. We save it as a lesson in this kind of dead end.
   ;;     = Integer(int kind, dimension* dims)
   ;;     | ...
 
-  ;; head spec for Integer ~~> integer (nskw-kebab-from 'Integer)
+  ;; temporary redef; try (s/exercise ::dimension
 
-  (s/def ::integer
-    (s/cat :head      #{'Integer}
-           :kind      (s/spec ::int)
-           :dimension (s/* (s/spec ::dimension))))
+  (s/def ::dimension
+    (s/cat :start  (s/? nat-int?)
+           :length (s/? nat-int?)))
 
   ;;  _ _ _     _                        _    _
   ;; (_|_|_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __
@@ -1370,7 +1371,92 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; (_|_)_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/
   ;;                   |___/                               |_|
 
-  (let [integer-bin-op-stuff
+  ;; At this point, we distinguish syntactically correct nonsense
+  ;; ASR (SynNASR) from semantically constrained nonsense
+  ;; ASR (SemNASR).
+  ;;
+  ;; - SynNASR is for testing error paths in the ASR backends. A
+  ;;   random utterance is overwhelmingly unlikely to be
+  ;;   meaningful, but it must NEVER crash a back-end nor cause it
+  ;;   to go into an infinite loop (spin). An example is a
+  ;;   IntegerBinOp expression with a string and a float as
+  ;;   arguments. ASDL allows this, but backends must reject it.
+  ;;
+  ;; - SemNASR is for testing happy paths in the backends. SemNASR
+  ;;   should be semantically valid, we should be able to
+  ;;   independently compute results, and we should be able to
+  ;;   round-trip examples. For example, an IntegerBinOp with
+  ;;   two IntegerConstant instances of the same kind, say i16,
+  ;;   should generate code to compute the results, or perhaps,
+  ;;   with optimizations turned on, compute the results at
+  ;;   compile time.
+  ;;
+  ;; We will write Clojure specs for both SynNASR and SemNASR.
+  ;; clojure.spec.gen.alpha, clojure.spec.test.alpha, and
+  ;; clojure.test.check.generators give us ways to quickly
+  ;; generate large numbers of NASR strings/trees. SynNASR is the
+  ;; default because we can generate SynNASR directly from the
+  ;; ASDL grammar. Names of terms and heads from ASDL with no
+  ;; `semnasr` suffix are SynNASR. SemNASR requires humans to
+  ;; write the specs. Our first example of SemNASR will be
+  ;; IntegerBinOp.
+
+
+  ;; head spec for 'Integer ~~nskw-kebab-from~~> 'integer
+
+  (s/def ::integer-semnasr
+    (s/cat :head       #{'Integer}
+           :kind       #{1 2 4 8} ;; i8, i16, i32, i64
+           :dimensions (s/* (s/spec ::dimension))))
+
+  (s/valid? ::integer-semnasr '(Integer 4 [])                )
+  (s/valid? ::integer-semnasr '(Integer 4 [1 2])             )
+  (s/valid? ::integer-semnasr '(Integer 4 [] [1 2] [] [3 4]) )
+  (s/valid? ::integer-semnasr '(Integer 4)                   )
+  (s/valid? ::integer-semnasr '(Integer 2 ())                )
+  (s/valid? ::integer-semnasr '(Integer 2 (1 2))             )
+  (s/valid? ::integer-semnasr '(Integer 2 () (1 2) () (3 4)) )
+
+  (letfn [(b [e] (expt 2 (- e 1)))
+          (gmkr [e]
+            (let [b_ (b e)]
+              (tgen/choose (- b_) (- b_ 1))))
+          (smkr [e]
+            (let [b_ (b e)]
+              (s/and integer? #(>= % (- b_)) #(< % b_))))]
+    (let [gi8  (fn [] (gmkr 8))
+          gi16 (fn [] (gmkr 16))
+          gi32 (fn [] (gmkr 32))
+          gi64 (fn [] (gmkr 64))
+          si8  (smkr 8)
+          si16 (smkr 16)
+          si32 (smkr 32)
+          si64 (smkr 64)]
+      (s/def ::bounded-integer-value
+        ;; The order matters, here. We want 127 to be marked :i8
+        ;; even though it satisfies the specs for larger integers.
+        ;; Spot-check this with `(s/exercise ::bounded-integer-value).
+        (s/or :i8 (s/with-gen  si8 gi8)
+              :i16 (s/with-gen si16 gi16)
+              :i32 (s/with-gen si32 gi32)
+              :i64 (s/with-gen si64 gi64)))))
+
+  ;; The following provisional (ansatz) spec has meta-semantics;
+  ;; the ttype must be of integer kind. This ansatz is
+  ;; work-in-progress.
+
+  (s/def ::integer-bin-op-semnasr
+    (s/cat :head  #{'IntegerBinOp}
+           :kind  #{1 2 4 8} ;; i8, i16, i32, i64
+           :left  ::integer
+           :right ::integer))
+
+  ;; The following ansatz is automatically created from the ASDL
+  ;; parse and satisfies a conformance test in core_test.clj. It
+  ;; will eventually be removed in favor of the hand-written test
+  ;; above.
+
+  (let [integer-bin-op-stuff ;; SynNASR
         (filter #(= (:head %) :asr.core/IntegerBinOp)
                 big-list-of-stuff)]
     (-> (spec-from-composite
@@ -1381,8 +1467,6 @@ discarded. We save it as a lesson in this kind of dead end.
              echo))
         echo
         eval))
-
-
 
   ;;  _       _        _                   _
   ;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_

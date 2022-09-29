@@ -1,32 +1,28 @@
 # asr
 
-FIXME: description
+Test generator for ASR (https://github.com/lcompilers/lpython/wiki/ASR-Design)
 
 ## Installation
 
-Download from http://example.com/FIXME.
+Prerequisite: [Leiningen and Clojure](https://leiningen.org/)
+
+```
+cd -=|[some convenient directory]|=-
+git clone https://github.com/rebcabin/ClojureProjects002
+```
 
 ## Usage
 
-FIXME: explanation
-
-    $ java -jar asr-0.1.0-standalone.jar [args]
+```
+cd ClojureProjects002/asr
+lein test
+```
 
 ## Options
 
-FIXME: listing of options this app accepts.
-
 ## Examples
 
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+## Bugs
 
 ## License
 
