@@ -5,6 +5,9 @@
             [clojure.spec.gen.alpha :as gen]))
 
 
+(def NSPECS 116) ;; Bump this number as specs are added to core.clj.
+
+
 (deftest kebab-test
   (testing "kebab-case"
     (is (= (nskw-kebab-from 'TranslationUnit)
@@ -364,7 +367,7 @@
 
 
 (deftest count-asr-specs-test
-  (is (= 111 (count-asr-specs))))
+  (is (= NSPECS (count-asr-specs))))
 
 
 ;;   __ _     _
@@ -473,50 +476,58 @@
 ;; We have a spec for ::binop --- (s/exercise :asr.core/binop).
 ;; We have a spec for ::ttype --- (s/exercise :asr.core/ttype).
 
-(deftest integer-semnasr-conformance
-  (testing "Integer ttype conformance"
-    (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [])                ))
-    (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [1 2])             ))
-    (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [] [1 2] [] [3 4]) ))
-    (is (s/valid? :asr.core/integer-semnasr '(Integer 4)                   ))
-    (is (s/valid? :asr.core/integer-semnasr '(Integer 2 ())                ))
-    (is (s/valid? :asr.core/integer-semnasr '(Integer 2 (1 2))             ))
-    (is (s/valid? :asr.core/integer-semnasr '(Integer 2 () (1 2) () (3 4)) ))
+(let [NTESTS 25]
+  (deftest integer-semnasr-conformance
+         (testing "Integer ttype conformance"
+           (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [])                ))
+           (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [1 2])             ))
+           (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [] [1 2] [] [3 4]) ))
+           (is (s/valid? :asr.core/integer-semnasr '(Integer 4)                   ))
+           (is (s/valid? :asr.core/integer-semnasr '(Integer 2 ())                ))
+           (is (s/valid? :asr.core/integer-semnasr '(Integer 2 (1 2))             ))
+           (is (s/valid? :asr.core/integer-semnasr '(Integer 2 () (1 2) () (3 4)) ))
 
-    (is (every?
-         (partial s/valid? :asr.core/integer-semnasr)
-         (for [_ (range 25)]
-           (gen/generate (s/gen :asr.core/integer-semnasr)))))
-    ))
+           (is (every?
+                (partial s/valid? :asr.core/integer-semnasr)
+                (for [_ (range NTESTS)]
+                  (gen/generate (s/gen :asr.core/integer-semnasr)))))
+           ))
 
-(deftest integer-semnasr-postprocessing
-  (testing "Integer ttype posprocessing"
-    (is (= '(Integer 4 [] [1 2] [] [3 4])
-           (postprocess-integer-semnasr-example
-            '(Integer 4 () (1 2) () (3 4)))))
+ (deftest integer-semnasr-postprocessing
+   (testing "Integer ttype post-processing"
+     (is (= '(Integer 4 [] [1 2] [] [3 4])
+            (postprocess-integer-semnasr-example
+             '(Integer 4 () (1 2) () (3 4)))))
 
-    (is (= '(Integer 4 [])
-           (postprocess-integer-semnasr-example
-            '(Integer 4 ()))))
+     (is (= '(Integer 4 [])
+            (postprocess-integer-semnasr-example
+             '(Integer 4 ()))))
 
-    ;; Turns out that Clojure is pretty permissive and reckons
-    ;; '(Integer 4 []) equal to '(Integer 4 ())
+     ;; Turns out that Clojure is pretty permissive and reckons
+     ;; '(Integer 4 []) equal to '(Integer 4 ()).
+     ;; https://clojure.org/guides/equality
 
-    ;; https://clojure.org/guides/equality
+     #_(is (not (= '(Integer 4 ())
+                   (postprocess-integer-semnasr-example
+                    '(Integer 4 ())))))
 
-    #_(is (not (= '(Integer 4 ())
-                  (postprocess-integer-semnasr-example
-                   '(Integer 4 ())))))
+     (is (= '(Integer 4 [])
+            (postprocess-integer-semnasr-example
+             '(Integer 4 []))))
 
-    (is (= '(Integer 4 [])
-           (postprocess-integer-semnasr-example
-            '(Integer 4 []))))
+     (is (= '(Integer 4 [])
+            (postprocess-integer-semnasr-example
+             '(Integer 4))))
 
-    (is (= '(Integer 4 [])
-           (postprocess-integer-semnasr-example
-            '(Integer 4))))
+     (is (not (= '(Integer 4)
+                 (postprocess-integer-semnasr-example
+                  '(Integer 4)))))
 
-    (is (not (= '(Integer 4)
-                (postprocess-integer-semnasr-example
-                 '(Integer 4)))))
-    ))
+     (is (every?
+          (partial s/valid? :asr.core/integer-semnasr)
+          (for [_ (range NTESTS)]
+            (-> :asr.core/integer-semnasr
+                s/gen
+                gen/generate
+                postprocess-integer-semnasr-example))))
+     )))

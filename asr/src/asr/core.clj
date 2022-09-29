@@ -1237,6 +1237,16 @@ discarded. We save it as a lesson in this kind of dead end.
       (list key kind []))
     ))
 
+;; Overwrite print-method for clojure BigInt to get rid of
+;; the "N" at the end (can't do this inside (-main) lest
+;; compile errors).
+
+(import '(java.io Writer))
+(defmethod print-method clojure.lang.BigInt
+  [b, ^Writer w]
+  (.write w (str b))
+  #_(.write "N"))
+
 
 (defn -main
   "Please see the tests. Main doesn't do a whole lot ... yet."
@@ -1372,9 +1382,21 @@ discarded. We save it as a lesson in this kind of dead end.
 
   ;; temporary redef; try (s/exercise ::dimension
 
+  (defn bigint? [n]
+    (instance? clojure.lang.BigInt n))
+
+  (s/def ::bignat
+    (s/with-gen
+      (s/and bigint? #(>= % 0))
+      (fn [] tgen/size-bounded-bigint)))
+
   (s/def ::dimension
-    (s/cat :start  (s/? nat-int?)
-           :length (s/? nat-int?)))
+    (s/cat :start  (s/? (s/or :nat nat-int? :bignat ::bignat))
+           :length (s/? (s/or :nat nat-int? :bignat ::bignat))))
+
+
+  ;; Now, we can s/exercise ::dimension and also include it in
+  ;; other specs.
 
   ;;  _ _ _     _                        _    _
   ;; (_|_|_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __
@@ -1420,7 +1442,7 @@ discarded. We save it as a lesson in this kind of dead end.
            :kind       #{1 2 4 8} ;; i8, i16, i32, i64
            :dimensions (s/* (s/spec ::dimension))))
 
-  (letfn [(b [e] (expt 2 (- e 1)))
+  (letfn [(b [e] (expt 2 (- e 1)))     ; ::i8, ::i16, ::i32, ::i64
           (gmkr [e]
             (let [b_ (b e)]
               (tgen/choose (- b_) (- b_ 1))))
@@ -1435,14 +1457,24 @@ discarded. We save it as a lesson in this kind of dead end.
           si16 (smkr 16)
           si32 (smkr 32)
           si64 (smkr 64)]
-      (s/def ::bounded-integer-value
-        ;; The order matters, here. We want 127 to be marked :i8
-        ;; even though it satisfies the specs for larger integers.
-        ;; Spot-check this with `(s/exercise ::bounded-integer-value).
-        (s/or :i8 (s/with-gen  si8 gi8)
-              :i16 (s/with-gen si16 gi16)
-              :i32 (s/with-gen si32 gi32)
-              :i64 (s/with-gen si64 gi64)))))
+      (s/def ::i8  (s/with-gen  si8  gi8))
+      (s/def ::i16 (s/with-gen si16 gi16))
+      (s/def ::i32 (s/with-gen si32 gi32))
+      (s/def ::i64 (s/with-gen si64 gi64))))
+
+  (s/def ::bounded-integer-value
+    ;; The order matters, here. We want 127 to be marked :i8 even
+    ;; though it satisfies the specs for larger integers.
+    ;; Spot-check this with `(s/exercise ::bounded-integer-value)`.
+    ;;
+    ;; LIMITATION: We might never get an :i16 with a value that is
+    ;; also an :i8. However, the spec ::i16 does occasionally
+    ;; produce such values. Try `(s/exercise ::i16 40)`
+    (s/or :i8  ::i8
+          :i16 ::i16
+          :i32 ::i32
+          :i64 ::i64))
+
 
   ;; The following provisional (ansatz) spec has meta-semantics;
   ;; the ttype must be of integer kind. This ansatz is
