@@ -473,7 +473,7 @@
 ;; We have a spec for ::binop --- (s/exercise :asr.core/binop).
 ;; We have a spec for ::ttype --- (s/exercise :asr.core/ttype).
 
-(deftest integer-semnasr-unit
+(deftest integer-semnasr-conformance
   (testing "Integer ttype conformance"
     (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [])                ))
     (is (s/valid? :asr.core/integer-semnasr '(Integer 4 [1 2])             ))
@@ -487,4 +487,36 @@
          (partial s/valid? :asr.core/integer-semnasr)
          (for [_ (range 25)]
            (gen/generate (s/gen :asr.core/integer-semnasr)))))
+    ))
+
+(deftest integer-semnasr-postprocessing
+  (testing "Integer ttype posprocessing"
+    (is (= '(Integer 4 [] [1 2] [] [3 4])
+           (postprocess-integer-semnasr-example
+            '(Integer 4 () (1 2) () (3 4)))))
+
+    (is (= '(Integer 4 [])
+           (postprocess-integer-semnasr-example
+            '(Integer 4 ()))))
+
+    ;; Turns out that Clojure is pretty permissive and reckons
+    ;; '(Integer 4 []) equal to '(Integer 4 ())
+
+    ;; https://clojure.org/guides/equality
+
+    #_(is (not (= '(Integer 4 ())
+                  (postprocess-integer-semnasr-example
+                   '(Integer 4 ())))))
+
+    (is (= '(Integer 4 [])
+           (postprocess-integer-semnasr-example
+            '(Integer 4 []))))
+
+    (is (= '(Integer 4 [])
+           (postprocess-integer-semnasr-example
+            '(Integer 4))))
+
+    (is (not (= '(Integer 4)
+                (postprocess-integer-semnasr-example
+                 '(Integer 4)))))
     ))

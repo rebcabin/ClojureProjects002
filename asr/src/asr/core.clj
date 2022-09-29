@@ -1227,6 +1227,17 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; |_|_|_\__,_|_|_||_|
 
 
+(defn postprocess-integer-semnasr-example
+  "See the tests for examples."
+  [ex]
+  (let [[key kind & dims] ex
+        redims (map vec dims)]
+    (if dims
+      (conj redims kind key)
+      (list key kind []))
+    ))
+
+
 (defn -main
   "Please see the tests. Main doesn't do a whole lot ... yet."
   [& args]
