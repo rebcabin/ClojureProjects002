@@ -1244,8 +1244,15 @@ discarded. We save it as a lesson in this kind of dead end.
         redims (map vec dims)]
     (if dims
       (conj redims kind key)
-      (list key kind []))
-    ))
+      (list key kind []))))
+
+(defn postprocess-kinded-integer-bin-op-semnasr-example
+  [items]
+  (map (fn [item]
+         (if (vector? item)
+           (apply list item)
+           item))
+       items))
 
 ;; Overwrite print-method for clojure BigInt to get rid of
 ;; the "N" at the end (can't do this inside (-main) lest
@@ -1491,6 +1498,8 @@ discarded. We save it as a lesson in this kind of dead end.
            :kind #{8}
            :dimensions #{[]}))
 
+  ;; for interactive testing in CIDER:
+  ;; C-x C-e after the closing parenthesis
   (->> ::i64-scalar-ttype-semnasr
        s/gen
        gen/generate)
@@ -1571,6 +1580,8 @@ discarded. We save it as a lesson in this kind of dead end.
           :i32 ::i32-constant-semnasr
           :i64 ::i64-constant-semnasr))
 
+  ;; for interactive testing in CIDER:
+  ;; C-x C-e after the closing parenthesis
   (->> ::integer-constant-semnasr
        s/gen
        gen/generate
@@ -1590,6 +1601,13 @@ discarded. We save it as a lesson in this kind of dead end.
              ::i8-constant-semnasr
              ::i8-scalar-ttype-semnasr))
 
+  ;; for interactive testing in CIDER:
+  ;; C-x C-e after the closing parenthesis
+  (->> ::i8-bin-op-base-semnasr
+       s/gen
+       gen/generate
+       postprocess-kinded-integer-bin-op-semnasr-example)
+
   (s/def ::i16-bin-op-base-semnasr      ; recursive base case
     (s/tuple #{'IntegerBinOp}
              ::i16-constant-semnasr
@@ -1597,20 +1615,223 @@ discarded. We save it as a lesson in this kind of dead end.
              ::i16-constant-semnasr
              ::i16-scalar-ttype-semnasr))
 
-  (s/def ::i32-bin-op-base-semnasr      ; recursive base case
-    (s/tuple #{'IntegerBinOp}
-             ::i32-constant-semnasr
-             ::binop
-             ::i32-constant-semnasr
-             ::i32-scalar-ttype-semnasr))
+  (s/def ::i32-bin-op-semnasr
+    (s/or
+     :base-case
+     (s/or :no-answer (s/tuple #{'IntegerBinOp}
+                               ::i32-constant-semnasr
+                               ::binop
+                               ::i32-constant-semnasr
+                               ::i32-scalar-ttype-semnasr)
+           :base-answer (s/tuple #{'IntegerBinOp}
+                                 ::i32-constant-semnasr
+                                 ::binop
+                                 ::i32-constant-semnasr
+                                 ::i32-scalar-ttype-semnasr
+                                 ::i32-constant-semnasr)
+           :recusirve-answer (s/tuple #{'IntegerBinOp}
+                                      ::i32-constant-semnasr
+                                      ::binop
+                                      ::i32-constant-semnasr
+                                      ::i32-scalar-ttype-semnasr
+                                      ::i32-bin-op-semnasr))
+     :recurse-l
+     (s/or :no-answer (s/tuple #{'IntegerBinOp}
+                               ::i32-bin-op-semnasr
+                               ::binop
+                               ::i32-constant-semnasr
+                               ::i32-scalar-ttype-semnasr)
+           :base-answer (s/tuple #{'IntegerBinOp}
+                                 ::i32-bin-op-semnasr
+                                 ::binop
+                                 ::i32-constant-semnasr
+                                 ::i32-scalar-ttype-semnasr
+                                 ::i32-constant-semnasr)
+           :recursive-answer (s/tuple #{'IntegerBinOp}
+                                      ::i32-bin-op-semnasr
+                                      ::binop
+                                      ::i32-constant-semnasr
+                                      ::i32-scalar-ttype-semnasr
+                                      ::i32-bin-op-semnasr))
+     :recurse-r
+     (s/or :no-answer (s/tuple #{'IntegerBinOp}
+                               ::i32-constant-semnasr
+                               ::binop
+                               ::i32-bin-op-semnasr
+                               ::i32-scalar-ttype-semnasr)
+           :base-answer (s/tuple #{'IntegerBinOp}
+                                 ::i32-constant-semnasr
+                                 ::binop
+                                 ::i32-bin-op-semnasr
+                                 ::i32-scalar-ttype-semnasr
+                                 ::i32-constant-semnasr)
+           :recursive-answer (s/tuple #{'IntegerBinOp}
+                                      ::i32-constant-semnasr
+                                      ::binop
+                                      ::i32-bin-op-semnasr
+                                      ::i32-scalar-ttype-semnasr
+                                      ::i32-bin-op-semnasr))
+     :recurse
+     (s/or :no-answer (s/tuple #{'IntegerBinOp}
+                               ::i32-bin-op-semnasr
+                               ::binop
+                               ::i32-bin-op-semnasr
+                               ::i32-scalar-ttype-semnasr)
+           :base-answer (s/tuple #{'IntegerBinOp}
+                                 ::i32-bin-op-semnasr
+                                 ::binop
+                                 ::i32-bin-op-semnasr
+                                 ::i32-scalar-ttype-semnasr
+                                 ::i32-constant-semnasr)
+           :recursive-answer (s/tuple #{'IntegerBinOp}
+                                      ::i32-bin-op-semnasr
+                                      ::binop
+                                      ::i32-bin-op-semnasr
+                                      ::i32-scalar-ttype-semnasr
+                                      ::i32-bin-op-semnasr))))
 
-  (s/def ::i64-bin-op-base-semnasr      ; recursive base case
-    (s/tuple #{'IntegerBinOp}
-             ::i64-constant-semnasr
-             ::binop
-             ::i64-constant-semnasr
-             ::i64-scalar-ttype-semnasr))
+  (def RECURSION-LIMIT 3) ; careful!
+  ;; for interactive testing in CIDER:
+  ;; C-x C-e after the closing parenthesis
+  (binding [s/*recursion-limit* RECURSION-LIMIT]
+    (->> ::i32-bin-op-semnasr
+         s/gen
+         gen/generate
+         ))
 
+  ;; Base case, base-answer
+  (let [test-vector '[IntegerBinOp
+                      [IntegerConstant 2 (Integer 4 [])] ; left
+                      Add                                ; binop
+                      [IntegerConstant 3 (Integer 4 [])] ; right
+                      (Integer 4 [])    ; answer-ttype
+                      [IntegerConstant 5 (Integer 4 [])]]] ; answer
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  ;; Base case, no-answer
+  (let [test-vector '[IntegerBinOp
+                      [IntegerConstant 2 (Integer 4 [])] ; left
+                      Add                                ; binop
+                      [IntegerConstant 3 (Integer 4 [])] ; right
+                      (Integer 4 [])    ; answer-ttype
+                      ]]
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  ;; Base case, recursive-answer
+  (let [test-vector '[IntegerBinOp
+                      [IntegerConstant 2 (Integer 4 [])] ; left
+                      Add                                ; binop
+                      [IntegerConstant 3 (Integer 4 [])] ; right
+                      (Integer 4 [])    ; answer-ttype
+                      [IntegerBinOp     ; recursive answer
+                       [IntegerBinOp
+                        [IntegerConstant 2 (Integer 4 [])] ; left
+                        Add                                ; binop
+                        [IntegerConstant 3 (Integer 4 [])] ; right
+                        (Integer 4 [])]
+                       Add                                ; binop
+                       [IntegerConstant 3 (Integer 4 [])] ; right
+                       (Integer 4 []) ]]]
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  ;; Recursive left, base-answer
+  (let [test-vector '[IntegerBinOp
+                      [IntegerBinOp     ; recur-left
+                       [IntegerConstant 2 (Integer 4 [])] ;   left
+                       Add              ;   binop
+                       [IntegerConstant 3 (Integer 4 [])] ;   right
+                       (Integer 4 [])   ;   answer-ttype
+                       [IntegerConstant 5 (Integer 4 [])]] ;   answer
+                      Mul                                  ; binop
+                      [IntegerConstant 5 (Integer 4 [])]   ; right
+                      (Integer 4 [])    ; answer-ttype
+                      [IntegerConstant 25 (Integer 4 [])]]] ; answer
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  ;; Recursive right, base-answer
+  (let [test-vector '[IntegerBinOp
+                      [IntegerConstant 2 (Integer 4 [])] ; left
+                      Add                                ; binop
+                      [IntegerBinOp     ; recur-right
+                       [IntegerConstant 3 (Integer 4 [])] ;   left
+                       Add              ;   binop
+                       [IntegerConstant 4 (Integer 4 [])] ;   right
+                       (Integer 4 [])   ;   answer-ttype
+                       [IntegerConstant 42 (Integer 4 [])]] ;   answer
+                      (Integer 4 [])    ; answer-ttype
+                      [IntegerConstant 42 (Integer 4 [])]]] ; answer
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  ;; Recursive left, base-answer
+  (let [test-vector '[IntegerBinOp
+                      [IntegerBinOp
+                       [IntegerConstant 3 (Integer 4 [])]
+                       Add
+                       [IntegerConstant 4 (Integer 4 [])]
+                       (Integer 4 [])
+                       [IntegerConstant 5 (Integer 4 [])]]
+                      Mul
+                      [IntegerConstant 2 (Integer 4 [])]
+                      (Integer 4 [])    ; answer type
+                      [IntegerConstant 25 (Integer 4)]]] ; base-answer
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  ;; Recursive right, base answer
+  (let [test-vector '[IntegerBinOp
+                      [IntegerConstant 2 (Integer 4 [])]
+                      Add
+                      [IntegerBinOp
+                       [IntegerConstant 3 (Integer 4 [])]
+                       Add
+                       [IntegerConstant 4 (Integer 4 [])]
+                       (Integer 4 [])]
+                      (Integer 4 [])
+                      [IntegerConstant 9 (Integer 4 [])]]]
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  ;; Recursive right, recursive answer
+  (let [test-vector '[IntegerBinOp
+                      [IntegerConstant 2 (Integer 4 [])] ;base
+                      Add
+                      [IntegerBinOp     ; recursive right
+                       [IntegerConstant 3 (Integer 4 [])]
+                       Add
+                       [IntegerConstant 4 (Integer 4 [])]
+                       (Integer 4 [])]
+                      (Integer 4 [])    ; answer type
+                      [IntegerBinOp     ; recursive answer
+                       [IntegerConstant 3 (Integer 4 [])]
+                       Mul
+                       [IntegerConstant 4 (Integer 4 [])]
+                       (Integer 4 [])
+                       [IntegerConstant 25 (Integer 4 [])]]]]
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  ;; base, recursive answer
+  (let [test-vector '[IntegerBinOp
+                      [IntegerConstant 2 (Integer 4 [])] ; base
+                      Add
+                      [IntegerConstant 4 (Integer 4 [])] ; base
+                      (Integer 4 [])    ; answer ttype
+                      [IntegerBinOp     ; recursive answer
+                       [IntegerConstant 3 (Integer 4 [])]
+                       Mul
+                       [IntegerConstant 4 (Integer 4 [])]
+                       (Integer 4 [])
+                       [IntegerConstant 25 (Integer 4 [])]]]]
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  (let [test-vector '[IntegerBinOp
+                      [IntegerConstant 2 (Integer 4 [])]
+                      Add
+                      [IntegerConstant 3 (Integer 4 [])]
+                      (Integer 4 [])
+                      #_[IntegerConstant 5 (Integer 4 [])]
+                      ]]
+    (s/valid? ::i32-bin-op-semnasr test-vector))
+
+  ;; The following breaks some semantics by mixing integer kinds.
+  ;; It's not fully syntactical, but might be useful.
   (s/def ::integer-bin-op-mixed-kind-base-semnasr
     (s/tuple
      #{'IntegerBinOp}
@@ -1619,35 +1840,35 @@ discarded. We save it as a lesson in this kind of dead end.
      ::integer-constant-semnasr
      ::integer-scalar-ttype-semnasr))
 
+  ;; for interactive testing in CIDER:
+  ;; C-x C-e after the closing parenthesis
   (->> ::integer-bin-op-mixed-kind-base-semnasr
        s/gen
        gen/generate)
 
+  ;; The following are recursive and dangerous on the generator
+  ;; side. It can stack-overflow or worse. Follow the example
+  ;; below before generating with it
   (s/def ::i8-bin-op-semnasr
     (s/or
+
      :base-case
-     ::i8-bin-op-base-semnasr
-     :recur
+     ::i8-bin-op-base-semnasr,
+
+     :recurse
      (s/tuple
       #{'IntegerBinOp}
-      ::i8-bin-op-semnasr ; stack overflow if integer-bin-op-semnsasr
+      ::i8-bin-op-semnasr
       ::binop
-      ::iu-bin-op-semnasr
+      ::i8-bin-op-semnasr
       ::i8-scalar-ttype-semnasr)))
 
 
-
-
-  ;; The following provisional (ansatz) spec has
-  ;; meta-semantics (it's a semantical nonsense ASR fragment); the
-  ;; ttype must be of integer kind. This ansatz is
-  ;; work-in-progress.
-
-  (s/def ::integer-bin-op-semnasr
-    (s/cat :head  #{'IntegerBinOp}
-           :kind  #{1 2 4 8} ;; i8, i16, i32, i64
-           :left  ::integer
-           :right ::integer))
+  ;;                     _        _   _    _
+  ;;  __ _ _ _  ___ __ _| |_ ___ (_) | |__(_)_ _    ___ _ __
+  ;; / _` | ' \(_-</ _` |  _|_ / | | | '_ \ | ' \  / _ \ '_ \
+  ;; \__,_|_||_/__/\__,_|\__/__| |_| |_.__/_|_||_| \___/ .__/
+  ;;                                                   |_|
 
   ;; The following ansatz is automatically created from the ASDL
   ;; parse and satisfies a conformance test in core_test.clj. It
@@ -1665,6 +1886,21 @@ discarded. We save it as a lesson in this kind of dead end.
              echo))
         echo
         eval))
+
+  ;; Example from Python, recursive-left, base-anser,
+  ;; round-brackets instead of square.
+  (let [test-vector '(IntegerBinOp
+                      (IntegerBinOp
+                       (IntegerConstant 2 (Integer 4 []))
+                       Add
+                       (IntegerConstant 3 (Integer 4 []))
+                       (Integer 4 [])   ; answer ttype
+                       (IntegerConstant 5 (Integer 4 []))) ; answer
+                      Mul
+                      (IntegerConstant 5 (Integer 4 []))
+                      (Integer 4 [])    ; answer ttype
+                      (IntegerConstant 25 (Integer 4 [])))]
+    (s/valid? :asr.core/integer-bin-op test-vector))
 
   ;;  _       _        _                   _
   ;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_
