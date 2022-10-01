@@ -5,7 +5,7 @@
             [clojure.spec.gen.alpha :as gen]))
 
 
-(def NSPECS 132) ;; Bump this number as specs are added to core.clj.
+(def NSPECS 128) ;; Bump this number as specs are added to core.clj.
 
 
 (deftest kebab-test
@@ -538,3 +538,152 @@
                 gen/generate
                 postprocess-integer-ttype-semnasr-example))))
      )))
+
+(deftest i32-bin-op-semnasr-conformance
+  ;; Base case, base-answer
+  (is (let [test-vector '[IntegerBinOp
+                          [IntegerConstant 2 (Integer 4 [])]
+                          Add                                  ; binop
+                          [IntegerConstant 3 (Integer 4 [])]   ; right
+                          (Integer 4 [])                       ; answer-ttype
+                          [IntegerConstant 5 (Integer 4 [])]]] ; answer
+        (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
+
+  ;; Base case, no-answer
+  (is (let [test-vector '[IntegerBinOp
+                          [IntegerConstant 2 (Integer 4 [])] ; left
+                          Add                                ; binop
+                          [IntegerConstant 3 (Integer 4 [])] ; right
+                          (Integer 4 []) ]]                  ; answer-ttype
+        (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
+
+  ;; Base case, recursive-answer
+  (is (let [test-vector '[IntegerBinOp
+                          [IntegerConstant 2 (Integer 4 [])] ; left
+                          Add                                ; binop
+                          [IntegerConstant 3 (Integer 4 [])] ; right
+                          (Integer 4 [])                     ; answer-ttype
+                          [IntegerBinOp                      ; recursive answer
+                           [IntegerBinOp
+                            [IntegerConstant 2 (Integer 4 [])] ; left
+                            Add                                ; binop
+                            [IntegerConstant 3 (Integer 4 [])] ; right
+                            (Integer 4 [])]
+                           Add                                ; binop
+                           [IntegerConstant 3 (Integer 4 [])] ; right
+                           (Integer 4 []) ]]]
+        (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
+
+  ;; Recursive left, base-answer
+  (is (let [test-vector '[IntegerBinOp
+                          [IntegerBinOp                         ; recur-left
+                           [IntegerConstant 2 (Integer 4 [])]   ;   left
+                           Add                                  ;   binop
+                           [IntegerConstant 3 (Integer 4 [])]   ;   right
+                           (Integer 4 [])                       ;   answer-ttype
+                           [IntegerConstant 5 (Integer 4 [])]]  ;   answer
+                          Mul                                   ; binop
+                          [IntegerConstant 5 (Integer 4 [])]    ; right
+                          (Integer 4 [])                        ; answer-ttype
+                          [IntegerConstant 25 (Integer 4 [])]]] ; answer
+        (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
+
+  ;; Recursive right, base-answer
+  (is (let [test-vector '[IntegerBinOp
+                          [IntegerConstant 2 (Integer 4 [])]    ; left
+                          Add                                   ; binop
+                          [IntegerBinOp                         ; recur-right
+                           [IntegerConstant 3 (Integer 4 [])]   ;   left
+                           Add                                  ;   binop
+                           [IntegerConstant 4 (Integer 4 [])]   ;   right
+                           (Integer 4 [])                       ;   answer-ttype
+                           [IntegerConstant 42 (Integer 4 [])]] ;   answer
+                          (Integer 4 [])                        ; answer-ttype
+                          [IntegerConstant 42 (Integer 4 [])]]] ; answer
+        (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
+
+  ;; Recursive right, recursive answer
+  (is (let [test-vector '[IntegerBinOp
+                          [IntegerConstant 2 (Integer 4 [])] ;base
+                          Add
+                          [IntegerBinOp ; recursive right
+                           [IntegerConstant 3 (Integer 4 [])]
+                           Add
+                           [IntegerConstant 4 (Integer 4 [])]
+                           (Integer 4 [])]
+                          (Integer 4 []) ; answer type
+                          [IntegerBinOp  ; recursive answer
+                           [IntegerConstant 3 (Integer 4 [])]
+                           Mul
+                           [IntegerConstant 4 (Integer 4 [])]
+                           (Integer 4 [])
+                           [IntegerConstant 25 (Integer 4 [])]]]]
+        (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
+
+  ;; base, recursive answer
+  (is (let [test-vector '[IntegerBinOp
+                          [IntegerConstant 2 (Integer 4 [])] ; base
+                          Add
+                          [IntegerConstant 4 (Integer 4 [])] ; base
+                          (Integer 4 [])                     ; answer ttype
+                          [IntegerBinOp                      ; recursive answer
+                           [IntegerConstant 3 (Integer 4 [])]
+                           Mul
+                           [IntegerConstant 4 (Integer 4 [])]
+                           (Integer 4 [])
+                           [IntegerConstant 25 (Integer 4 [])]]]]
+        (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
+
+  (is (s/valid?
+       :asr.core/i32-bin-op-semnasr
+       '[IntegerBinOp
+         [IntegerBinOp
+          [IntegerBinOp
+           [IntegerBinOp
+            [IntegerBinOp
+             [IntegerConstant 544338735 (Integer 4 [])]
+             BitXor
+             [IntegerConstant -1100782011 (Integer 4 [])]
+             (Integer 4 [])]
+            Mul
+            [IntegerConstant -971625237 (Integer 4 [])]
+            (Integer 4 [])
+            [IntegerConstant 1980305294 (Integer 4 [])]]
+           Sub
+           [IntegerConstant 1776882703 (Integer 4 [])]
+           (Integer 4 [])]
+          BitLShift
+          [IntegerBinOp
+           [IntegerConstant 1019633051 (Integer 4 [])]
+           BitRShift
+           [IntegerBinOp
+            [IntegerConstant -1661136848 (Integer 4 [])]
+            BitXor
+            [IntegerBinOp
+             [IntegerConstant -390475637 (Integer 4 [])]
+             BitOr
+             [IntegerConstant -627011181 (Integer 4 [])]
+             (Integer 4 [])
+             [IntegerConstant 591935352 (Integer 4 [])]]
+            (Integer 4 [])
+            [IntegerBinOp
+             [IntegerConstant -903848770 (Integer 4 [])]
+             BitRShift
+             [IntegerConstant -256687998 (Integer 4 [])]
+             (Integer 4 [])]]
+           (Integer 4 [])
+           [IntegerBinOp
+            [IntegerBinOp
+             [IntegerConstant -147005213 (Integer 4 [])]
+             BitXor
+             [IntegerConstant -2030399113 (Integer 4 [])]
+             (Integer 4 [])]
+            BitAnd
+            [IntegerConstant -1249059602 (Integer 4 [])]
+            (Integer 4 [])]]
+          (Integer 4 [])
+          [IntegerConstant -1164337677 (Integer 4 [])]]
+         Add
+         [IntegerConstant 1917318437 (Integer 4 [])]
+         (Integer 4 [])]))
+  )

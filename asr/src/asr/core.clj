@@ -1489,8 +1489,8 @@ discarded. We save it as a lesson in this kind of dead end.
            :dimensions #{[]}))
 
   (s/def ::i32-scalar-ttype-semnasr
-    (s/cat :head #{'Integer}
-           :kind #{4}
+    (s/cat :head #{'Integer}    ; s/cat gens a list shape with ()
+           :kind #{4}           ; but s/cat splices, does not nest
            :dimensions #{[]}))
 
   (s/def ::i64-scalar-ttype-semnasr
@@ -1594,27 +1594,6 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; |_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/ |___/___|_|  |_|
   ;;               |___/                               |_|
 
-  (s/def ::i8-bin-op-base-semnasr       ; recursive base case
-    (s/tuple #{'IntegerBinOp}
-             ::i8-constant-semnasr
-             ::binop
-             ::i8-constant-semnasr
-             ::i8-scalar-ttype-semnasr))
-
-  ;; for interactive testing in CIDER:
-  ;; C-x C-e after the closing parenthesis
-  (->> ::i8-bin-op-base-semnasr
-       s/gen
-       gen/generate
-       postprocess-kinded-integer-bin-op-semnasr-example)
-
-  (s/def ::i16-bin-op-base-semnasr      ; recursive base case
-    (s/tuple #{'IntegerBinOp}
-             ::i16-constant-semnasr
-             ::binop
-             ::i16-constant-semnasr
-             ::i16-scalar-ttype-semnasr))
-
   (s/def ::i32-bin-op-semnasr
     (s/or
      :base-case
@@ -1629,7 +1608,7 @@ discarded. We save it as a lesson in this kind of dead end.
                                  ::i32-constant-semnasr
                                  ::i32-scalar-ttype-semnasr
                                  ::i32-constant-semnasr)
-           :recusirve-answer (s/tuple #{'IntegerBinOp}
+           :recursive-answer (s/tuple #{'IntegerBinOp}
                                       ::i32-constant-semnasr
                                       ::binop
                                       ::i32-constant-semnasr
@@ -1690,10 +1669,14 @@ discarded. We save it as a lesson in this kind of dead end.
                                       ::i32-scalar-ttype-semnasr
                                       ::i32-bin-op-semnasr))))
 
-  (def RECURSION-LIMIT 3) ; careful!
+
+  (s/exercise ::i32-bin-op-semnasr 1)
+  s/*recursion-limit*
+
+  (def RECURSION-LIMIT 10)    ; careful!
   ;; for interactive testing in CIDER:
   ;; C-x C-e after the closing parenthesis
-  (binding [s/*recursion-limit* RECURSION-LIMIT]
+  #_(binding [s/*recursion-limit* RECURSION-LIMIT]
     (->> ::i32-bin-op-semnasr
          s/gen
          gen/generate
@@ -1701,7 +1684,7 @@ discarded. We save it as a lesson in this kind of dead end.
 
   ;; Base case, base-answer
   (let [test-vector '[IntegerBinOp
-                      [IntegerConstant 2 (Integer 4 [])] ; left
+                      [IntegerConstant 2 (Integer 4 [])]
                       Add                                ; binop
                       [IntegerConstant 3 (Integer 4 [])] ; right
                       (Integer 4 [])    ; answer-ttype
@@ -1713,8 +1696,7 @@ discarded. We save it as a lesson in this kind of dead end.
                       [IntegerConstant 2 (Integer 4 [])] ; left
                       Add                                ; binop
                       [IntegerConstant 3 (Integer 4 [])] ; right
-                      (Integer 4 [])    ; answer-ttype
-                      ]]
+                      (Integer 4 []) ]] ; answer-ttype
     (s/valid? ::i32-bin-op-semnasr test-vector))
 
   ;; Base case, recursive-answer
@@ -1762,33 +1744,6 @@ discarded. We save it as a lesson in this kind of dead end.
                       [IntegerConstant 42 (Integer 4 [])]]] ; answer
     (s/valid? ::i32-bin-op-semnasr test-vector))
 
-  ;; Recursive left, base-answer
-  (let [test-vector '[IntegerBinOp
-                      [IntegerBinOp
-                       [IntegerConstant 3 (Integer 4 [])]
-                       Add
-                       [IntegerConstant 4 (Integer 4 [])]
-                       (Integer 4 [])
-                       [IntegerConstant 5 (Integer 4 [])]]
-                      Mul
-                      [IntegerConstant 2 (Integer 4 [])]
-                      (Integer 4 [])    ; answer type
-                      [IntegerConstant 25 (Integer 4)]]] ; base-answer
-    (s/valid? ::i32-bin-op-semnasr test-vector))
-
-  ;; Recursive right, base answer
-  (let [test-vector '[IntegerBinOp
-                      [IntegerConstant 2 (Integer 4 [])]
-                      Add
-                      [IntegerBinOp
-                       [IntegerConstant 3 (Integer 4 [])]
-                       Add
-                       [IntegerConstant 4 (Integer 4 [])]
-                       (Integer 4 [])]
-                      (Integer 4 [])
-                      [IntegerConstant 9 (Integer 4 [])]]]
-    (s/valid? ::i32-bin-op-semnasr test-vector))
-
   ;; Recursive right, recursive answer
   (let [test-vector '[IntegerBinOp
                       [IntegerConstant 2 (Integer 4 [])] ;base
@@ -1819,15 +1774,6 @@ discarded. We save it as a lesson in this kind of dead end.
                        [IntegerConstant 4 (Integer 4 [])]
                        (Integer 4 [])
                        [IntegerConstant 25 (Integer 4 [])]]]]
-    (s/valid? ::i32-bin-op-semnasr test-vector))
-
-  (let [test-vector '[IntegerBinOp
-                      [IntegerConstant 2 (Integer 4 [])]
-                      Add
-                      [IntegerConstant 3 (Integer 4 [])]
-                      (Integer 4 [])
-                      #_[IntegerConstant 5 (Integer 4 [])]
-                      ]]
     (s/valid? ::i32-bin-op-semnasr test-vector))
 
   ;; The following breaks some semantics by mixing integer kinds.
