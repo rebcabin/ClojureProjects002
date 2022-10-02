@@ -2,11 +2,14 @@
   (:require [clojure.test :refer :all]
             [asr.core :refer :all]
             [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen]))
+            [clojure.spec.gen.alpha :as gen]
+            [clojure.test.check.generators :as tgen]
+            [clojure.test.check.properties :as tprop]))
 
 
-(def NSPECS 128) ;; Bump this number as specs are added to core.clj.
-(def NTESTS   5) ;; Bigger for more stress, smaller for more speed
+(def NSPECS        130) ;; Bump this number as specs are added to core.clj.
+(def NTESTS          5) ;; Bigger for more stress, smaller for more speed
+(def RECURSION-LIMIT 4) ;; ditto
 
 (deftest kebab-test
   (testing "kebab-case"
@@ -688,8 +691,9 @@
 
   (is (every?
        (partial s/valid? :asr.core/i32-bin-op-semnasr)
-       (for [_ (range NTESTS)]
-         (-> :asr.core/i32-bin-op-semnasr
-             s/gen
-             gen/generate))))
+       (binding [s/*recursion-limit* RECURSION-LIMIT]
+         (for [_ (range NTESTS)]
+           (-> :asr.core/i32-bin-op-semnasr
+               s/gen
+               gen/generate)))))
   )

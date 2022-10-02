@@ -21,11 +21,12 @@
 (println "|                               |")
 (println "+-------------------------------+")
 
+;; TODO: macro?
 (defn echo
   "Print and return argument. Convenient for debugging -> call
   chains."
   [x]
-  (pprint x) x)  ;; TODO: macro?
+  (pprint x) x)
 
 
 (def expr-01-211000
@@ -751,6 +752,7 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
   [(keyword "asr.core" (:ASDL-TERM speclet-map)) ;; no kebab'bing!
    (:ASDL-FORMS speclet-map)])
 
+
 (def big-map-of-speclets-from-terms
   "# Big Map of Speclets From Terms
 
@@ -782,17 +784,20 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
 (defn kind-from-form [form]
   (-> form first first))
 
+
 (defn head-from-kind-form [kind form]
   (case kind
     :ASDL-COMPOSITE (-> form first second :ASDL-HEAD)
     :ASDL-SYMCONST (-> form first second) ;; symconst itself
     :ASDL-TUPLE (-> form first second)))
 
+
 (defn stuff-from-term-form [term form]
   (let [kind (-> form kind-from-form)
         ghead (head-from-kind-form kind form)
         kwh (keyword "asr.core" ghead)] ;; no kebab'bing
     {:head kwh,:term term,:kind kind,:form,form}))
+
 
 (def big-list-of-stuff
   "# Big List of Stuff
@@ -984,6 +989,7 @@ discarded. We save it as a lesson in this kind of dead end.
        (map symbol)
        set))
 
+
 (defn dummy-generator-for-heads
   "A dummy generator for argument lists for heads which just
   inserts a list of random length of random identifiers. Not
@@ -992,6 +998,7 @@ discarded. We save it as a lesson in this kind of dead end.
   (tgen/let [head (s/gen heads)
              rest (gen/list (s/gen ::identifier))]
     (cons head rest)))
+
 
 (defn dummy-lpred
   "A predicate for dummy specs that checks simply that the
@@ -1018,11 +1025,13 @@ discarded. We save it as a lesson in this kind of dead end.
       (dummy-lpred heads)
       (fn [] (dummy-generator-for-heads heads)))))
 
+
 (let [heads (heads-for-composite ::expr)]
   (s/def ::expr
     (s/with-gen
       (dummy-lpred heads)
       (fn [] (dummy-generator-for-heads heads)))))
+
 
 (let [heads (heads-for-composite ::stmt)]
   (s/def ::stmt
@@ -1246,6 +1255,7 @@ discarded. We save it as a lesson in this kind of dead end.
       (conj redims kind key)
       (list key kind []))))
 
+
 (defn postprocess-kinded-integer-bin-op-semnasr-example
   [items]
   (map (fn [item]
@@ -1264,11 +1274,35 @@ discarded. We save it as a lesson in this kind of dead end.
   (.write w (str b))
   #_(.write "N"))
 
+;; At this point, we distinguish syntactically correct nonsense
+;; ASR (SynNASR) from semantically constrained nonsense
+;; ASR (SemNASR).
+;;
+;; - SynNASR is for testing error paths in the ASR backends. A
+;;   random utterance is overwhelmingly unlikely to be meaningful,
+;;   but it must NEVER crash a back-end nor cause it to go into an
+;;   infinite loop (spin). An example is a IntegerBinOp expression
+;;   with a string and a float as arguments. ASDL allows this, but
+;;   backends must reject it.
+;;
+;; - SemNASR is for testing happy paths in the backends. SemNASR
+;;   should be semantically valid, we should be able to
+;;   independently compute results, and we should be able to
+;;   round-trip examples. For example, an IntegerBinOp with two
+;;   IntegerConstant instances of the same kind, say i16, should
+;;   generate code to compute the results, or perhaps, with
+;;   optimizations turned on, compute the results at compile time.
+;;
+;; We will write Clojure specs for both SynNASR and SemNASR.
+;; clojure.spec.gen.alpha, clojure.spec.test.alpha, and
+;; clojure.test.check.generators give us ways to quickly generate
+;; large numbers of NASR strings/trees. SynNASR is the default
+;; because we can generate SynNASR directly from the ASDL grammar.
+;; Names of terms and heads from ASDL with no `semnasr` suffix are
+;; SynNASR. SemNASR requires humans to write the specs. Our first
+;; example of SemNASR will be IntegerBinOp.
 
-(defn -main
-  "Please see the tests. Main doesn't do a whole lot ... yet."
-  [& args]
-
+(defn do-synnasr []
   ;; Building up the spec registry by side-effect.
 
   (print "symconst head specs: ")
@@ -1398,54 +1432,31 @@ discarded. We save it as a lesson in this kind of dead end.
   (defn bigint? [n]
     (instance? clojure.lang.BigInt n))
 
+
   (s/def ::bignat
     (s/with-gen
       (s/and bigint? #(>= % 0))
       (fn [] tgen/size-bounded-bigint)))
+
 
   (s/def ::dimension
     (s/cat :start  (s/? (s/or :nat nat-int? :bignat ::bignat))
            :length (s/? (s/or :nat nat-int? :bignat ::bignat))))
 
 
-  ;; Now, we can s/exercise ::dimension and also include it in
-  ;; other specs.
+  )
+
+(defn -main
+  "Please see the tests. Main doesn't do a whole lot ... yet."
+  [& args]
+
+  (do-synnasr)
 
   ;;  _ _ _     _                        _    _
   ;; (_|_|_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __
   ;;  _ _| | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \
   ;; (_|_)_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/
   ;;                   |___/                               |_|
-
-  ;; At this point, we distinguish syntactically correct nonsense
-  ;; ASR (SynNASR) from semantically constrained nonsense
-  ;; ASR (SemNASR).
-  ;;
-  ;; - SynNASR is for testing error paths in the ASR backends. A
-  ;;   random utterance is overwhelmingly unlikely to be
-  ;;   meaningful, but it must NEVER crash a back-end nor cause it
-  ;;   to go into an infinite loop (spin). An example is a
-  ;;   IntegerBinOp expression with a string and a float as
-  ;;   arguments. ASDL allows this, but backends must reject it.
-  ;;
-  ;; - SemNASR is for testing happy paths in the backends. SemNASR
-  ;;   should be semantically valid, we should be able to
-  ;;   independently compute results, and we should be able to
-  ;;   round-trip examples. For example, an IntegerBinOp with
-  ;;   two IntegerConstant instances of the same kind, say i16,
-  ;;   should generate code to compute the results, or perhaps,
-  ;;   with optimizations turned on, compute the results at
-  ;;   compile time.
-  ;;
-  ;; We will write Clojure specs for both SynNASR and SemNASR.
-  ;; clojure.spec.gen.alpha, clojure.spec.test.alpha, and
-  ;; clojure.test.check.generators give us ways to quickly
-  ;; generate large numbers of NASR strings/trees. SynNASR is the
-  ;; default because we can generate SynNASR directly from the
-  ;; ASDL grammar. Names of terms and heads from ASDL with no
-  ;; `semnasr` suffix are SynNASR. SemNASR requires humans to
-  ;; write the specs. Our first example of SemNASR will be
-  ;; IntegerBinOp.
 
   ;;  ___     _                      _   _
   ;; |_ _|_ _| |_ ___ __ _ ___ _ _  | |_| |_ _  _ _ __  ___
@@ -1594,7 +1605,29 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; |_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/ |___/___|_|  |_|
   ;;               |___/                               |_|
 
-  (println "GOT FURTHER")
+  (s/def ::foo
+    (s/or :no-answer (s/tuple #{'IntegerBinOp}
+                              ::i32-constant-semnasr
+                              ::binop
+                              ::i32-constant-semnasr
+                              ::i32-scalar-ttype-semnasr)
+          :base-answer (s/tuple #{'IntegerBinOp}
+                                ::i32-constant-semnasr
+                                ::binop
+                                ::i32-constant-semnasr
+                                ::i32-scalar-ttype-semnasr
+                                ::i32-constant-semnasr)))
+
+  (s/def ::bar
+    (s/tuple #{'IntegerBinOp}
+             ::i32-constant-semnasr
+             ::binop
+             ::i32-constant-semnasr
+             ::i32-scalar-ttype-semnasr
+             (s/? ::i32-constant-semnasr)))
+  (->> ::bar
+    s/gen
+    gen/generate)
 
   (s/def ::i32-bin-op-semnasr
     (s/or
@@ -1672,112 +1705,6 @@ discarded. We save it as a lesson in this kind of dead end.
                                       ::i32-bin-op-semnasr
                                       ::i32-scalar-ttype-semnasr
                                       ::i32-bin-op-semnasr))))
-
-  (s/exercise ::i32-bin-op-semnasr 1)
-  s/*recursion-limit*
-
-  (def RECURSION-LIMIT 4)    ; careful!
-  ;; for interactive testing in CIDER:
-  ;; C-x C-e after the closing parenthesis
-  (binding [s/*recursion-limit* RECURSION-LIMIT]
-      (->> ::i32-bin-op-semnasr
-           s/gen
-           gen/generate
-           ))
-
-  ;; Base case, base-answer
-  (let [test-vector '[IntegerBinOp
-                      [IntegerConstant 2 (Integer 4 [])]
-                      Add                                ; binop
-                      [IntegerConstant 3 (Integer 4 [])] ; right
-                      (Integer 4 [])    ; answer-ttype
-                      [IntegerConstant 5 (Integer 4 [])]]] ; answer
-    (s/valid? ::i32-bin-op-semnasr test-vector))
-
-  ;; Base case, no-answer
-  (let [test-vector '[IntegerBinOp
-                      [IntegerConstant 2 (Integer 4 [])] ; left
-                      Add                                ; binop
-                      [IntegerConstant 3 (Integer 4 [])] ; right
-                      (Integer 4 []) ]] ; answer-ttype
-    (s/valid? ::i32-bin-op-semnasr test-vector))
-
-  ;; Base case, recursive-answer
-  (let [test-vector '[IntegerBinOp
-                      [IntegerConstant 2 (Integer 4 [])] ; left
-                      Add                                ; binop
-                      [IntegerConstant 3 (Integer 4 [])] ; right
-                      (Integer 4 [])    ; answer-ttype
-                      [IntegerBinOp     ; recursive answer
-                       [IntegerBinOp
-                        [IntegerConstant 2 (Integer 4 [])] ; left
-                        Add                                ; binop
-                        [IntegerConstant 3 (Integer 4 [])] ; right
-                        (Integer 4 [])]
-                       Add                                ; binop
-                       [IntegerConstant 3 (Integer 4 [])] ; right
-                       (Integer 4 []) ]]]
-    (s/valid? ::i32-bin-op-semnasr test-vector))
-
-  ;; Recursive left, base-answer
-  (let [test-vector '[IntegerBinOp
-                      [IntegerBinOp     ; recur-left
-                       [IntegerConstant 2 (Integer 4 [])] ;   left
-                       Add              ;   binop
-                       [IntegerConstant 3 (Integer 4 [])] ;   right
-                       (Integer 4 [])   ;   answer-ttype
-                       [IntegerConstant 5 (Integer 4 [])]] ;   answer
-                      Mul                                  ; binop
-                      [IntegerConstant 5 (Integer 4 [])]   ; right
-                      (Integer 4 [])    ; answer-ttype
-                      [IntegerConstant 25 (Integer 4 [])]]] ; answer
-    (s/valid? ::i32-bin-op-semnasr test-vector))
-
-  ;; Recursive right, base-answer
-  (let [test-vector '[IntegerBinOp
-                      [IntegerConstant 2 (Integer 4 [])] ; left
-                      Add                                ; binop
-                      [IntegerBinOp     ; recur-right
-                       [IntegerConstant 3 (Integer 4 [])] ;   left
-                       Add              ;   binop
-                       [IntegerConstant 4 (Integer 4 [])] ;   right
-                       (Integer 4 [])   ;   answer-ttype
-                       [IntegerConstant 42 (Integer 4 [])]] ;   answer
-                      (Integer 4 [])    ; answer-ttype
-                      [IntegerConstant 42 (Integer 4 [])]]] ; answer
-    (s/valid? ::i32-bin-op-semnasr test-vector))
-
-  ;; Recursive right, recursive answer
-  (let [test-vector '[IntegerBinOp
-                      [IntegerConstant 2 (Integer 4 [])] ;base
-                      Add
-                      [IntegerBinOp     ; recursive right
-                       [IntegerConstant 3 (Integer 4 [])]
-                       Add
-                       [IntegerConstant 4 (Integer 4 [])]
-                       (Integer 4 [])]
-                      (Integer 4 [])    ; answer type
-                      [IntegerBinOp     ; recursive answer
-                       [IntegerConstant 3 (Integer 4 [])]
-                       Mul
-                       [IntegerConstant 4 (Integer 4 [])]
-                       (Integer 4 [])
-                       [IntegerConstant 25 (Integer 4 [])]]]]
-    (s/valid? ::i32-bin-op-semnasr test-vector))
-
-  ;; base, recursive answer
-  (let [test-vector '[IntegerBinOp
-                      [IntegerConstant 2 (Integer 4 [])] ; base
-                      Add
-                      [IntegerConstant 4 (Integer 4 [])] ; base
-                      (Integer 4 [])    ; answer ttype
-                      [IntegerBinOp     ; recursive answer
-                       [IntegerConstant 3 (Integer 4 [])]
-                       Mul
-                       [IntegerConstant 4 (Integer 4 [])]
-                       (Integer 4 [])
-                       [IntegerConstant 25 (Integer 4 [])]]]]
-    (s/valid? ::i32-bin-op-semnasr test-vector))
 
   ;; The following breaks some semantics by mixing integer kinds.
   ;; It's not fully syntactical, but might be useful.
