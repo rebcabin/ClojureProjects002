@@ -6,7 +6,7 @@
 
 
 (def NSPECS 128) ;; Bump this number as specs are added to core.clj.
-
+(def NTESTS   5) ;; Bigger for more stress, smaller for more speed
 
 (deftest kebab-test
   (testing "kebab-case"
@@ -476,68 +476,67 @@
 ;; We have a spec for ::binop --- (s/exercise :asr.core/binop).
 ;; We have a spec for ::ttype --- (s/exercise :asr.core/ttype).
 
-(let [NTESTS 25]
-  (deftest integer-ttype-semnasr-conformance
-         (testing "Integer ttype conformance"
-           (is (s/valid? :asr.core/integer-ttype-semnasr
-                         '(Integer 4 [])                ))
-           (is (s/valid? :asr.core/integer-ttype-semnasr
-                         '(Integer 4 [1 2])             ))
-           (is (s/valid? :asr.core/integer-ttype-semnasr
-                         '(Integer 4 [] [1 2] [] [3 4]) ))
-           (is (s/valid? :asr.core/integer-ttype-semnasr
-                         '(Integer 4)                   ))
-           (is (s/valid? :asr.core/integer-ttype-semnasr
-                         '(Integer 2 ())                ))
-           (is (s/valid? :asr.core/integer-ttype-semnasr
-                         '(Integer 2 (1 2))             ))
-           (is (s/valid? :asr.core/integer-ttype-semnasr
-                         '(Integer 2 () (1 2) () (3 4)) ))
+(deftest integer-ttype-semnasr-conformance
+  (testing "Integer ttype conformance"
+    (is (s/valid? :asr.core/integer-ttype-semnasr
+                  '(Integer 4 [])                ))
+    (is (s/valid? :asr.core/integer-ttype-semnasr
+                  '(Integer 4 [1 2])             ))
+    (is (s/valid? :asr.core/integer-ttype-semnasr
+                  '(Integer 4 [] [1 2] [] [3 4]) ))
+    (is (s/valid? :asr.core/integer-ttype-semnasr
+                  '(Integer 4)                   ))
+    (is (s/valid? :asr.core/integer-ttype-semnasr
+                  '(Integer 2 ())                ))
+    (is (s/valid? :asr.core/integer-ttype-semnasr
+                  '(Integer 2 (1 2))             ))
+    (is (s/valid? :asr.core/integer-ttype-semnasr
+                  '(Integer 2 () (1 2) () (3 4)) ))
 
-           (is (every?
-                (partial s/valid? :asr.core/integer-ttype-semnasr)
-                (for [_ (range NTESTS)]
-                  (gen/generate (s/gen :asr.core/integer-ttype-semnasr)))))
-           ))
+    (is (every?
+         (partial s/valid? :asr.core/integer-ttype-semnasr)
+         (for [_ (range NTESTS)]
+           (gen/generate (s/gen :asr.core/integer-ttype-semnasr)))))
+    ))
 
- (deftest integer-ttype-semnasr-postprocessing
-   (testing "Integer ttype post-processing"
-     (is (= '(Integer 4 [] [1 2] [] [3 4])
-            (postprocess-integer-ttype-semnasr-example
-             '(Integer 4 () (1 2) () (3 4)))))
+(deftest integer-ttype-semnasr-postprocessing
+  (testing "Integer ttype post-processing"
+    (is (= '(Integer 4 [] [1 2] [] [3 4])
+           (postprocess-integer-ttype-semnasr-example
+            '(Integer 4 () (1 2) () (3 4)))))
 
-     (is (= '(Integer 4 [])
-            (postprocess-integer-ttype-semnasr-example
-             '(Integer 4 ()))))
+    (is (= '(Integer 4 [])
+           (postprocess-integer-ttype-semnasr-example
+            '(Integer 4 ()))))
 
-     ;; Turns out that Clojure is pretty permissive and reckons
-     ;; '(Integer 4 []) equal to '(Integer 4 ()).
-     ;; https://clojure.org/guides/equality
+    ;; Turns out that Clojure is pretty permissive and reckons
+    ;; '(Integer 4 []) equal to '(Integer 4 ()).
+    ;; https://clojure.org/guides/equality
 
-     #_(is (not (= '(Integer 4 ())
-                   (postprocess-integer-ttype-semnasr-example
-                    '(Integer 4 ())))))
+    #_(is (not (= '(Integer 4 ())
+                  (postprocess-integer-ttype-semnasr-example
+                   '(Integer 4 ())))))
 
-     (is (= '(Integer 4 [])
-            (postprocess-integer-ttype-semnasr-example
-             '(Integer 4 []))))
+    (is (= '(Integer 4 [])
+           (postprocess-integer-ttype-semnasr-example
+            '(Integer 4 []))))
 
-     (is (= '(Integer 4 [])
-            (postprocess-integer-ttype-semnasr-example
-             '(Integer 4))))
+    (is (= '(Integer 4 [])
+           (postprocess-integer-ttype-semnasr-example
+            '(Integer 4))))
 
-     (is (not (= '(Integer 4)
-                 (postprocess-integer-ttype-semnasr-example
-                  '(Integer 4)))))
+    (is (not (= '(Integer 4)
+                (postprocess-integer-ttype-semnasr-example
+                 '(Integer 4)))))
 
-     (is (every?
-          (partial s/valid? :asr.core/integer-ttype-semnasr)
-          (for [_ (range NTESTS)]
-            (-> :asr.core/integer-ttype-semnasr
-                s/gen
-                gen/generate
-                postprocess-integer-ttype-semnasr-example))))
-     )))
+    (is (every?
+         (partial s/valid? :asr.core/integer-ttype-semnasr)
+         (for [_ (range NTESTS)]
+           (-> :asr.core/integer-ttype-semnasr
+               s/gen
+               gen/generate
+               postprocess-integer-ttype-semnasr-example))))
+    ))
 
 (deftest i32-bin-op-semnasr-conformance
   ;; Base case, base-answer
@@ -686,4 +685,11 @@
          Add
          [IntegerConstant 1917318437 (Integer 4 [])]
          (Integer 4 [])]))
+
+  (is (every?
+       (partial s/valid? :asr.core/i32-bin-op-semnasr)
+       (for [_ (range NTESTS)]
+         (-> :asr.core/i32-bin-op-semnasr
+             s/gen
+             gen/generate))))
   )

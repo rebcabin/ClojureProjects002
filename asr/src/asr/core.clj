@@ -1594,6 +1594,8 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; |_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/ |___/___|_|  |_|
   ;;               |___/                               |_|
 
+  (println "GOT FURTHER")
+
   (s/def ::i32-bin-op-semnasr
     (s/or
      :base-case
@@ -1607,14 +1609,16 @@ discarded. We save it as a lesson in this kind of dead end.
                                  ::binop
                                  ::i32-constant-semnasr
                                  ::i32-scalar-ttype-semnasr
-                                 ::i32-constant-semnasr)
-           :recursive-answer (s/tuple #{'IntegerBinOp}
-                                      ::i32-constant-semnasr
-                                      ::binop
-                                      ::i32-constant-semnasr
-                                      ::i32-scalar-ttype-semnasr
-                                      ::i32-bin-op-semnasr))
-     :recurse-l
+                                 ::i32-constant-semnasr))
+     :recurse-answer
+     (s/tuple #{'IntegerBinOp}
+              ::i32-constant-semnasr
+              ::binop
+              ::i32-constant-semnasr
+              ::i32-scalar-ttype-semnasr
+              ::i32-bin-op-semnasr)
+
+     :recurse-left
      (s/or :no-answer (s/tuple #{'IntegerBinOp}
                                ::i32-bin-op-semnasr
                                ::binop
@@ -1632,7 +1636,7 @@ discarded. We save it as a lesson in this kind of dead end.
                                       ::i32-constant-semnasr
                                       ::i32-scalar-ttype-semnasr
                                       ::i32-bin-op-semnasr))
-     :recurse-r
+     :recurse-right
      (s/or :no-answer (s/tuple #{'IntegerBinOp}
                                ::i32-constant-semnasr
                                ::binop
@@ -1650,7 +1654,7 @@ discarded. We save it as a lesson in this kind of dead end.
                                       ::i32-bin-op-semnasr
                                       ::i32-scalar-ttype-semnasr
                                       ::i32-bin-op-semnasr))
-     :recurse
+     :recurse-all
      (s/or :no-answer (s/tuple #{'IntegerBinOp}
                                ::i32-bin-op-semnasr
                                ::binop
@@ -1669,18 +1673,17 @@ discarded. We save it as a lesson in this kind of dead end.
                                       ::i32-scalar-ttype-semnasr
                                       ::i32-bin-op-semnasr))))
 
-
   (s/exercise ::i32-bin-op-semnasr 1)
   s/*recursion-limit*
 
-  (def RECURSION-LIMIT 10)    ; careful!
+  (def RECURSION-LIMIT 4)    ; careful!
   ;; for interactive testing in CIDER:
   ;; C-x C-e after the closing parenthesis
-  #_(binding [s/*recursion-limit* RECURSION-LIMIT]
-    (->> ::i32-bin-op-semnasr
-         s/gen
-         gen/generate
-         ))
+  (binding [s/*recursion-limit* RECURSION-LIMIT]
+      (->> ::i32-bin-op-semnasr
+           s/gen
+           gen/generate
+           ))
 
   ;; Base case, base-answer
   (let [test-vector '[IntegerBinOp
@@ -1861,4 +1864,6 @@ discarded. We save it as a lesson in this kind of dead end.
   ;; (pprint (s/exercise ::dimension))
 
 
-  (println "Please see the tests. Main doesn't do a whole lot ... yet."))
+  (println "Please see the tests. Main doesn't do a whole lot ... yet.")
+
+  )
