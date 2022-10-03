@@ -9,6 +9,7 @@
             [clojure.spec.test.alpha       :as stest]
             [clojure.test.check.generators :as tgen]
             [clojure.math.numeric-tower    :refer [expt]]
+            [clojure.inspector             :refer [inspect-tree]]
             ))
 
 (println "+-------------------------------+")
@@ -28,6 +29,16 @@
   [x]
   (pprint x) x)
 
+;;  ___                   _               _        _   _  _         _
+;; | __|_ ___ __  ___ _ _(_)_ __  ___ _ _| |_ __ _| | | || |___ _ _(_)______ _ _
+;; | _|\ \ / '_ \/ -_) '_| | '  \/ -_) ' \  _/ _` | | | __ / _ \ '_| |_ / _ \ ' \
+;; |___/_\_\ .__/\___|_| |_|_|_|_\___|_||_\__\__,_|_| |_||_\___/_| |_/__\___/_||_|
+;;         |_|
+
+;;; Code below this line, up to the lines marked "Production
+;;; Horizon" is experimental. Most of it concerns automatically
+;;; generating syntactically valid nonsense ASR
+;;; programs (SynNASR).
 
 (def expr-01-211000
   "Here is the Python that generates the ASR below, from
@@ -116,7 +127,8 @@ main0()
   ;; to do with macros.
   #_(->> sym csk/->kebab-case #(keyword "asr.core" %)) )
 
-;;; Experimental Spec for nskw-kebab-from:
+;;; Experimental Function Spec for nskw-kebab-from. This is an
+;;; ansatz for future function specs.
 
 (s/fdef nskw-kebab-from
   :args (s/alt :str string? :sym symbol?)
@@ -124,6 +136,9 @@ main0()
 
 (stest/instrument `nskw-kebab-from)
 
+
+;;; An immutable scrape from lcompilers web site, to have stable
+;;; inputs for development. TODO: dynamically scrape this.
 
 (def all-asr
 
@@ -530,6 +545,9 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
 
 }")
 
+
+;;; Documentation for speclets and other nomenclature is in the
+;;; docstring for "asdl-grammar."
 
 (def asdl-grammar
 
@@ -1238,41 +1256,11 @@ discarded. We save it as a lesson in this kind of dead end.
   (count (only-asr-specs)))
 
 
-;;             _
-;;  _ __  __ _(_)_ _
-;; | '  \/ _` | | ' \
-;; |_|_|_\__,_|_|_||_|
-
-
-(defn postprocess-integer-ttype-semnasr-example
-  "Formatting for output to C/C++, mostly replacing empty lists with
-  empty square brackets and round brackets with square brackets.
-  See the tests for examples."
-  [ex]
-  (let [[key kind & dims] ex
-        redims (map vec dims)]
-    (if dims
-      (conj redims kind key)
-      (list key kind []))))
-
-
-(defn postprocess-kinded-integer-bin-op-semnasr-example
-  [items]
-  (map (fn [item]
-         (if (vector? item)
-           (apply list item)
-           item))
-       items))
-
-;; Overwrite print-method for clojure BigInt to get rid of
-;; the "N" at the end (can't do this inside (-main) lest
-;; compile errors).
-
-(import '(java.io Writer))
-(defmethod print-method clojure.lang.BigInt
-  [b, ^Writer w]
-  (.write w (str b))
-  #_(.write "N"))
+;;     _
+;;  __| |___ ___ ____  _ _ _  _ _  __ _ ____ _
+;; / _` / _ \___(_-< || | ' \| ' \/ _` (_-< '_|
+;; \__,_\___/   /__/\_, |_||_|_||_\__,_/__/_|
+;;                  |__/
 
 ;; At this point, we distinguish syntactically correct nonsense
 ;; ASR (SynNASR) from semantically constrained nonsense
@@ -1292,6 +1280,8 @@ discarded. We save it as a lesson in this kind of dead end.
 ;;   IntegerConstant instances of the same kind, say i16, should
 ;;   generate code to compute the results, or perhaps, with
 ;;   optimizations turned on, compute the results at compile time.
+;;   Types must match and zero divisors must be rejected. Such
+;;   checks are distinct layers or sibling domains of semantics.
 ;;
 ;; We will write Clojure specs for both SynNASR and SemNASR.
 ;; clojure.spec.gen.alpha, clojure.spec.test.alpha, and
@@ -1299,11 +1289,12 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; large numbers of NASR strings/trees. SynNASR is the default
 ;; because we can generate SynNASR directly from the ASDL grammar.
 ;; Names of terms and heads from ASDL with no `semnasr` suffix are
-;; SynNASR. SemNASR requires humans to write the specs. Our first
-;; example of SemNASR will be IntegerBinOp.
+;; SynNASR. SemNASR requires humans to write at least parts of the
+;; specs. Our first example of SemNASR will be IntegerBinOp.
 
-(defn do-synnasr []
-  ;; Building up the spec registry by side-effect.
+(defn do-synnasr
+  "Automated items for the spec registry. W.I.P."
+  []
 
   (print "symconst head specs: ")
 
@@ -1422,374 +1413,425 @@ discarded. We save it as a lesson in this kind of dead end.
   ;;     = Integer(int kind, dimension* dims)
   ;;     | ...
 
-  ;;  _ _    _ _                   _
-  ;; (_|_)__| (_)_ __  ___ _ _  __(_)___ _ _
-  ;;  _ _/ _` | | '  \/ -_) ' \(_-< / _ \ ' \
-  ;; (_|_)__,_|_|_|_|_\___|_||_/__/_\___/_||_|
-
-  ;; Redefinition; try (s/exercise ::dimension
-
-  (defn bigint? [n]
-    (instance? clojure.lang.BigInt n))
-
-
-  (s/def ::bignat
-    (s/with-gen
-      (s/and bigint? #(>= % 0))
-      (fn [] tgen/size-bounded-bigint)))
-
-
-  (s/def ::dimension
-    (s/cat :start  (s/? (s/or :nat nat-int? :bignat ::bignat))
-           :length (s/? (s/or :nat nat-int? :bignat ::bignat))))
-
+  ;; WORK-IN-PROGRESS
   )
 
-(defn -main
-  "Please see the tests. Main doesn't do a whole lot ... yet."
-  [& args]
+;;  ___             _         _   _            _  _         _
+;; | _ \_ _ ___  __| |_  _ __| |_(_)___ _ _   | || |___ _ _(_)______ _ _
+;; |  _/ '_/ _ \/ _` | || / _|  _| / _ \ ' \  | __ / _ \ '_| |_ / _ \ ' \
+;; |_| |_| \___/\__,_|\_,_\__|\__|_\___/_||_| |_||_\___/_| |_/__\___/_||_|
 
-  (do-synnasr)
+;; Code below this line is ready for testing in production.
 
-  ;;  _ _ _     _                        _    _
-  ;; (_|_|_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __
-  ;;  _ _| | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \
-  ;; (_|_)_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/
-  ;;                   |___/                               |_|
+;; Define some automatically generated SynNASR specs. This is
+;; experimental, but some of the subsequent production specs
+;; may depend on some of these definitions.
 
-  ;;  ___     _                      _   _
-  ;; |_ _|_ _| |_ ___ __ _ ___ _ _  | |_| |_ _  _ _ __  ___
-  ;;  | || ' \  _/ -_) _` / -_) '_| |  _|  _| || | '_ \/ -_)
-  ;; |___|_||_\__\___\__, \___|_|    \__|\__|\_, | .__/\___|
-  ;;                 |___/                   |__/|_|
+(do-synnasr)
 
-  ;; Head spec for ttype [sic]
-  ;; 'Integer ~~nskw-kebab-from~~> 'integer
+;;  _ _ _     _                        _    _
+;; (_|_|_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __
+;;  _ _| | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \
+;; (_|_)_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/
+;;                   |___/                               |_|
+
+;;  ___     _                      _   _
+;; |_ _|_ _| |_ ___ __ _ ___ _ _  | |_| |_ _  _ _ __  ___
+;;  | || ' \  _/ -_) _` / -_) '_| |  _|  _| || | '_ \/ -_)
+;; |___|_||_\__\___\__, \___|_|    \__|\__|\_, | .__/\___|
+;;                 |___/                   |__/|_|
 
 
-  (s/def ::integer-ttype-semnasr
-    (s/cat :head       #{'Integer}
-           :kind       #{1 2 4 8} ;; i8, i16, i32, i64
-           :dimensions (s/* (s/spec ::dimension))))
+;; NOTA BENE: s/cat specs wrapped in s/spec are nestable.
+;; Unwrapped regex specs are spliced. Regex specs arise from s/*,
+;; s/+, s/?, s/alt, s/cat, as explained here
+;; https://clojure.org/guides/spec#_sequences. This point bears
+;; emphasis because, although the docs are clear, it takes some
+;; experience to internalize the conceptual differences between
+;; regex sequences and normal specs combined with s/and and s/or.
 
-  ;; for interactive testing in CIDER:
-  ;; C-x C-e after the closing parenthesis
-  (->> ::integer-ttype-semnasr
-       s/gen
-       gen/generate)
+;;  _ _    _ _                   _
+;; (_|_)__| (_)_ __  ___ _ _  __(_)___ _ _
+;;  _ _/ _` | | '  \/ -_) ' \(_-< / _ \ ' \
+;; (_|_)__,_|_|_|_|_\___|_||_/__/_\___/_||_|
 
-  ;; Often, we need a scalar that has no dimension.
+;; Redefinition; try (s/exercise ::dimension
 
-  (s/def ::integer-scalar-ttype-semnasr
-    (s/cat :head #{'Integer}
-           :kind #{1 2 4 8}
-           :dimensions #{[]}))
+(defn bigint?
+  "Doesn't seem to be defined in system-supplied libraries."
+  [n]
+  (instance? clojure.lang.BigInt n))
 
-  ;; Particular ones so we can match the "kind," i8 thru i64.
-  ;; Written in this funny way for test-generation.
+;; Overwrite print-method for clojure BigInt to get rid of
+;; the "N" at the end (can't do this inside (-main) lest
+;; compile errors).
 
+(import '(java.io Writer))
+(defmethod print-method clojure.lang.BigInt
+  [b, ^Writer w]
+  (.write w (str b))
+  #_(.write "N"))
+
+(s/def ::bignat
+  (s/with-gen
+    (s/and bigint? #(>= % 0))
+    ;; size-bounded-bignat is not public, else I would call it
+    (fn [] tgen/size-bounded-bigint)))
+
+;; C-c C-v C-f C-c e to generate pretty-printed comments. Then
+;; stub off the call to save a tiny bit of runtime. Remove the
+;; #_ and press C-c C-c in the expression to see results in a
+;; CIDER Emacs buffer. We follow this convenience convention
+;; frequently in this development section. Comments are cheap.
+
+#_(->> ::bignat s/exercise (map second))
+;; => (7 13 63 98225932 4572 28 31914670493 80 252 256185)
+
+
+(s/def ::dimensions
+  (s/coll-of (s/or :nat-int nat-int?, :bigint ::bignat)
+             :min-count 0,
+             :max-count 2,
+             :into []))
+
+#_(-> ::dimensions (s/exercise 4))
+;; => ([[1 0] [[:nat-int 1] [:bigint 0]]]
+;;     [[1 0] [[:nat-int 1] [:nat-int 0]]]
+;;     [[] []]
+;;     [[459] [[:bigint 459]]])
+
+(s/def ::integer-ttype-semnasr
+  (s/spec              ; means "nestable" not "spliceable" in other "regex" specs
+   (s/cat :head        #{'Integer}
+          :kind        #{1 2 4 8} ;; i8, i16, i32, i64
+          :dimensionss (s/+ ::dimensions))))
+
+#_(->> ::integer-ttype-semnasr
+     s/gen
+     gen/generate)
+;; => (Integer ;; head
+;;     4       ;; kind
+;;     [3223318265799195456]  ;; (dimensionss), bunch of dimensions
+;;     []
+;;     [28]
+;;     [8 313679744843364260991]
+;;     [87100772691971102709151610292570444761])
+
+
+;; Often, we need a scalar that has no dimensionss [sic].
+
+(s/def ::integer-scalar-ttype-semnasr
+  (s/spec
+   (s/cat :head        #{'Integer}
+          :kind        #{1 2 4 8}
+          :dimensionss #{[]})))
+
+(-> ::integer-scalar-ttype-semnasr
+      (s/exercise 4))
+;; => ([(Integer 2 []) {:head Integer, :kind 2, :dimensionss []}]
+;;     [(Integer 4 []) {:head Integer, :kind 4, :dimensionss []}]
+;;     [(Integer 1 []) {:head Integer, :kind 1, :dimensionss []}]
+;;     [(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}])
+
+;; Particular ones so we can match the "kind," i8 thru i64, by
+;; hand. Written in this funny way for test-generation.
+
+(do
   (s/def ::i8-scalar-ttype-semnasr
-    (s/cat :head #{'Integer}
-           :kind #{1}
-           :dimensions #{[]}))
+    (s/spec ; nestable
+     (s/cat :head        #{'Integer}
+            :kind        #{1}
+            :dimensionss #{[]})))
 
   (s/def ::i16-scalar-ttype-semnasr
-    (s/cat :head #{'Integer}
-           :kind #{2}
-           :dimensions #{[]}))
+    (s/spec ; nestable
+     (s/cat :head        #{'Integer}
+            :kind        #{2}
+            :dimensionss #{[]})))
 
   (s/def ::i32-scalar-ttype-semnasr
-    (s/cat :head #{'Integer}    ; s/cat gens a list shape with ()
-           :kind #{4}           ; but s/cat splices, does not nest
-           :dimensions #{[]}))
+    (s/spec ; nestable
+     (s/cat :head        #{'Integer}
+            :kind        #{4}
+            :dimensionss #{[]})))
 
   (s/def ::i64-scalar-ttype-semnasr
-    (s/cat :head #{'Integer}
-           :kind #{8}
-           :dimensions #{[]}))
+    (s/spec ; nestable
+     (s/cat :head        #{'Integer}
+            :kind        #{8}
+            :dimensionss #{[]}))))
 
-  ;; for interactive testing in CIDER:
-  ;; C-x C-e after the closing parenthesis
-  (->> ::i64-scalar-ttype-semnasr
-       s/gen
-       gen/generate)
+#_(-> ::i64-scalar-ttype-semnasr
+    (s/exercise 2))
+;; => ([(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}]
+;;     [(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}])
 
-  ;;  _     _                               _
-  ;; (_)_ _| |_ ___ __ _ ___ _ _  __ ____ _| |_  _ ___ ___
-  ;; | | ' \  _/ -_) _` / -_) '_| \ V / _` | | || / -_|_-<
-  ;; |_|_||_\__\___\__, \___|_|    \_/\__,_|_|\_,_\___/__/
-  ;;               |___/
+;; With nesting. Because every spec is wrapped in s/spec, results
+;; are nested under s/alt.
 
+#_(-> (s/alt ::i8-scalar-ttype-semnasr
+           ::i16-scalar-ttype-semnasr
+           ::i32-scalar-ttype-semnasr
+           ::i64-scalar-ttype-semnasr)
+    (s/exercise 2))
+;; => ([[(Integer 2 [])]
+;;      [:asr.core/i8-scalar-ttype-semnasr
+;;       {:head Integer, :kind 2, :dimensionss []}]]
+;;     [[(Integer 8 [])]
+;;      [:asr.core/i32-scalar-ttype-semnasr
+;;       {:head Integer, :kind 8, :dimensionss []}]])
 
-  ;; Mid-level specs for fixed-width integers.
+;; Without nesting. Results are not nested under s/or.
 
-  (letfn [(b [e] (expt 2 (- e 1)))     ; ::i8, ::i16, ::i32, ::i64
-          (gmkr [e]
-            (let [b_ (b e)]
-              (tgen/choose (- b_) (- b_ 1))))
-          (smkr [e]
-            (let [b_ (b e)]
-              (s/and integer? #(>= % (- b_)) #(< % b_))))]
-    (let [gi8  (fn [] (gmkr 8))
-          gi16 (fn [] (gmkr 16))
-          gi32 (fn [] (gmkr 32))
-          gi64 (fn [] (gmkr 64))
-          si8  (smkr 8)
-          si16 (smkr 16)
-          si32 (smkr 32)
-          si64 (smkr 64)]
-      (s/def ::i8  (s/with-gen  si8  gi8))
-      (s/def ::i16 (s/with-gen si16 gi16))
-      (s/def ::i32 (s/with-gen si32 gi32))
-      (s/def ::i64 (s/with-gen si64 gi64))))
-
-  (s/def ::bounded-integer-value
-    ;; The order matters, here. We want 127, for example, to be
-    ;; marked :i8 most of the time even though it satisfies the
-    ;; specs for larger integers. Spot-check this
-    ;; with `(s/exercise ::bounded-integer-value)`.
-    ;;
-    ;; LIMITATION: We might never get an :i16 with a value that is
-    ;; also an :i8. However, the spec ::i16 does occasionally
-    ;; produce such values. Try `(s/exercise ::i16 40)`
-    (s/or :i8  ::i8
-          :i16 ::i16
-          :i32 ::i32
-          :i64 ::i64))
+#_(-> (s/or :1 ::i8-scalar-ttype-semnasr
+          :2 ::i16-scalar-ttype-semnasr
+          :4 ::i32-scalar-ttype-semnasr
+          :8 ::i64-scalar-ttype-semnasr)
+    (s/exercise 2))
+;; => ([(Integer 8 []) [:8 {:head Integer, :kind 8, :dimensionss []}]]
+;;     [(Integer 1 []) [:1 {:head Integer, :kind 1, :dimensionss []}]])
 
 
-  ;;  _     _                                       _            _
-  ;; (_)_ _| |_ ___ __ _ ___ _ _ ___ __ ___ _ _  __| |_ __ _ _ _| |_
-  ;; | | ' \  _/ -_) _` / -_) '_|___/ _/ _ \ ' \(_-<  _/ _` | ' \  _|
-  ;; |_|_||_\__\___\__, \___|_|     \__\___/_||_/__/\__\__,_|_||_\__|
-  ;;               |___/
+;;  _     _                               _
+;; (_)_ _| |_ ___ __ _ ___ _ _  __ ____ _| |_  _ ___ ___
+;; | | ' \  _/ -_) _` / -_) '_| \ V / _` | | || / -_|_-<
+;; |_|_||_\__\___\__, \___|_|    \_/\__,_|_|\_,_\___/__/
+;;               |___/
 
+
+;; Mid-level specs for fixed-width integers.
+
+(letfn [(b [e] (expt 2 (- e 1)))     ; ::i8, ::i16, ::i32, ::i64
+        (gmkr [e]
+          (let [b_ (b e)]
+            (tgen/choose (- b_) (- b_ 1))))
+        (smkr [e]
+          (let [b_ (b e)]
+            (s/and integer? #(>= % (- b_)) #(< % b_))))]
+  (let [gi8  (fn [] (gmkr 8))
+        gi16 (fn [] (gmkr 16))
+        gi32 (fn [] (gmkr 32))
+        gi64 (fn [] (gmkr 64))
+        si8  (smkr 8)
+        si16 (smkr 16)
+        si32 (smkr 32)
+        si64 (smkr 64)]
+    (s/def ::i8  (s/spec  si8 :gen  gi8))  ; s/spec means
+    (s/def ::i16 (s/spec si16 :gen gi16))  ; "nestable"
+    (s/def ::i32 (s/spec si32 :gen gi32))
+    (s/def ::i64 (s/spec si64 :gen gi64))))
+
+;; s/alt introduces nesting!
+
+#_(s/exercise (s/alt :i8  ::i8
+                   :i16 ::i16
+                   :i32 ::i32
+                   :i64 ::i64) 2)
+;; => ([[537347452000468992] [:i64 537347452000468992]]
+;;     [[-7521659373872773120] [:i64 -7521659373872773120]])
+
+;; We want s/or:
+
+(s/def ::bounded-integer-value
+  ;; The order matters, here. We want 127, for example, to be
+  ;; marked :i8 most of the time even though it satisfies the
+  ;; specs for larger integers. Spot-check this
+  ;; with `(s/exercise ::bounded-integer-value)`.
+  ;;
+  ;; LIMITATION: We might never get an :i16 with a value that is
+  ;; also an :i8. However, the spec ::i16 does occasionally
+  ;; produce such values. Try `(s/exercise ::i16 40)`
+  (s/or :i8  ::i8
+        :i16 ::i16
+        :i32 ::i32
+        :i64 ::i64))
+
+#_(-> ::bounded-integer-value
+    (s/exercise 4))
+;; => ([24863 [:i16 24863]]
+;;     [-307664817 [:i32 -307664817]]
+;;     [8726810684370532352 [:i64 8726810684370532352]]
+;;     [5915974065133008896 [:i64 5915974065133008896]])
+
+
+;;  _     _                                       _            _
+;; (_)_ _| |_ ___ __ _ ___ _ _ ___ __ ___ _ _  __| |_ __ _ _ _| |_
+;; | | ' \  _/ -_) _` / -_) '_|___/ _/ _ \ ' \(_-<  _/ _` | ' \  _|
+;; |_|_||_\__\___\__, \___|_|     \__\___/_||_/__/\__\__,_|_||_\__|
+;;               |___/
+
+(do
   (s/def ::i8-constant-semnasr
-    (s/tuple #{'IntegerConstant}
-             ::i8
-             ::i8-scalar-ttype-semnasr))
+   (s/spec
+    (s/cat :head  #{'IntegerConstant}
+           :value ::i8
+           :ttype ::i8-scalar-ttype-semnasr)))
 
-  (s/def ::i16-constant-semnasr
-    (s/tuple #{'IntegerConstant}
-             ::i16
-             ::i16-scalar-ttype-semnasr))
+    (s/def ::i16-constant-semnasr
+      (s/spec
+       (s/cat :head  #{'IntegerConstant}
+              :value ::i16
+              :ttype ::i16-scalar-ttype-semnasr)))
 
-  (s/def ::i32-constant-semnasr
-    (s/tuple #{'IntegerConstant}
-             ::i32
-             ::i32-scalar-ttype-semnasr))
+    (s/def ::i32-constant-semnasr
+      (s/spec
+       (s/cat :head  #{'IntegerConstant}
+              :value ::i32
+              :ttype ::i32-scalar-ttype-semnasr)))
 
-  (s/def ::i64-constant-semnasr
-    (s/tuple #{'IntegerConstant}
-             ::i64
-             ::i64-scalar-ttype-semnasr))
+    (s/def ::i64-constant-semnasr
+      (s/spec
+       (s/cat :head  #{'IntegerConstant}
+              :value ::i64
+              :ttype ::i64-scalar-ttype-semnasr))))
 
-  (s/def ::integer-constant-semnasr
-    (s/or :i8  ::i8-constant-semnasr
-          :i16 ::i16-constant-semnasr
-          :i32 ::i32-constant-semnasr
-          :i64 ::i64-constant-semnasr))
+(s/def ::integer-constant-semnasr
+  (s/or :i8  ::i8-constant-semnasr
+        :i16 ::i16-constant-semnasr
+        :i32 ::i32-constant-semnasr
+        :i64 ::i64-constant-semnasr))
 
-  ;; for interactive testing in CIDER:
-  ;; C-x C-e after the closing parenthesis
-  (->> ::integer-constant-semnasr
-       s/gen
-       gen/generate
-       (apply list))
-
-
-  ;;  _     _                        _    _                    ___ ___ __  __
-  ;; (_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __  / __| __|  \/  |
-  ;; | | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \ \__ \ _|| |\/| |
-  ;; |_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/ |___/___|_|  |_|
-  ;;               |___/                               |_|
-
-  (s/def ::foo
-    (s/or :no-answer (s/tuple #{'IntegerBinOp}
-                              ::i32-constant-semnasr
-                              ::binop
-                              ::i32-constant-semnasr
-                              ::i32-scalar-ttype-semnasr)
-          :base-answer (s/tuple #{'IntegerBinOp}
-                                ::i32-constant-semnasr
-                                ::binop
-                                ::i32-constant-semnasr
-                                ::i32-scalar-ttype-semnasr
-                                ::i32-constant-semnasr)))
-
-  (s/def ::bar
-    (s/tuple #{'IntegerBinOp}
-             ::i32-constant-semnasr
-             ::binop
-             ::i32-constant-semnasr
-             ::i32-scalar-ttype-semnasr
-             (s/? ::i32-constant-semnasr)))
-  (->> ::bar
-    s/gen
-    gen/generate)
-
-  (s/def ::i32-bin-op-semnasr
-    (s/or
-     :base-case
-     (s/or :no-answer (s/tuple #{'IntegerBinOp}
-                               ::i32-constant-semnasr
-                               ::binop
-                               ::i32-constant-semnasr
-                               ::i32-scalar-ttype-semnasr)
-           :base-answer (s/tuple #{'IntegerBinOp}
-                                 ::i32-constant-semnasr
-                                 ::binop
-                                 ::i32-constant-semnasr
-                                 ::i32-scalar-ttype-semnasr
-                                 ::i32-constant-semnasr))
-     :recurse-answer
-     (s/tuple #{'IntegerBinOp}
-              ::i32-constant-semnasr
-              ::binop
-              ::i32-constant-semnasr
-              ::i32-scalar-ttype-semnasr
-              ::i32-bin-op-semnasr)
-
-     :recurse-left
-     (s/or :no-answer (s/tuple #{'IntegerBinOp}
-                               ::i32-bin-op-semnasr
-                               ::binop
-                               ::i32-constant-semnasr
-                               ::i32-scalar-ttype-semnasr)
-           :base-answer (s/tuple #{'IntegerBinOp}
-                                 ::i32-bin-op-semnasr
-                                 ::binop
-                                 ::i32-constant-semnasr
-                                 ::i32-scalar-ttype-semnasr
-                                 ::i32-constant-semnasr)
-           :recursive-answer (s/tuple #{'IntegerBinOp}
-                                      ::i32-bin-op-semnasr
-                                      ::binop
-                                      ::i32-constant-semnasr
-                                      ::i32-scalar-ttype-semnasr
-                                      ::i32-bin-op-semnasr))
-     :recurse-right
-     (s/or :no-answer (s/tuple #{'IntegerBinOp}
-                               ::i32-constant-semnasr
-                               ::binop
-                               ::i32-bin-op-semnasr
-                               ::i32-scalar-ttype-semnasr)
-           :base-answer (s/tuple #{'IntegerBinOp}
-                                 ::i32-constant-semnasr
-                                 ::binop
-                                 ::i32-bin-op-semnasr
-                                 ::i32-scalar-ttype-semnasr
-                                 ::i32-constant-semnasr)
-           :recursive-answer (s/tuple #{'IntegerBinOp}
-                                      ::i32-constant-semnasr
-                                      ::binop
-                                      ::i32-bin-op-semnasr
-                                      ::i32-scalar-ttype-semnasr
-                                      ::i32-bin-op-semnasr))
-     :recurse-all
-     (s/or :no-answer (s/tuple #{'IntegerBinOp}
-                               ::i32-bin-op-semnasr
-                               ::binop
-                               ::i32-bin-op-semnasr
-                               ::i32-scalar-ttype-semnasr)
-           :base-answer (s/tuple #{'IntegerBinOp}
-                                 ::i32-bin-op-semnasr
-                                 ::binop
-                                 ::i32-bin-op-semnasr
-                                 ::i32-scalar-ttype-semnasr
-                                 ::i32-constant-semnasr)
-           :recursive-answer (s/tuple #{'IntegerBinOp}
-                                      ::i32-bin-op-semnasr
-                                      ::binop
-                                      ::i32-bin-op-semnasr
-                                      ::i32-scalar-ttype-semnasr
-                                      ::i32-bin-op-semnasr))))
-
-  ;; The following breaks some semantics by mixing integer kinds.
-  ;; It's not fully syntactical, but might be useful.
-  (s/def ::integer-bin-op-mixed-kind-base-semnasr
-    (s/tuple
-     #{'IntegerBinOp}
-     ::integer-constant-semnasr ; stack overflow if integer-bin-op-semnsasr
-     ::binop
-     ::integer-constant-semnasr
-     ::integer-scalar-ttype-semnasr))
-
-  ;; for interactive testing in CIDER:
-  ;; C-x C-e after the closing parenthesis
-  (->> ::integer-bin-op-mixed-kind-base-semnasr
-       s/gen
-       gen/generate)
-
-  ;; The following are recursive and dangerous on the generator
-  ;; side. It can stack-overflow or worse. Follow the example
-  ;; below before generating with it
-  (s/def ::i8-bin-op-semnasr
-    (s/or
-
-     :base-case
-     ::i8-bin-op-base-semnasr,
-
-     :recurse
-     (s/tuple
-      #{'IntegerBinOp}
-      ::i8-bin-op-semnasr
-      ::binop
-      ::i8-bin-op-semnasr
-      ::i8-scalar-ttype-semnasr)))
+#_(-> ::integer-constant-semnasr
+    (s/exercise 2))
+;; => ([(IntegerConstant 8520418889430933504 (Integer 8 []))
+;;      [:i64
+;;       {:head IntegerConstant,
+;;        :value 8520418889430933504,
+;;        :ttype {:head Integer, :kind 8, :dimensionss []}}]]
+;;     [(IntegerConstant -375619001 (Integer 4 []))
+;;      [:i32
+;;       {:head IntegerConstant,
+;;        :value -375619001,
+;;        :ttype {:head Integer, :kind 4, :dimensionss []}}]])
 
 
-  ;;                     _        _   _    _
-  ;;  __ _ _ _  ___ __ _| |_ ___ (_) | |__(_)_ _    ___ _ __
-  ;; / _` | ' \(_-</ _` |  _|_ / | | | '_ \ | ' \  / _ \ '_ \
-  ;; \__,_|_||_/__/\__,_|\__/__| |_| |_.__/_|_||_| \___/ .__/
-  ;;                                                   |_|
-
-  ;; The following ansatz is automatically created from the ASDL
-  ;; parse and satisfies a conformance test in core_test.clj. It
-  ;; will eventually be removed in favor of the hand-written test
-  ;; above.
-
-  (let [integer-bin-op-stuff ;; SynNASR
-        (filter #(= (:head %) :asr.core/IntegerBinOp)
-                big-list-of-stuff)]
-    (-> (spec-from-composite
-         (-> integer-bin-op-stuff
-             first
-             :form
-             :ASDL-COMPOSITE
-             echo))
-        echo
-        eval))
-
-  ;; Example from Python, recursive-left, base-anser,
-  ;; round-brackets instead of square.
-  (let [test-vector '(IntegerBinOp
-                      (IntegerBinOp
-                       (IntegerConstant 2 (Integer 4 []))
-                       Add
-                       (IntegerConstant 3 (Integer 4 []))
-                       (Integer 4 [])   ; answer ttype
-                       (IntegerConstant 5 (Integer 4 []))) ; answer
-                      Mul
-                      (IntegerConstant 5 (Integer 4 []))
-                      (Integer 4 [])    ; answer ttype
-                      (IntegerConstant 25 (Integer 4 [])))]
-    (s/valid? :asr.core/integer-bin-op test-vector))
-
-  ;;  _       _        _                   _
-  ;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_
-  ;; |  _/ _ \  _/ _` | | / _/ _ \ || | ' \  _|
-  ;;  \__\___/\__\__,_|_| \__\___/\_,_|_||_\__|
-
-  (print "total number of specs registered: ")
-  (println (count-asr-specs))
-
-  ;; (pprint (s/exercise ::identifier))
-  ;; (pprint (s/exercise ::expr))
-  ;; (pprint (s/exercise ::dimension))
+;;  _     _                        _    _                    ___ ___ __  __
+;; (_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __  / __| __|  \/  |
+;; | | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \ \__ \ _|| |\/| |
+;; |_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/ |___/___|_|  |_|
+;;               |___/                               |_|
 
 
-  (println "Please see the tests. Main doesn't do a whole lot ... yet.")
+;; This section tests some SemNASR, some semantically valid
+;; nonsense ASR programs. There are multiple levels of semantics,
+;; and the programs in this section test them in layers.
+;;
+;; 1. Do types match? The tests here guarantee that by
+;; construction. i32 binops can have only arguments and returns of
+;; ttype [sic] i32. Ditto for i8, i16, and i64.
+;;
+;; 2. In the case of answers computable at compile time, do
+;; answers match the computation? We will have test generators
+;; that cover both yes and no cases.
+;;
+;; 3. Division by zero? We will have testers that generate yes and
+;; no cases when the divisor is zero at compile time.
+;;
+;; Yes cases are expected to round-trip: the ASR should go into
+;; the compiler and come back out in semantically equivalent form.
+;; Testing semantical equivalence is a big TODO. No cases are
+;; expected to trip compiler errors and warnings as appropriate.
+;;
+;; These testers are not concerned with run time.
+;;
+;; These testers are not concerned with SynNASR, syntactically
+;; valid nonsense ASR programs. Such programs almost never make
+;; semantical sense. They are for testing compiler robustness. The
+;; compiler must never spin or crash.
 
-  )
+;;; Because trees of i32 binops are of arbitrary depth, we write a
+;;; recursive spec for them. This spec exercises the ASR
+;;; head "IntegerBinOp"
+;;;
+;;;   IntegerBinOp(expr left, binop op, expr right, ttype type, expr? value)
+;;;
+;;; for the cases where left, right, and value are IntegerBinOps
+;;; or IntegerConstants, the base case for recursion. Later, we
+;;; extend the cases to other ASR exprs.
+
+(s/def ::i32-bin-op-semnasr
+  (s/or
+   :base
+   (s/cat :head  #{'IntegerBinOp}
+          :left  ::i32-constant-semnasr
+          :op    ::binop
+          :right ::i32-constant-semnasr
+          :ttype ::i32-scalar-ttype-semnasr
+          :value (s/? ::i32-constant-semnasr))
+
+   :recurse
+   (let [or-leaf (s/or :leaf   ::i32-constant-semnasr
+                       :branch ::i32-bin-op-semnasr)]
+     (s/cat :head  #{'IntegerBinOp}
+            :left  or-leaf
+            :op    ::binop
+            :right or-leaf
+            :ttype ::i32-scalar-ttype-semnasr
+            :value (s/? or-leaf))) ))
+
+;; To visualize the tree, uncomment this and do "lein run" at a
+;; terminal.
+#_(-> ::i32-bin-op-semnasr
+    (s/exercise 25)
+    inspect-tree)
+
+;;; END OF PRODUCTION HORIZON
+;;; Code below this line is, again, experimental
+
+;; The following breaks some semantics by mixing integer kinds.
+;; It's not fully syntactical, but might be useful.
+
+(s/def ::integer-bin-op-mixed-kind-base-semnasr
+  (s/tuple
+   #{'IntegerBinOp}
+   ::integer-constant-semnasr ; stack overflow if integer-bin-op-semnsasr
+   ::binop
+   ::integer-constant-semnasr
+   ::integer-scalar-ttype-semnasr))
+
+;; for interactive testing in CIDER:
+;; C-x C-e after the closing parenthesis
+#_(->> ::integer-bin-op-mixed-kind-base-semnasr
+     s/gen
+     gen/generate)
+
+;;                     _        _   _    _
+;;  __ _ _ _  ___ __ _| |_ ___ (_) | |__(_)_ _    ___ _ __
+;; / _` | ' \(_-</ _` |  _|_ / | | | '_ \ | ' \  / _ \ '_ \
+;; \__,_|_||_/__/\__,_|\__/__| |_| |_.__/_|_||_| \___/ .__/
+;;                                                   |_|
+
+;; The following ansatz is automatically created from the ASDL
+;; parse and satisfies a conformance test in core_test.clj.
+
+(let [integer-bin-op-stuff ;; SynNASR
+      (filter #(= (:head %) :asr.core/IntegerBinOp)
+              big-list-of-stuff)]
+  (-> (spec-from-composite
+       (-> integer-bin-op-stuff
+           first
+           :form
+           :ASDL-COMPOSITE
+           echo))
+      echo
+      eval))
+
+;;  _       _        _                   _
+;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_
+;; |  _/ _ \  _/ _` | | / _/ _ \ || | ' \  _|
+;;  \__\___/\__\__,_|_| \__\___/\_,_|_||_\__|
+
+(print "total number of specs registered: ")
+(println (count-asr-specs))
+
+;; (pprint (s/exercise ::identifier))
+;; (pprint (s/exercise ::expr))
+;; (pprint (s/exercise ::dimension))
+
+(println "Please see the tests. Main doesn't do a whole lot ... yet.")
+
+
+(defn -main
+  "I don't do a whole lot ... yet."
+  [& args]
+  (println "Hello, World!"))

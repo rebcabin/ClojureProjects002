@@ -7,9 +7,22 @@
             [clojure.test.check.properties :as tprop]))
 
 
-(def NSPECS        130) ;; Bump this number as specs are added to core.clj.
+(def NSPECS        128) ;; Bump this number as specs are added to core.clj.
 (def NTESTS          5) ;; Bigger for more stress, smaller for more speed
 (def RECURSION-LIMIT 4) ;; ditto
+
+
+;;  _____       _     ___                   _               _        _
+;; |_   _|__ __| |_  | __|_ ___ __  ___ _ _(_)_ __  ___ _ _| |_ __ _| |
+;;   | |/ -_|_-<  _| | _|\ \ / '_ \/ -_) '_| | '  \/ -_) ' \  _/ _` | |
+;;   |_|\___/__/\__| |___/_\_\ .__/\___|_| |_|_|_|_\___|_||_\__\__,_|_|
+;;                           |_|
+;;  ___           _  _   _   ___ ___
+;; / __|_  _ _ _ | \| | /_\ / __| _ \
+;; \__ \ || | ' \| .` |/ _ \\__ \   /
+;; |___/\_, |_||_|_|\_/_/ \_\___/_|_\
+;;      |__/
+
 
 (deftest kebab-test
   (testing "kebab-case"
@@ -109,6 +122,7 @@
 
 (defn- not-asr-tuple [kw]
   (not (re-matches #"asr-tuple[0-9]+" (name kw))))
+
 
 (deftest all-heads-test
   (testing "check all 227 heads, minus 6 asr-tuples"
@@ -279,6 +293,7 @@
                 (map eval)
                 set)))))
 
+
 (deftest all-heads-for-symbols-test
   (testing "all 13 heads for symbols"
     (is (= '#{Block               Function            GenericProcedure
@@ -287,6 +302,7 @@
               DerivedType         AssociateBlock      Variable
               Program}
            (heads-for-composite :asr.core/symbol)))))
+
 
 (deftest all-heads-for-stmts-test
   (testing "all 42 heads for composite stmts"
@@ -307,6 +323,7 @@
               GoToTarget          Return              ErrorStop
               DoConcurrentLoop    FileClose           IfArithmetic}
            (heads-for-composite :asr.core/stmt)))))
+
 
 (deftest all-heads-for-exprs-test
   (testing "all 73 heads for expr composite"
@@ -373,26 +390,6 @@
   (is (= NSPECS (count-asr-specs))))
 
 
-;;   __ _     _
-;;  / _(_)_ _| |_ _  _ _ _ ___ ___
-;; |  _| \ \ /  _| || | '_/ -_|_-<
-;; |_| |_/_\_\\__|\_,_|_| \___/__/
-
-
-;;; Proved these are necessary.
-
-(defn symconst-stuffs-fixture [f]
-  (-main)
-  (f))
-
-(use-fixtures :once symconst-stuffs-fixture)
-
-
-(deftest add-conforms-test
-  (is (= 'Add
-       (s/conform (s/spec :asr.core/add) 'Add))))
-
-
 ;;                               _     _
 ;;  ____  _ _ __  __ ___ _ _  __| |_  | |_ ___ _ _ _ __  ___
 ;; (_-< || | '  \/ _/ _ \ ' \(_-<  _| |  _/ -_) '_| '  \(_-<
@@ -445,15 +442,16 @@
                     (Integer 4 [])
                     (IntegerConstant
                      25 (Integer 4 [])))]
+
   (deftest IntegerBinop-conformance-test
     (testing "IntegerBinop conforms to dummy expr spec and
               to evolving integer-bin-op spec."
+
       (is (= test-vector
              (s/conform :asr.core/expr test-vector)))
+
       (is (s/valid? :asr.core/integer-bin-op test-vector)))))
 
-;; However, there is no spec for IntegerBinOp, yet. We have a dummy term spec
-;; for ::expr and need a head spec for ::IntegerBinOp
 
 (let [integer-bin-op-stuff
       '({:head :asr.core/IntegerBinOp,
@@ -470,14 +468,13 @@
             {:ASDL-TYPE "expr",
              :MULTIPLICITY :asr.core/at-most-once,
              :ASDL-NYM "value"})}}})]
+
   (deftest IntegerBinop-stuff-test
     (testing "stuff for IntegerBinOp has expected data"
       (is (= integer-bin-op-stuff
              (filter #(= (:head %) :asr.core/IntegerBinOp)
                      big-list-of-stuff))))))
 
-;; We have a spec for ::binop --- (s/exercise :asr.core/binop).
-;; We have a spec for ::ttype --- (s/exercise :asr.core/ttype).
 
 (deftest integer-ttype-semnasr-conformance
   (testing "Integer ttype conformance"
@@ -487,8 +484,8 @@
                   '(Integer 4 [1 2])             ))
     (is (s/valid? :asr.core/integer-ttype-semnasr
                   '(Integer 4 [] [1 2] [] [3 4]) ))
-    (is (s/valid? :asr.core/integer-ttype-semnasr
-                  '(Integer 4)                   ))
+    (is (not (s/valid? :asr.core/integer-ttype-semnasr  ;; NOT case!
+                  '(Integer 4)                   )))
     (is (s/valid? :asr.core/integer-ttype-semnasr
                   '(Integer 2 ())                ))
     (is (s/valid? :asr.core/integer-ttype-semnasr
@@ -502,49 +499,11 @@
            (gen/generate (s/gen :asr.core/integer-ttype-semnasr)))))
     ))
 
-(deftest integer-ttype-semnasr-postprocessing
-  (testing "Integer ttype post-processing"
-    (is (= '(Integer 4 [] [1 2] [] [3 4])
-           (postprocess-integer-ttype-semnasr-example
-            '(Integer 4 () (1 2) () (3 4)))))
-
-    (is (= '(Integer 4 [])
-           (postprocess-integer-ttype-semnasr-example
-            '(Integer 4 ()))))
-
-    ;; Turns out that Clojure is pretty permissive and reckons
-    ;; '(Integer 4 []) equal to '(Integer 4 ()).
-    ;; https://clojure.org/guides/equality
-
-    #_(is (not (= '(Integer 4 ())
-                  (postprocess-integer-ttype-semnasr-example
-                   '(Integer 4 ())))))
-
-    (is (= '(Integer 4 [])
-           (postprocess-integer-ttype-semnasr-example
-            '(Integer 4 []))))
-
-    (is (= '(Integer 4 [])
-           (postprocess-integer-ttype-semnasr-example
-            '(Integer 4))))
-
-    (is (not (= '(Integer 4)
-                (postprocess-integer-ttype-semnasr-example
-                 '(Integer 4)))))
-
-    (is (every?
-         (partial s/valid? :asr.core/integer-ttype-semnasr)
-         (for [_ (range NTESTS)]
-           (-> :asr.core/integer-ttype-semnasr
-               s/gen
-               gen/generate
-               postprocess-integer-ttype-semnasr-example))))
-    ))
 
 (deftest i32-bin-op-semnasr-conformance
   ;; Base case, base-answer
   (is (let [test-vector '[IntegerBinOp
-                          [IntegerConstant 2 (Integer 4 [])]
+                          [IntegerConstant 2 (Integer 4 [])]   ; left
                           Add                                  ; binop
                           [IntegerConstant 3 (Integer 4 [])]   ; right
                           (Integer 4 [])                       ; answer-ttype
@@ -559,21 +518,33 @@
                           (Integer 4 []) ]]                  ; answer-ttype
         (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
 
-  ;; Base case, recursive-answer
+  ;; Recurse left, no answers
+  (is (let [test-vector '[IntegerBinOp
+                          [IntegerBinOp                        ; recuse:
+                           [IntegerConstant 2 (Integer 4 [])]  ; left
+                           Add                                 ; binop
+                           [IntegerConstant 3 (Integer 4 [])]  ; right
+                           (Integer 4 [])]                     ; ttype
+                          Add                                ; binop
+                          [IntegerConstant 3 (Integer 4 [])] ; right
+                          (Integer 4 [])] ]                  ; ttype
+        (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
+
+  ;; Base case, doubly recursive-answer
   (is (let [test-vector '[IntegerBinOp
                           [IntegerConstant 2 (Integer 4 [])] ; left
                           Add                                ; binop
                           [IntegerConstant 3 (Integer 4 [])] ; right
                           (Integer 4 [])                     ; answer-ttype
-                          [IntegerBinOp                      ; recursive answer
-                           [IntegerBinOp
+                          [IntegerBinOp                       ; recurse answer
+                           [IntegerBinOp                       ; recurse again
                             [IntegerConstant 2 (Integer 4 [])] ; left
                             Add                                ; binop
                             [IntegerConstant 3 (Integer 4 [])] ; right
-                            (Integer 4 [])]
+                            (Integer 4 [])]                    ; ttype
                            Add                                ; binop
                            [IntegerConstant 3 (Integer 4 [])] ; right
-                           (Integer 4 []) ]]]
+                           (Integer 4 []) ]]]                 ; ttype
         (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
 
   ;; Recursive left, base-answer
@@ -606,15 +577,15 @@
 
   ;; Recursive right, recursive answer
   (is (let [test-vector '[IntegerBinOp
-                          [IntegerConstant 2 (Integer 4 [])] ;base
+                          [IntegerConstant 2 (Integer 4 [])]
                           Add
-                          [IntegerBinOp ; recursive right
+                          [IntegerBinOp ; recursive right       ; recur-right
                            [IntegerConstant 3 (Integer 4 [])]
                            Add
                            [IntegerConstant 4 (Integer 4 [])]
                            (Integer 4 [])]
-                          (Integer 4 []) ; answer type
-                          [IntegerBinOp  ; recursive answer
+                          (Integer 4 [])                        ; answer type
+                          [IntegerBinOp                         ; recurse answer
                            [IntegerConstant 3 (Integer 4 [])]
                            Mul
                            [IntegerConstant 4 (Integer 4 [])]
@@ -636,6 +607,7 @@
                            [IntegerConstant 25 (Integer 4 [])]]]]
         (s/valid? :asr.core/i32-bin-op-semnasr test-vector)))
 
+  ;; big-honkin' case
   (is (s/valid?
        :asr.core/i32-bin-op-semnasr
        '[IntegerBinOp
@@ -689,11 +661,11 @@
          [IntegerConstant 1917318437 (Integer 4 [])]
          (Integer 4 [])]))
 
+  ;; Stress. Guaranteed by clojure.spec, but ya' never know.
   (is (every?
        (partial s/valid? :asr.core/i32-bin-op-semnasr)
        (binding [s/*recursion-limit* RECURSION-LIMIT]
          (for [_ (range NTESTS)]
            (-> :asr.core/i32-bin-op-semnasr
                s/gen
-               gen/generate)))))
-  )
+               gen/generate))))))
