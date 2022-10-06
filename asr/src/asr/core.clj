@@ -144,6 +144,8 @@ main0()
 
   "# A Grammar for ASDL Specs
 
+  from https://github.com/lcompilers/libasr/blob/main/src/libasr/ASR.asdl
+
   ## ASDL Spec for ASR
 
   Here is a big string that contains the ASR.asdl, the spec that
@@ -947,7 +949,7 @@ case_stmt = CaseStmt(expr* test, stmt* body) | CaseStmt_Range(expr? start, expr?
     `(s/def ~term-nskw (set (quote ~ss1)))))
 
 
-;;; Experiment that failed.
+;;; TEACHING NOTE: Experiment that failed.
 
 "## Spec for *identifier*
 
@@ -1566,8 +1568,8 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; => ([(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}]
 ;;     [(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}])
 
-;; With nesting. Because every spec is wrapped in s/spec, results
-;; are nested under s/alt.
+;; TEACHING NOTE: With nesting. Because every spec is wrapped in
+;; s/spec, results are nested under s/alt.
 
 #_(-> (s/alt ::i8-scalar-ttype-semnasr
            ::i16-scalar-ttype-semnasr
@@ -1581,7 +1583,8 @@ discarded. We save it as a lesson in this kind of dead end.
 ;;      [:asr.core/i32-scalar-ttype-semnasr
 ;;       {:head Integer, :kind 8, :dimensionss []}]])
 
-;; Without nesting. Results are not nested under s/or.
+;; TEACHING NOTE: Without nesting. Results are not nested under
+;; s/or.
 
 #_(-> (s/or :1 ::i8-scalar-ttype-semnasr
           :2 ::i16-scalar-ttype-semnasr
@@ -1621,7 +1624,7 @@ discarded. We save it as a lesson in this kind of dead end.
     (s/def ::i32 (s/spec si32 :gen gi32))
     (s/def ::i64 (s/spec si64 :gen gi64))))
 
-;; s/alt introduces nesting!
+;; TEACHING NOTE: s/alt introduces nesting!
 
 #_(s/exercise (s/alt :i8  ::i8
                    :i16 ::i16
@@ -1630,7 +1633,7 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; => ([[537347452000468992] [:i64 537347452000468992]]
 ;;     [[-7521659373872773120] [:i64 -7521659373872773120]])
 
-;; We want s/or:
+;; TEACHING NOTE: We want s/or, here:
 
 (s/def ::bounded-integer-value
   ;; The order matters, here. We want 127, for example, to be
@@ -1647,11 +1650,67 @@ discarded. We save it as a lesson in this kind of dead end.
         :i64 ::i64))
 
 #_(-> ::bounded-integer-value
-    (s/exercise 4))
-;; => ([24863 [:i16 24863]]
-;;     [-307664817 [:i32 -307664817]]
-;;     [8726810684370532352 [:i64 8726810684370532352]]
-;;     [5915974065133008896 [:i64 5915974065133008896]])
+    (s/exercise 10))
+;; => ([25158 [:i16 25158]]
+;;     [112 [:i8 112]]
+;;     [13665 [:i16 13665]]
+;;     [4904739350796937216 [:i64 4904739350796937216]]
+;;     [12454 [:i16 12454]]
+;;     [104 [:i8 104]]
+;;     [-3194707471125534720 [:i64 -3194707471125534720]]
+;;     [-12 [:i8 -12]]
+;;     [73 [:i8 73]]
+;;     [12 [:i8 12]])
+
+;;  ____              ___      _        _   _
+;; |_  /___ _ _ ___  | _ \___ (_)___ __| |_(_)___ _ _
+;;  / // -_) '_/ _ \ |   / -_)| / -_) _|  _| / _ \ ' \
+;; /___\___|_| \___/ |_|_\___|/ \___\__|\__|_\___/_||_|
+;;                          |__/
+
+(letfn [(b [e] (expt 2 (- e 1)))     ; ::i8, ::i16, ::i32, ::i64
+        (gmkr [e]
+          (let [b_ (b e)]
+            (tgen/choose (- b_) (- b_ 1))))
+        (smkr [e]
+          (let [b_ (b e)]
+            (s/and integer?
+                   #(not (zero? %))
+                   #(>= % (- b_)) #(< % b_))))]
+  (let [gi8nz  (fn [] (gmkr 8))
+        gi16nz (fn [] (gmkr 16))
+        gi32nz (fn [] (gmkr 32))
+        gi64nz (fn [] (gmkr 64))
+        si8nz  (smkr 8)
+        si16nz (smkr 16)
+        si32nz (smkr 32)
+        si64nz (smkr 64)]
+    (s/def ::i8nz  (s/spec  si8nz :gen  gi8nz))  ; s/spec means
+    (s/def ::i16nz (s/spec si16nz :gen gi16nz))  ; "nestable"
+    (s/def ::i32nz (s/spec si32nz :gen gi32nz))
+    (s/def ::i64nz (s/spec si64nz :gen gi64nz))))
+
+(s/def ::bounded-non-zero-integer-value
+  (s/or :i8nz  ::i8nz
+        :i16nz ::i16nz
+        :i32nz ::i32nz
+        :i64nz ::i64nz))
+
+(-> ::bounded-non-zero-integer-value
+    (s/exercise 10))
+;; => ([-1973039035 [:i32nz -1973039035]]
+;;     [30960 [:i16nz 30960]]
+;;     [-30043 [:i16nz -30043]]
+;;     [-19577 [:i16nz -19577]]
+;;     [-1021736767 [:i32nz -1021736767]]
+;;     [911541823 [:i32nz 911541823]]
+;;     [-2553 [:i16nz -2553]]
+;;     [614291134 [:i32nz 614291134]]
+;;     [-863139396 [:i32nz -863139396]]
+;;     [24394 [:i16nz 24394]])
+
+(-> ::bounded-non-zero-integer-value
+    (s/exercise 10))
 
 
 ;;  _     _                                       _            _
@@ -1662,28 +1721,28 @@ discarded. We save it as a lesson in this kind of dead end.
 
 (do
   (s/def ::i8-constant-semnasr
-   (s/spec
-    (s/cat :head  #{'IntegerConstant}
-           :value ::i8
-           :ttype ::i8-scalar-ttype-semnasr)))
+    (s/spec
+     (s/cat :head  #{'IntegerConstant}
+            :value ::i8
+            :ttype ::i8-scalar-ttype-semnasr)))
 
-    (s/def ::i16-constant-semnasr
-      (s/spec
-       (s/cat :head  #{'IntegerConstant}
-              :value ::i16
-              :ttype ::i16-scalar-ttype-semnasr)))
+  (s/def ::i16-constant-semnasr
+    (s/spec
+     (s/cat :head  #{'IntegerConstant}
+            :value ::i16
+            :ttype ::i16-scalar-ttype-semnasr)))
 
-    (s/def ::i32-constant-semnasr
-      (s/spec
-       (s/cat :head  #{'IntegerConstant}
-              :value ::i32
-              :ttype ::i32-scalar-ttype-semnasr)))
+  (s/def ::i32-constant-semnasr
+    (s/spec
+     (s/cat :head  #{'IntegerConstant}
+            :value ::i32
+            :ttype ::i32-scalar-ttype-semnasr)))
 
-    (s/def ::i64-constant-semnasr
-      (s/spec
-       (s/cat :head  #{'IntegerConstant}
-              :value ::i64
-              :ttype ::i64-scalar-ttype-semnasr))))
+  (s/def ::i64-constant-semnasr
+    (s/spec
+     (s/cat :head  #{'IntegerConstant}
+            :value ::i64
+            :ttype ::i64-scalar-ttype-semnasr))))
 
 (s/def ::integer-constant-semnasr
   (s/or :i8  ::i8-constant-semnasr
@@ -1743,14 +1802,26 @@ discarded. We save it as a lesson in this kind of dead end.
 ;;; recursive spec for them. This spec exercises the ASR
 ;;; head "IntegerBinOp"
 ;;;
-;;;   IntegerBinOp(expr left, binop op, expr right, ttype type, expr? value)
+;;;   IntegerBinOp(expr left, binop op, expr right,
+;;;                ttype type, expr? value)
 ;;;
 ;;; for the cases where left, right, and value are IntegerBinOps
 ;;; or IntegerConstants, the base case for recursion. Later, we
-;;; extend the cases to other ASR exprs.
+;;; extend the cases to other ASR exprs. This spec WILL generate
+;;;
+;;; - zero divisors
+;;;
+;;; - cases where a result is computable but NOT provided
+;;;
+;;; - cases where the provided answer for a computed result is
+;;;   incorrect
+;;;
+;;; It will NOT generate type mismatches.
 
 (s/def ::i32-bin-op-semnasr
   (s/or
+   ;; The base case is necessary. Try commenting it out and
+   ;; running "lein test" at a terminal.
    :base
    (s/cat :head  #{'IntegerBinOp}
           :left  ::i32-constant-semnasr
@@ -1774,6 +1845,18 @@ discarded. We save it as a lesson in this kind of dead end.
 #_(-> ::i32-bin-op-semnasr
     (s/exercise 25)
     inspect-tree)
+
+(s/def ::i32-bin-op-semnasr-no-zero-divisor (fn [] true))
+
+(s/exercise ::binop)
+
+;;; TODO: Note that MOD, REM, QUOTIENT are missing!
+
+;;  ___         _        __   ___             _         _   _
+;; | __|_ _  __| |  ___ / _| | _ \_ _ ___  __| |_  _ __| |_(_)___ _ _
+;; | _|| ' \/ _` | / _ \  _| |  _/ '_/ _ \/ _` | || / _|  _| / _ \ ' \
+;; |___|_||_\__,_| \___/_|   |_| |_| \___/\__,_|\_,_\__|\__|_\___/_||_|
+
 
 ;;; END OF PRODUCTION HORIZON
 ;;; Code below this line is, again, experimental
