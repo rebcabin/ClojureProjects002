@@ -717,7 +717,7 @@
       (IntegerBinOp
        (IntegerConstant 0 (Integer 4 []))
        Div
-       (IntegerConstant -1 (Integer 4 []))
+       (IntegerConstant 0 (Integer 4 []))  ;;; BAD
        (Integer 4 [])
        (IntegerConstant 0 (Integer 4 [])))
       BitRShift
@@ -742,14 +742,14 @@
   '(IntegerBinOp
     (IntegerConstant 0 (Integer 4 []))
     Div
-    (IntegerConstant -2 (Integer 4 []))
+    (IntegerConstant 0 (Integer 4 []))   ;;; BAD
     (Integer 4 [])
     (IntegerConstant 0 (Integer 4 []))))
 
 
 (deftest no-zero-divisors
   (testing "lack of zero divisors"
-    (is (s/valid? :asr.core/i32-bin-op-semnasr-no-zero-divisor
-                  honker-2))
-    (is (s/valid? :asr.core/i32-bin-op-semnasr-no-zero-divisor
-                  honker-3))))
+    (is (not (s/valid? :asr.core/i32-bin-op-semnasr-no-zero-divisor
+                       honker-2)))
+    (is (not (s/valid? :asr.core/i32-bin-op-semnasr-no-zero-divisor
+                       honker-3)))))
