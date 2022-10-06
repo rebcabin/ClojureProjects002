@@ -75,6 +75,7 @@ In both directions, we replace PascalCase to kebab-case. For example, `IntegerBi
 From [this specification](https://github.com/lcompilers/libasr/blob/main/src/libasr/ASR.asdl), consider the following closed subset of productions or terms:
 
 <!-- #raw -->
+```
      ...
 expr  = ...
       | IntegerConstant(int n, ttype type)
@@ -86,6 +87,7 @@ ttype = Integer(int kind, dimension* dims)
      ...
 binop = Add | Sub | Mul | Div | Pow | ...
 dimension = (expr? start, expr? length)
+```
 <!-- #endraw -->
 
 where `kind`, informally, is an exponent of 2 that indicates the number of bytes: one of 1, 2, 4, 8.
@@ -197,12 +199,14 @@ This enables a clever notation for forward references. If you want to name a fun
 From [LPython's AST in ASDL](https://github.com/lcompilers/lpython/blob/fabf0ec00353acaf25af14c4b76371eae46f5847/grammar/Python.asdl), consider these terms:
 
 <!-- #raw -->
+```
 expr = ...
      | BinOp(expr left, operator op, expr right)
     ...
      | ConstantInt(int value, string? kind)
 operator = Add | Sub | Mult | MatMult | Div | Mod | Pow ...
     ...
+```
 <!-- #endraw -->
 
 and `kind` is unspecified. We'll just guess it should be one of "i8", "i16", "i32", "i64", concrete integer kinds corresponding to ASR's abstract integer kinds 1, 2, 4, 8, respectively.
@@ -270,10 +274,12 @@ To get started, we're concerned with two `s-exp`s:
 Of the many alternatives for `expr` and `ttype`, we're concerned with the following to get started:
 
 <!-- #raw -->
+```
 expr = (IntegerBinOp ...)
      | (IntegerConstant ...)
 
 ttype = (Integer ...)
+```
 <!-- #endraw -->
 
 Luckily, these alternatives can be distinguished by their heads, retrieved via Clojure's `first` built-in:
