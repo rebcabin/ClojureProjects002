@@ -10,7 +10,7 @@
             [clojure.test.check.generators :as tgen]
             [clojure.math.numeric-tower    :refer [expt]]
             [clojure.inspector             :refer [inspect-tree]]
-            ))
+            [clojure.set :as set]))
 
 (println "+-------------------------------+")
 (println "|                               |")
@@ -1849,15 +1849,82 @@ discarded. We save it as a lesson in this kind of dead end.
             :ttype ::i32-scalar-ttype-semnasr
             :value (s/? or-leaf))) ))
 
+(s/exercise ::binop)
+;; => ([BitOr BitOr]
+;;     [BitXor BitXor]
+;;     [Div Div]
+;;     [BitLShift BitLShift]
+;;     [BitRShift BitRShift]
+;;     [BitXor BitXor]
+;;     [Div Div]
+;;     [BitOr BitOr]
+;;     [BitRShift BitRShift]
+;;     [Div Div])
+
+(s/def ::binop-no-div
+  (set/difference (eval (s/describe ::binop))
+                  #{'Div}))
+
+(s/exercise ::binop-no-div)
+;; => ([Mul Mul]
+;;     [Add Add]
+;;     [BitOr BitOr]
+;;     [BitOr BitOr]
+;;     [BitLShift BitLShift]
+;;     [BitRShift BitRShift]
+;;     [BitXor BitXor]
+;;     [BitAnd BitAnd]
+;;     [Sub Sub]
+;;     [BitAnd BitAnd])
+
 ;; To visualize the tree, uncomment this and do "lein run" at a
 ;; terminal.
 #_(-> ::i32-bin-op-semnasr
     (s/exercise 25)
     inspect-tree)
 
-(s/def ::i32-bin-op-semnasr-no-zero-divisor (fn [] true))
 
-(s/exercise ::binop)
+(s/def ::i32-bin-op-semnasr-no-zero-divisor
+  (s/or
+   ;; The base case is necessary. Try commenting it out and
+   ;; running "lein test" at a terminal.
+   :base-no-div
+   (s/cat :head  #{'IntegerBinOp}
+          :left  ::i32-constant-semnasr
+          :op    ::binop-no-div
+          :right ::i32-constant-semnasr
+          :ttype ::i32-scalar-ttype-semnasr
+          :value (s/? ::i32-constant-semnasr))
+
+   :base-no-zero-divisor
+   (s/cat :head  #{'IntegerBinOp}
+          :left  ::i32-constant-semnasr
+          :op    #{'Div}
+          :right ::i32-non-zero-constant-semnasr
+          :ttype ::i32-scalar-ttype-semnasr
+          :value (s/? ::i32-constant-semnasr))
+
+   :recurse-no-div
+   (let [or-leaf (s/or :leaf   ::i32-constant-semnasr
+                       :branch ::i32-bin-op-semnasr-no-zero-divisor)]
+     (s/cat :head  #{'IntegerBinOp}
+            :left  or-leaf
+            :op    ::binop-no-div
+            :right or-leaf
+            :ttype ::i32-scalar-ttype-semnasr
+            :value (s/? or-leaf)))
+
+   :recurse-no-zero-divisor
+   (let [or-leaf (s/or :leaf   ::i32-constant-semnasr
+                       :branch ::i32-bin-op-semnasr-no-zero-divisor)
+         nz-leaf (s/or :nz-leaf ::i32-non-zero-constant-semnasr
+                       :branch ::i32-bin-op-semnasr-no-zero-divisor)]
+     (s/cat :head  #{'IntegerBinOp}
+            :left  or-leaf
+            :op    #{'Div}
+            :right nz-leaf
+            :ttype ::i32-scalar-ttype-semnasr
+            :value (s/? or-leaf)))))
 
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 

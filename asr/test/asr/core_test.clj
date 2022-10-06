@@ -7,8 +7,8 @@
             [clojure.test.check.properties :as tprop]))
 
 
-(def NSPECS        137) ;; Adjust to the number of specs in core.clj.
-(def NTESTS          5) ;; Bigger for more stress, smaller for more speed
+(def NSPECS        138) ;; Adjust to the number of specs in core.clj.
+(def NTESTS         50) ;; Bigger for more stress, smaller for more speed
 (def RECURSION-LIMIT 4) ;; ditto
 
 
@@ -669,3 +669,87 @@
            (-> :asr.core/i32-bin-op-semnasr
                s/gen
                gen/generate))))))
+
+
+(deftest binop-no-div
+  (testing "that ::binop-no-div never generates 'Div")
+  (is (not-any?
+       #{'Div}
+       (s/exercise :asr.core/binop-no-div NTESTS))))
+
+
+(def honker-2
+  '(IntegerBinOp
+   (IntegerBinOp
+    (IntegerConstant -1 (Integer 4 []))
+    Div
+    (IntegerBinOp
+     (IntegerConstant 0 (Integer 4 []))
+     Div
+     (IntegerConstant -1 (Integer 4 []))
+     (Integer 4 []))
+    (Integer 4 []))
+   BitAnd
+   (IntegerBinOp
+    (IntegerBinOp
+     (IntegerConstant 0 (Integer 4 []))
+     Pow
+     (IntegerBinOp
+      (IntegerConstant -1 (Integer 4 []))
+      Mul
+      (IntegerConstant -1 (Integer 4 []))
+      (Integer 4 []))
+     (Integer 4 [])
+     (IntegerBinOp
+      (IntegerBinOp
+       (IntegerConstant 0 (Integer 4 []))
+       Div
+       (IntegerConstant -1 (Integer 4 []))
+       (Integer 4 []))
+      Div
+      (IntegerConstant -1 (Integer 4 []))
+      (Integer 4 [])))
+    BitOr
+    (IntegerConstant -1 (Integer 4 []))
+    (Integer 4 [])
+    (IntegerBinOp
+     (IntegerBinOp
+      (IntegerBinOp
+       (IntegerConstant 0 (Integer 4 []))
+       Div
+       (IntegerConstant -1 (Integer 4 []))
+       (Integer 4 [])
+       (IntegerConstant 0 (Integer 4 [])))
+      BitRShift
+      (IntegerConstant 0 (Integer 4 []))
+      (Integer 4 [])
+      (IntegerConstant -1 (Integer 4 [])))
+     Div
+     (IntegerBinOp
+      (IntegerConstant 0 (Integer 4 []))
+      Div
+      (IntegerConstant -1 (Integer 4 []))
+      (Integer 4 []))
+     (Integer 4 [])))
+   (Integer 4 [])
+   (IntegerBinOp
+    (IntegerConstant 0 (Integer 4 []))
+    BitAnd
+    (IntegerConstant -1 (Integer 4 []))
+    (Integer 4 []))))
+
+(def honker-3
+  '(IntegerBinOp
+    (IntegerConstant 0 (Integer 4 []))
+    Div
+    (IntegerConstant -2 (Integer 4 []))
+    (Integer 4 [])
+    (IntegerConstant 0 (Integer 4 []))))
+
+
+(deftest no-zero-divisors
+  (testing "lack of zero divisors"
+    (is (s/valid? :asr.core/i32-bin-op-semnasr-no-zero-divisor
+                  honker-2))
+    (is (s/valid? :asr.core/i32-bin-op-semnasr-no-zero-divisor
+                  honker-3))))
