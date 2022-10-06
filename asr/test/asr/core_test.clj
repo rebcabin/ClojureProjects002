@@ -7,7 +7,7 @@
             [clojure.test.check.properties :as tprop]))
 
 
-(def NSPECS        134) ;; Bump this number as specs are added to core.clj.
+(def NSPECS        137) ;; Adjust to the number of specs in core.clj.
 (def NTESTS          5) ;; Bigger for more stress, smaller for more speed
 (def RECURSION-LIMIT 4) ;; ditto
 

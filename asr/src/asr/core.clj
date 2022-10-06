@@ -1607,7 +1607,7 @@ discarded. We save it as a lesson in this kind of dead end.
 (letfn [(b [e] (expt 2 (- e 1)))     ; ::i8, ::i16, ::i32, ::i64
         (gmkr [e]
           (let [b_ (b e)]
-            (tgen/choose (- b_) (- b_ 1))))
+            (tgen/large-integer* {:min (- b_) :max (- b_ 1)})))
         (smkr [e]
           (let [b_ (b e)]
             (s/and integer? #(>= % (- b_)) #(< % b_))))]
@@ -1624,43 +1624,12 @@ discarded. We save it as a lesson in this kind of dead end.
     (s/def ::i32 (s/spec si32 :gen gi32))
     (s/def ::i64 (s/spec si64 :gen gi64))))
 
-;; TEACHING NOTE: s/alt introduces nesting!
+;; for interactive testing in CIDER:
+;; (s/exercise ::i8)
+;; (s/exercise ::i16)
+;; (s/exercise ::i32)
+;; (s/exercise ::i64)
 
-#_(s/exercise (s/alt :i8  ::i8
-                   :i16 ::i16
-                   :i32 ::i32
-                   :i64 ::i64) 2)
-;; => ([[537347452000468992] [:i64 537347452000468992]]
-;;     [[-7521659373872773120] [:i64 -7521659373872773120]])
-
-;; TEACHING NOTE: We want s/or, here:
-
-(s/def ::bounded-integer-value
-  ;; The order matters, here. We want 127, for example, to be
-  ;; marked :i8 most of the time even though it satisfies the
-  ;; specs for larger integers. Spot-check this
-  ;; with `(s/exercise ::bounded-integer-value)`.
-  ;;
-  ;; LIMITATION: We might never get an :i16 with a value that is
-  ;; also an :i8. However, the spec ::i16 does occasionally
-  ;; produce such values. Try `(s/exercise ::i16 40)`
-  (s/or :i8  ::i8
-        :i16 ::i16
-        :i32 ::i32
-        :i64 ::i64))
-
-#_(-> ::bounded-integer-value
-    (s/exercise 10))
-;; => ([25158 [:i16 25158]]
-;;     [112 [:i8 112]]
-;;     [13665 [:i16 13665]]
-;;     [4904739350796937216 [:i64 4904739350796937216]]
-;;     [12454 [:i16 12454]]
-;;     [104 [:i8 104]]
-;;     [-3194707471125534720 [:i64 -3194707471125534720]]
-;;     [-12 [:i8 -12]]
-;;     [73 [:i8 73]]
-;;     [12 [:i8 12]])
 
 ;;  ____              ___      _        _   _
 ;; |_  /___ _ _ ___  | _ \___ (_)___ __| |_(_)___ _ _
@@ -1668,10 +1637,10 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; /___\___|_| \___/ |_|_\___|/ \___\__|\__|_\___/_||_|
 ;;                          |__/
 
-(letfn [(b [e] (expt 2 (- e 1)))     ; ::i8, ::i16, ::i32, ::i64
+(letfn [(b [e] (expt 2 (- e 1)))       ; ::i8, ::i16, ::i32, ::i64
         (gmkr [e]
           (let [b_ (b e)]
-            (tgen/choose (- b_) (- b_ 1))))
+            (tgen/large-integer* {:min (- b_) :max (- b_ 1)})))
         (smkr [e]
           (let [b_ (b e)]
             (s/and integer?
@@ -1685,32 +1654,16 @@ discarded. We save it as a lesson in this kind of dead end.
         si16nz (smkr 16)
         si32nz (smkr 32)
         si64nz (smkr 64)]
-    (s/def ::i8nz  (s/spec  si8nz :gen  gi8nz))  ; s/spec means
-    (s/def ::i16nz (s/spec si16nz :gen gi16nz))  ; "nestable"
+    (s/def ::i8nz  (s/spec  si8nz :gen  gi8nz)) ; s/spec means
+    (s/def ::i16nz (s/spec si16nz :gen gi16nz)) ; "nestable"
     (s/def ::i32nz (s/spec si32nz :gen gi32nz))
     (s/def ::i64nz (s/spec si64nz :gen gi64nz))))
 
-(s/def ::bounded-non-zero-integer-value
-  (s/or :i8nz  ::i8nz
-        :i16nz ::i16nz
-        :i32nz ::i32nz
-        :i64nz ::i64nz))
-
-(-> ::bounded-non-zero-integer-value
-    (s/exercise 10))
-;; => ([-1973039035 [:i32nz -1973039035]]
-;;     [30960 [:i16nz 30960]]
-;;     [-30043 [:i16nz -30043]]
-;;     [-19577 [:i16nz -19577]]
-;;     [-1021736767 [:i32nz -1021736767]]
-;;     [911541823 [:i32nz 911541823]]
-;;     [-2553 [:i16nz -2553]]
-;;     [614291134 [:i32nz 614291134]]
-;;     [-863139396 [:i32nz -863139396]]
-;;     [24394 [:i16nz 24394]])
-
-(-> ::bounded-non-zero-integer-value
-    (s/exercise 10))
+;; for interactive testing in CIDER:
+;; (s/exercise ::i8nz)
+;; (s/exercise ::i16nz)
+;; (s/exercise ::i32nz)
+;; (s/exercise ::i64nz)
 
 
 ;;  _     _                                       _            _
@@ -1750,18 +1703,74 @@ discarded. We save it as a lesson in this kind of dead end.
         :i32 ::i32-constant-semnasr
         :i64 ::i64-constant-semnasr))
 
+;; for interactive testing in CIDER:
 #_(-> ::integer-constant-semnasr
     (s/exercise 2))
-;; => ([(IntegerConstant 8520418889430933504 (Integer 8 []))
-;;      [:i64
+;; => ([(IntegerConstant 0 (Integer 2 []))
+;;      [:i16
 ;;       {:head IntegerConstant,
-;;        :value 8520418889430933504,
-;;        :ttype {:head Integer, :kind 8, :dimensionss []}}]]
-;;     [(IntegerConstant -375619001 (Integer 4 []))
+;;        :value 0,
+;;        :ttype {:head Integer, :kind 2, :dimensionss []}}]]
+;;     [(IntegerConstant -1 (Integer 4 []))
 ;;      [:i32
 ;;       {:head IntegerConstant,
-;;        :value -375619001,
+;;        :value -1,
 ;;        :ttype {:head Integer, :kind 4, :dimensionss []}}]])
+
+
+(do
+  (s/def ::i8-non-zero-constant-semnasr
+    (s/spec
+     (s/cat :head  #{'IntegerConstant}
+            :value ::i8nz
+            :ttype ::i8-scalar-ttype-semnasr)))
+
+  (s/def ::i16-non-zero-constant-semnasr
+    (s/spec
+     (s/cat :head  #{'IntegerConstant}
+            :value ::i16nz
+            :ttype ::i16-scalar-ttype-semnasr)))
+
+  (s/def ::i32-non-zero-constant-semnasr
+    (s/spec
+     (s/cat :head  #{'IntegerConstant}
+            :value ::i32nz
+            :ttype ::i32-scalar-ttype-semnasr)))
+
+  (s/def ::i64-non-zero-constant-semnasr
+    (s/spec
+     (s/cat :head  #{'IntegerConstant}
+            :value ::i64nz
+            :ttype ::i64-scalar-ttype-semnasr))))
+
+(s/def ::integer-non-zero-constant-semnasr
+  (s/or :i8  ::i8-non-zero-constant-semnasr
+        :i16 ::i16-non-zero-constant-semnasr
+        :i32 ::i32-non-zero-constant-semnasr
+        :i64 ::i64-non-zero-constant-semnasr))
+
+(-> ::integer-non-zero-constant-semnasr
+    (s/exercise 4))
+;; => ([(IntegerConstant 1 (Integer 2 []))
+;;      [:i16
+;;       {:head IntegerConstant,
+;;        :value 1,
+;;        :ttype {:head Integer, :kind 2, :dimensionss []}}]]
+;;     [(IntegerConstant -1 (Integer 8 []))
+;;      [:i64
+;;       {:head IntegerConstant,
+;;        :value -1,
+;;        :ttype {:head Integer, :kind 8, :dimensionss []}}]]
+;;     [(IntegerConstant -1 (Integer 8 []))
+;;      [:i64
+;;       {:head IntegerConstant,
+;;        :value -1,
+;;        :ttype {:head Integer, :kind 8, :dimensionss []}}]]
+;;     [(IntegerConstant -1 (Integer 1 []))
+;;      [:i8
+;;       {:head IntegerConstant,
+;;        :value -1,
+;;        :ttype {:head Integer, :kind 1, :dimensionss []}}]])
 
 
 ;;  _     _                        _    _                    ___ ___ __  __
@@ -1852,11 +1861,11 @@ discarded. We save it as a lesson in this kind of dead end.
 
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 
+
 ;;  ___         _        __   ___             _         _   _
 ;; | __|_ _  __| |  ___ / _| | _ \_ _ ___  __| |_  _ __| |_(_)___ _ _
 ;; | _|| ' \/ _` | / _ \  _| |  _/ '_/ _ \/ _` | || / _|  _| / _ \ ' \
 ;; |___|_||_\__,_| \___/_|   |_| |_| \___/\__,_|\_,_\__|\__|_\___/_||_|
-
 
 ;;; END OF PRODUCTION HORIZON
 ;;; Code below this line is, again, experimental
