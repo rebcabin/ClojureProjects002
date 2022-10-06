@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [asr-ast.core :refer :all]))
 
+
 ;;; hand-written test vectors
 
 (def asr-frag
@@ -20,6 +21,15 @@
       (ConstantInt 3, "i32"))
     {:result-ttype "i32",
      :value '(ConstantInt 5 "i32")}))
+
+
+;;; ASR->AST
+
+(deftest asr->ast-one-direction
+  (testing "ASR -> AST one direction"
+    (is (= ast-frag (-> asr-frag asr-s-exp)))
+    ))
+
 
 ;;; round-tripping
 
@@ -41,7 +51,7 @@
      [IntegerConstant 12 (Integer 4 [])]]])
 
 (deftest asr<->ast-round-tripping
-  (testing "asr<->ast round tripping"
+  (testing "ASR <-> AST round tripping"
     (is (= asr-frag
            (-> asr-frag
                asr-s-exp
@@ -50,8 +60,3 @@
            (-> bigger-asr-frag
                asr-s-exp
                ast-s-exp)))))
-
-(deftest asr->ast-one-direction
-  (testing "asr->ast one direction"
-    (is (= ast-frag (-> asr-frag asr-s-exp)))
-    ))

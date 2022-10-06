@@ -16,11 +16,11 @@
 (defn echo [x]
   (pprint x) x)
 
-
 ;;    _   ___ ___     __      _   ___ _____
 ;;   /_\ / __| _ \  __\ \    /_\ / __|_   _|
 ;;  / _ \\__ \   / |___> >  / _ \\__ \ | |
 ;; /_/ \_\___/_|_\    /_/  /_/ \_\___/ |_|
+
 
 ;; ### `asr-s-exp`: Top-Level Dispatch
 
@@ -58,6 +58,7 @@
     Integer         (-> node asr-ttype)
     #_"Add more here."))
 
+
 ;; ### `asr-expr`: Sub-Case
 
 ;; This is just a mid-level dispatcher. It exists to mimic the ASR
@@ -74,6 +75,7 @@
     IntegerConstant (-> node asr-expr-integer-constant)
     #_"Add more here."))
 
+
 ;; ### `asr-ttype`: Sub-Case
 
 ;; another obvious mid-level dispatcher.
@@ -81,20 +83,20 @@
 (defn asr-ttype-integer [node] ,,,)
 
 (defn asr-ttype
-    [node]
-    (case (-> node first)
-        Integer (-> node asr-ttype-integer)
-        #_"Add more here."))
+  [node]
+  (case (-> node first)
+    Integer (-> node asr-ttype-integer)
+    #_"Add more here."))
 
 ;; TODO: Generate the parsers from the ASDL grammar for AST, to
 ;; future-proof the parsing.
 
 ;; TODO: the transformation to AST is hard-coded. We will want
 ;; other transformations. Abstract over the transformations,
-;; making them pluggable.
+;; making them pluggable at the leaf-level of the parser.
+
 
 ;; ### Translations for Informal Kinds
-
 
 ;; Because `kind` is informally specified in ASR (there is no
 ;; production for `kind` on the left-hand side of a specification
@@ -102,51 +104,58 @@
 ;; recursive-descent parser for the `kind` node.
 
 (def asr->ast-kind-map
-    {4 "i32", 1 "i8", 2 "i16", 8 "i64"})
+  {4 "i32", 1 "i8", 2 "i16", 8 "i64"})
+
 
 ;; ### Translation of `ttype-integer`
 
 (defn asr-ttype-integer
-    "Example: (Integer 4 []) ~~~> \"i32\""
-    [node]
-    (let [[signum, kind, & dims]
-          node] ; destructuring
-        (assert (= signum 'Integer))
-        (assert (not (empty? dims)))
-        (assert (#{1 2 4 8} kind))
-        (-> kind asr->ast-kind-map)
-        ;; TODO: dimensions
-        ))
+  "Example: (Integer 4 []) ~~~> \"i32\""
+  [node]
+  (let [[signum, kind, & dims]
+        node]                           ; destructuring
+    (assert (= signum 'Integer))
+    (assert (not (empty? dims)))
+    (assert (#{1 2 4 8} kind))
+    (-> kind asr->ast-kind-map)
+    ;; TODO: dimensions
+    ))
+
 
 ;; ### Translation of `expr-integer-constant`
 
 (defn asr-expr-integer-constant
-    "Example: (IntegerConstant 42 (Integer 4 [])) ~~~>
+  "Example: (IntegerConstant 42 (Integer 4 [])) ~~~>
     (ConstantInt 42 \"i32\")"
-    [node]
-    (let [[signum, value, ttype]
-          node] ; destructuring
-        (assert (= signum 'IntegerConstant))
-        (assert (int? value))
-        (list 'ConstantInt
-              value
-              (-> ttype asr-ttype))))
+  [node]
+  (let [[signum, value, ttype] node]    ; destructuring
+    (assert (= signum 'IntegerConstant))
+    (assert (int? value))
+    (list 'ConstantInt
+          value
+          (-> ttype asr-ttype))))
+
 
 ;; ### Translation of `binop`
 
 ;; Note that ASR `Mul` maps to AST `Mult`
 
 (def asr->ast-binop-map
-    {'Add 'Add, 'Mul, 'Mult, 'Sub 'Sub, 'Div 'Div #_"Add more here."})
+  {'Add 'Add,
+   'Mul, 'Mult,
+   'Sub 'Sub,
+   'Div 'Div,
+   #_"Add more here."})
 
 (defn asr-binop
-    [node]
-    (-> node asr->ast-binop-map))
+  [node]
+  (-> node asr->ast-binop-map))
+
 
 ;; ### Translation of `expr-integer-bin-op`
 
 (defn asr-expr-integer-bin-op
-    "Example: (IntegerBinOp
+  "Example: (IntegerBinOp
      (IntegerConstant 2 (Integer 4 []))  ; left
      Add                                 ; binop
      (IntegerConstant 3 (Integer 4 []))  ; right
@@ -157,27 +166,27 @@
                    Add (ConstantInt 3 \"i32\")))
                 {:result-type \"i32\",
                  :value (ConstantInt 5 \"i32\")}"
-    [node]
-    (let [,[signum, left, binop, right, ttype, & value?] node
-          ,result-ttype {:result-ttype (-> ttype asr-ttype)}]
-        (assert (= signum 'IntegerBinOp)) ;; TODO: consider a signum hashmap.
-        (with-meta (list 'BinOp
-                         (-> left  asr-expr)
-                         (-> binop asr-binop)
-                         (-> right asr-expr))
-            (if value?
-                (merge result-ttype
-                       {:value (-> value? first asr-expr)})
-                result-ttype))))
+  [node]
+  (let [,[signum, left, binop, right, ttype, & value?] node
+        ,result-ttype {:result-ttype (-> ttype asr-ttype)}]
+    ;; TODO: consider a signum hashmap.
+    (assert (= signum 'IntegerBinOp))
+    (with-meta (list 'BinOp
+                     (-> left  asr-expr)
+                     (-> binop asr-binop)
+                     (-> right asr-expr))
+      (if value?
+        (merge result-ttype
+               {:value (-> value? first asr-expr)})
+        result-ttype))))
+
 
 ;;    _   ___ _____     __      _   ___ ___
 ;;   /_\ / __|_   _|  __\ \    /_\ / __| _ \
 ;;  / _ \\__ \ | |   |___> >  / _ \\__ \   /
 ;; /_/ \_\___/ |_|      /_/  /_/ \_\___/_|_\
 
-
 ;; ## Grandma's Way, Again
-
 
 ;; If you understood ASR $\rightarrow$ AST, then the following
 ;; needs little explanation. Every production in the AST grammar
@@ -194,93 +203,84 @@
 
 ;; ### AST Binop Map
 
-;; ```clojure
 (require '[clojure.set :as set])
 (def ast->asr-bin-op-map
-    (-> (set/map-invert asr->ast-binop-map) echo))
-;; ```
+  (-> (set/map-invert asr->ast-binop-map) #_echo))
+
 
 ;; ### AST Type Map
 
-;; ```clojure
 (def ast->asr-ttype-map
-    {"i32" '(Integer 4 []), "i8"  '(Integer 1 []),
-     "i16" '(Integer 2 []), "i64" '(Integer 8 [])})
-;; ```
+  {"i32" '(Integer 4 []), "i8"  '(Integer 1 []),
+   "i16" '(Integer 2 []), "i64" '(Integer 8 [])})
+
 
 ;; ### AST BinOp
 
-;; ```clojure
 (defn ast-bin-op
-    [node]
-    (-> node ast->asr-bin-op-map))
-;; ```
+  [node]
+  (-> node ast->asr-bin-op-map))
+
 
 ;; ### AST Signum Map
 
-;; ```clojure
 (def ast->asr-signum-map
-    {'ConstantInt 'IntegerConstant,
-     'BinOp       'IntegerBinOp
-     #_"Add more here."})
-;; ```
+  {'ConstantInt 'IntegerConstant,
+   'BinOp       'IntegerBinOp
+   #_"Add more here."})
+
 
 ;; ### AST Expr: BinOp
 
-;; ```clojure
 (defn ast-expr [node] ,,,)
 
 (defn ast-expr-bin-op
-    [node]
-    (let [,[signum, left, bin-op, right] node
-          ,{:keys [result-ttype value]} (-> node meta #_echo)
-          ,prefix
-          (list
-           (-> signum       ast->asr-signum-map)
-           (-> left         ast-expr)
-           (-> bin-op       ast-bin-op)
-           (-> right        ast-expr)
-           (-> result-ttype ast->asr-ttype-map))]
-        (-> (if value
-                (concat prefix [(-> value ast-expr)])
-                prefix)
-            #_echo)))
-;; ```
+  [node]
+  (let [,[signum, left, bin-op, right] node
+        ,{:keys [result-ttype value]} (-> node meta #_echo)
+        ,prefix
+        (list
+         (-> signum       ast->asr-signum-map)
+         (-> left         ast-expr)
+         (-> bin-op       ast-bin-op)
+         (-> right        ast-expr)
+         (-> result-ttype ast->asr-ttype-map))]
+    (-> (if value
+          (concat prefix [(-> value ast-expr)])
+          prefix)
+        #_echo)))
+
 
 ;; ### AST ConstantInt
 
-;; ```clojure
 (defn ast-expr-constant-int
-    [node]
-    (let [[signum, value, ast-type] node]
-        (assert (int? value))
-        (list
-         (-> signum ast->asr-signum-map)
-         value
-         (-> ast-type ast->asr-ttype-map))))
-;; ```
+  [node]
+  (let [[signum, value, ast-type] node]
+    (assert (int? value))
+    (list
+     (-> signum ast->asr-signum-map)
+     value
+     (-> ast-type ast->asr-ttype-map))))
+
 
 ;; ### AST Expr
 
-;; ```clojure
 (defn ast-expr
-    [node]
-    (case (-> node first)
-        BinOp       (-> node ast-expr-bin-op)
-        ConstantInt (-> node ast-expr-constant-int)
-        #_"Add more cases here"))
-;; ```
+  [node]
+  (case (-> node first)
+    BinOp       (-> node ast-expr-bin-op)
+    ConstantInt (-> node ast-expr-constant-int)
+    #_"Add more cases here"))
+
 
 ;; ### AST S-Exp
 
-;; ```clojure
 (defn ast-s-exp
-    [node]
-    (case (-> node first)
-        BinOp       (-> node ast-expr)
-        ConstantInt (-> node ast-expr)
-        #_"Add more cases here"))
-;; ```
+  [node]
+  (case (-> node first)
+    BinOp       (-> node ast-expr)
+    ConstantInt (-> node ast-expr)
+    #_"Add more cases here"))
 
 
 (defn -main
