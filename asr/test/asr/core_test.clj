@@ -674,31 +674,83 @@
                gen/generate))))))
 
 (deftest integer-generators
-  (testing "::i8, ::i8nz, ::i16, etc.")
-  (is (not-any? zero?
-                (gen/sample (s/gen :asr.core/i8nz) NTESTS)))
-  (is (not-any? zero?
-                (gen/sample (s/gen :asr.core/i16nz) NTESTS)))
-  (is (not-any? zero?
-                (gen/sample (s/gen :asr.core/i32nz) NTESTS)))
-  (is (not-any? zero?
-                (gen/sample (s/gen :asr.core/i64nz) NTESTS)))
-  (is (not-any? #(> % Byte/MAX_VALUE)
-                (gen/sample (s/gen :asr.core/i8) NTESTS)))
-  (is (not-any? #(> % Short/MAX_VALUE)
-                (gen/sample (s/gen :asr.core/i16) NTESTS)))
-  (is (not-any? #(> % Integer/MAX_VALUE)
-                (gen/sample (s/gen :asr.core/i32) NTESTS)))
-  (is (not-any? #(> % Long/MAX_VALUE)
-                (gen/sample (s/gen :asr.core/i64) NTESTS)))
-  (is (not-any? #(< % Byte/MIN_VALUE)
-                (gen/sample (s/gen :asr.core/i8) NTESTS)))
-  (is (not-any? #(< % Short/MIN_VALUE)
-                (gen/sample (s/gen :asr.core/i16) NTESTS)))
-  (is (not-any? #(< % Integer/MIN_VALUE)
-                (gen/sample (s/gen :asr.core/i32) NTESTS)))
-  (is (not-any? #(< % Long/MIN_VALUE)
-                (gen/sample (s/gen :asr.core/i64) NTESTS))))
+  (testing "::i8, ::i8nz, ::i16, etc."
+    (is (not-any? zero?
+                  (gen/sample (s/gen :asr.core/i8nz) NTESTS)))
+    (is (not-any? zero?
+                  (gen/sample (s/gen :asr.core/i16nz) NTESTS)))
+    (is (not-any? zero?
+                  (gen/sample (s/gen :asr.core/i32nz) NTESTS)))
+    (is (not-any? zero?
+                  (gen/sample (s/gen :asr.core/i64nz) NTESTS)))
+    (is (not-any? #(> % Byte/MAX_VALUE)
+                  (gen/sample (s/gen :asr.core/i8) NTESTS)))
+    (is (not-any? #(> % Short/MAX_VALUE)
+                  (gen/sample (s/gen :asr.core/i16) NTESTS)))
+    (is (not-any? #(> % Integer/MAX_VALUE)
+                  (gen/sample (s/gen :asr.core/i32) NTESTS)))
+    (is (not-any? #(> % Long/MAX_VALUE)
+                  (gen/sample (s/gen :asr.core/i64) NTESTS)))
+    (is (not-any? #(< % Byte/MIN_VALUE)
+                  (gen/sample (s/gen :asr.core/i8) NTESTS)))
+    (is (not-any? #(< % Short/MIN_VALUE)
+                  (gen/sample (s/gen :asr.core/i16) NTESTS)))
+    (is (not-any? #(< % Integer/MIN_VALUE)
+                  (gen/sample (s/gen :asr.core/i32) NTESTS)))
+    (is (not-any? #(< % Long/MIN_VALUE)
+                  (gen/sample (s/gen :asr.core/i64) NTESTS)))))
+
+
+(deftest integer-exceptions
+  (testing "small integer exceptions; Need different exceptions
+  for the various types"
+    (is "long overflow"
+        (try (long (dec Long/MIN_VALUE))
+             (catch ArithmeticException e
+               (-> e ex-message))))
+    (is "integer overflow"
+        (try (int (dec Integer/MIN_VALUE))
+             (catch ArithmeticException e
+               (-> e ex-message))))
+    (is "Value out of range for short: -32769"
+        (try (short (dec Short/MIN_VALUE))
+             (catch IllegalArgumentException e
+               (->> e ex-message))))
+    (is "Value of of range for byte: -129"
+        (try (byte (dec Byte/MIN_VALUE))
+             (catch IllegalArgumentException e
+               (-> e ex-message))))
+    (is "long overflow"
+        (try (long (inc Long/MAX_VALUE))
+             (catch ArithmeticException e
+               (-> e ex-message))))
+    (is "integer overflow"
+        (try (int (inc Integer/MAX_VALUE))
+             (catch ArithmeticException e
+               (-> e ex-message))))
+    (is "Value out of range for short: 32768"
+        (try (short (inc Short/MAX_VALUE))
+             (catch IllegalArgumentException e
+               (->> e ex-message))))
+    (is "Value of of range for byte: 128"
+        (try (byte (inc Byte/MAX_VALUE))
+             (catch IllegalArgumentException e
+               (-> e ex-message))))
+    (is (thrown?
+         ArithmeticException
+         (inc Long/MAX_VALUE)))))
+
+
+(deftest integer-types
+  (testing "integer types, clojure and java")
+  (is clojure.lang.BigInt
+      (type (+' 1 Long/MAX_VALUE)))
+  ;; long and short forms for the java.language types
+  (is java.lang.Byte    (type Byte/MAX_VALUE))
+  (is java.lang.Short   (type Short/MAX_VALUE))
+  (is java.lang.Integer (type Integer/MAX_VALUE))
+  (is java.lang.Long    (type Long/MAX_VALUE)))
+
 
 (deftest binop-no-div
   (testing "that ::binop-no-div never generates 'Div")

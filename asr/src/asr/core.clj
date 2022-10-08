@@ -1631,8 +1631,8 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; (s/exercise ::i32)
 ;; (s/exercise ::i64 100)
 
-(s/valid? ::i32 (Integer/MAX_VALUE))
-(s/valid? ::i32 0)
+(assert (s/valid? ::i32 (Integer/MAX_VALUE)))
+(assert (s/valid? ::i32 0))
 
 ;;  ____              ___      _        _   _
 ;; |_  /___ _ _ ___  | _ \___ (_)___ __| |_(_)___ _ _
@@ -1668,8 +1668,8 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; (s/exercise ::i32nz)
 ;; (s/exercise ::i64nz)
 
-(s/valid? ::i32nz (Integer/MAX_VALUE))
-(s/valid? ::i32nz 0)
+(assert (s/valid? ::i32nz (Integer/MAX_VALUE)))
+(assert (not (s/valid? ::i32nz 0)))
 
 ;;  _     _                                       _            _
 ;; (_)_ _| |_ ___ __ _ ___ _ _ ___ __ ___ _ _  __| |_ __ _ _ _| |_
@@ -1965,43 +1965,6 @@ discarded. We save it as a lesson in this kind of dead end.
 ;;     [Mul Mul]
 ;;     [Sub Sub]
 ;;     [Add Add])
-
-;; java.lang integer types are pre-loaded
-Long/MAX_VALUE
-;; => 9223372036854775807
-Integer/MAX_VALUE
-;; => 2147483647
-Short/MAX_VALUE
-;; => 32767
-Byte/MAX_VALUE
-;; => 127
-
-;; Need different exceptions for the various types
-
-(gen/sample (s/gen ::i32))
-
-(try (int (+ (gen/generate (s/gen ::i32)) 1))
-     (catch ArithmeticException e
-       (-> e ex-message)))
-
-(try (long (+ Long/MAX_VALUE 1))
-     (catch ArithmeticException e
-       (-> e ex-message)))
-
-(try (int (+ Integer/MAX_VALUE 1))
-     (catch ArithmeticException e
-       (-> e ex-message)))
-
-(try (short (+ Short/MAX_VALUE 1))
-     (catch IllegalArgumentException e
-       (->> e ex-message)))
-
-(try (byte (+ Byte/MAX_VALUE 1))
-     (catch IllegalArgumentException e
-       (-> e ex-message)))
-
-(type (+ (byte 127) (byte 1)))
-(type (byte 127))
 
 (def asr-binop->clojure-op
   {'Add +, 'Sub -, 'Mul *,
