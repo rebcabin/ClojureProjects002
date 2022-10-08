@@ -1605,7 +1605,7 @@ discarded. We save it as a lesson in this kind of dead end.
 
 ;; Mid-level specs for fixed-width integers.
 
-(letfn [(b [e] (expt 2 (- e 1)))     ; ::i8, ::i16, ::i32, ::i64
+(letfn [(b [e] (expt 2 (- e 1)))        ; ::i8, ::i16, ::i32, ::i64
         (gmkr [e]
           (let [b_ (b e)]
             (tgen/large-integer* {:min (- b_) :max (- b_ 1)})))
@@ -1620,8 +1620,8 @@ discarded. We save it as a lesson in this kind of dead end.
         si16 (smkr 16)
         si32 (smkr 32)
         si64 (smkr 64)]
-    (s/def ::i8  (s/spec  si8 :gen  gi8))  ; s/spec means
-    (s/def ::i16 (s/spec si16 :gen gi16))  ; "nestable"
+    (s/def ::i8  (s/spec  si8 :gen  gi8)) ; s/spec means
+    (s/def ::i16 (s/spec si16 :gen gi16)) ; "nestable"
     (s/def ::i32 (s/spec si32 :gen gi32))
     (s/def ::i64 (s/spec si64 :gen gi64))))
 
@@ -1631,6 +1631,8 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; (s/exercise ::i32)
 ;; (s/exercise ::i64 100)
 
+(s/valid? ::i32 (Integer/MAX_VALUE))
+(s/valid? ::i32 0)
 
 ;;  ____              ___      _        _   _
 ;; |_  /___ _ _ ___  | _ \___ (_)___ __| |_(_)___ _ _
@@ -1666,6 +1668,8 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; (s/exercise ::i32nz)
 ;; (s/exercise ::i64nz)
 
+(s/valid? ::i32nz (Integer/MAX_VALUE))
+(s/valid? ::i32nz 0)
 
 ;;  _     _                                       _            _
 ;; (_)_ _| |_ ___ __ _ ___ _ _ ___ __ ___ _ _  __| |_ __ _ _ _| |_
