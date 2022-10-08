@@ -1966,77 +1966,223 @@ discarded. We save it as a lesson in this kind of dead end.
 ;;     [Sub Sub]
 ;;     [Add Add])
 
-(def asr-binop->clojure-op
-  {'Add +, 'Sub -, 'Mul *,
-   'Div unchecked-divide-int #_quot,
-   'Pow #(-> pow int),
-   'BitAnd bit-and, 'BitOr bit-or, 'BitXor bit-xor,
-   'BitLShift bit-shift-left, 'BitRShift bit-shift-right})
+(defn fast-int-exp-pluggable
+  "O(lg(n)) x^n, n pos or neg, pluggable primitives for base
+  operations.
 
-(def i32-bin-op-leaf-gen
-  (tgen/let [left  (s/gen ::i32)
-             binop (s/gen #{'Pow} #_::binop-no-bits)
-             right (if (= binop 'Div)
-                     (s/gen ::i32nz)
-                     (s/gen ::i32))
-             _     (tgen/return
-                    (pprint {:left left, :binop binop, :right right}))
-             value (tgen/return
-                    ((asr-binop->clojure-op binop)
-                     left right))]
-    (let [tt '(Integer 4 [])
-          ic (fn [i] (list 'IngeterConstant i tt))]
-      (list 'IntegerBinOp (ic left) binop (ic right)
-            tt (ic value)))))
-
-(defn fast-int-exp
-  "exponent of x^n (int pos or neg n), with tail recursion and O(logn)"
-  [x n]
+  Partially evaluate this on its operations, for example:
+  (partial unchecked-multiply-int,
+           unchecked-divide-int,
+           unchecked-subtract-int,
+           Integer/MIN_VALUE)"
+  [mul, div, sub, underflow-val, x n]
   (if (neg? n)
-    (/ 1 (fast-int-exp x (- n)))
+    (let [trial (fast-int-exp-pluggable
+                 mul, div, sub, underflow-val,
+                 x (- n))]
+      (case trial
+        ;; In case x^(abs n) == 0
+        0 underflow-val
+        ;; Most often, (quot 1 trial) is zero, but sometimes it's
+        ;; 1/1 = 1.
+        (quot 1 trial)))
     (loop [acc 1,  b x,  e n]
-      (if (= e 0)
+      (if (zero? e)
         acc
         (if (even? e)
-          (recur acc (* b b) (/ e 2))
-          (recur  (* acc b) b (dec e)))))))
+          (recur       acc   (mul b b) (div e 2))
+          (recur  (mul acc b)     b    (sub e 1)))))))
 
-(def i32-bin-op-leaf-gen
+(def fast-unchecked-exp-int
+  "Produces zero for 2^32, 2^33, ... . Underflows negative exponents
+  to Integer/MIN_VALUE. Spins unchecked multiplications. Spins
+  large (>= 32) powers of 2 on 0."
+  (partial fast-int-exp-pluggable
+           unchecked-multiply-int,
+           unchecked-divide-int,
+           unchecked-subtract-int,
+           Integer/MIN_VALUE))
+
+;; ----------------------------------------------------------------
+;; Because our multiplication plugin is unchecked, this can spin
+;; round and round and round on seemingly random values:
+;;
+#_(fast-unchecked-exp-int -481 211)
+;; => 1387939935
+#_(fast-unchecked-exp-int 481 211)
+;; => -1387939935
+;; ----------------------------------------------------------------
+;; If the base is a positive or negative power of 2, this function
+;; will spin on 0:
+;;
+#_(fast-unchecked-exp-int 32 499)
+;; => 0
+#_(fast-unchecked-exp-int -32 499)
+;; => 0
+;; ----------------------------------------------------------------
+;; Try 2 on some negative exponents, quotient-ed to zero when
+;; small in abs or underflowing to Integer/MIN_VALUE when large:
+;;
+#_(map (partial fast-unchecked-exp-int 2) (range -37 4 4))
+;; => (-2147483648 -2147483648 0 0 0 0 0 0 0 0 8)
+;; ----------------------------------------------------------------
+;; Try it on some large exponents; once it hits 0, it stays there:
+;;
+#_(map (partial fast-unchecked-exp-int 2) '(10 20 24 30 31 32 33))
+;; => (1024 1048576 16777216 1073741824 -2147483648 0 0)
+;; ----------------------------------------------------------------
+
+(def asr-i32-unchecked-binop->clojure-op
+  {'Add unchecked-add-int,
+   'Sub unchecked-subtract-int,
+   'Mul unchecked-multiply-int,
+   'Div unchecked-divide-int,
+   'Pow fast-unchecked-exp-int,
+   'BitAnd bit-and,
+   'BitOr bit-or,
+   'BitXor bit-xor,
+   'BitLShift bit-shift-left,
+   'BitRShift bit-shift-right})
+
+(defn i32-bin-op-leaf-gen-pluggable
+  "with pluggable operations"
+  [ops-map]
   (tgen/let [left  (s/gen ::i32)
              binop (s/gen #{'Pow 'Div} #_::binop-no-bits)
              right (case binop
-                     Div (s/gen ::i32nz)
-                     Pow (if (zero? left)
+                     Div (s/gen ::i32nz)  ; don't / 0
+                     Pow (if (zero? left) ; don't 0^(negative int)
                            (tgen/fmap abs (s/gen ::i32))
                            (s/gen ::i32)))
-             _     (tgen/return
-                    (pprint {:left left, :binop binop, :right right}))
-             value (tgen/return
-                    ((asr-binop->clojure-op binop)
-                     left right))]
+             value (tgen/return  ((ops-map binop)  left right))]
     (let [tt '(Integer 4 [])
-          ic (fn [i] (list 'IngeterConstant i tt))]
+          ic (fn [i] (list 'IntegerConstant i tt))]
       (list 'IntegerBinOp (ic left) binop (ic right)
             tt (ic value)))))
 
-(gen/sample i32-bin-op-leaf-gen)
+(gen/sample (i32-bin-op-leaf-gen-pluggable
+             asr-i32-unchecked-binop->clojure-op) 20)
+;; => ((IntegerBinOp
+;;      (IntegerConstant 0 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant -1 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 0 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant -1 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 0 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant 1 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -1 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant -1 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant -1 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -1 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant 1 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant -1 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 0 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant -1 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -3 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant 30 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -1 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant 5 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant -1 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -4 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant 2 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 16 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 2 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant 7 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -32 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant 42 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 0 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant 635 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -481 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant 211 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 1387939935 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -493 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant 1 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant -493 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 142 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant -15 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 1781 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant -22 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant -80 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -3 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant -5896 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -52 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant -1197 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant -2147483648 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 44 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant -16960 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -16940 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant -22475 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant -2147483648 (Integer 4 []))))
 
-
-
-#_(s/def ::i32-bin-op-semnasr-static-arithmetic
-  (s/with-gen
-    int?
-    (tgen/let [left  (s/gen ::i32)
-               binop (s/gen ::binop)
-               right (if (= binop 'Div)
-                       (s/gen ::i32nz)
-                       (s/gen ::i32))
-               value ((asr-binop->clojure-op binop)
-                      left right)
-               ]
-      (fn [] (s/gen #{42})))))
-
-#_(s/exercise ::i32-bin-op-semnasr-static-arithmetic)
 
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 
