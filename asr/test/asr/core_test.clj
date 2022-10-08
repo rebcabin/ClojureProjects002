@@ -7,9 +7,12 @@
             [clojure.test.check.properties :as tprop]))
 
 
-(def NSPECS        138) ;; Adjust to the number of specs in core.clj.
-(def NTESTS         50) ;; Bigger for more stress, smaller for more speed
-(def RECURSION-LIMIT 4) ;; ditto
+;; Failure of the NSPECS number check will remind you to write
+;; tests for your new specs!
+
+(def NSPECS          139) ;; Adjust to the number of specs in core.clj.
+(def NTESTS           50) ;; Bigger for more stress, smaller for more speed
+(def RECURSION-LIMIT   4) ;; ditto
 
 
 ;;  _____       _     ___                   _               _        _
@@ -670,6 +673,32 @@
                s/gen
                gen/generate))))))
 
+(deftest integer-generators
+  (testing "::i8, ::i8nz, ::i16, etc.")
+  (is (not-any? zero?
+                (gen/sample (s/gen :asr.core/i8nz) NTESTS)))
+  (is (not-any? zero?
+                (gen/sample (s/gen :asr.core/i16nz) NTESTS)))
+  (is (not-any? zero?
+                (gen/sample (s/gen :asr.core/i32nz) NTESTS)))
+  (is (not-any? zero?
+                (gen/sample (s/gen :asr.core/i64nz) NTESTS)))
+  (is (not-any? #(> % Byte/MAX_VALUE)
+                (gen/sample (s/gen :asr.core/i8) NTESTS)))
+  (is (not-any? #(> % Short/MAX_VALUE)
+                (gen/sample (s/gen :asr.core/i16) NTESTS)))
+  (is (not-any? #(> % Integer/MAX_VALUE)
+                (gen/sample (s/gen :asr.core/i32) NTESTS)))
+  (is (not-any? #(> % Long/MAX_VALUE)
+                (gen/sample (s/gen :asr.core/i64) NTESTS)))
+  (is (not-any? #(< % Byte/MIN_VALUE)
+                (gen/sample (s/gen :asr.core/i8) NTESTS)))
+  (is (not-any? #(< % Short/MIN_VALUE)
+                (gen/sample (s/gen :asr.core/i16) NTESTS)))
+  (is (not-any? #(< % Integer/MIN_VALUE)
+                (gen/sample (s/gen :asr.core/i32) NTESTS)))
+  (is (not-any? #(< % Long/MIN_VALUE)
+                (gen/sample (s/gen :asr.core/i64) NTESTS))))
 
 (deftest binop-no-div
   (testing "that ::binop-no-div never generates 'Div")
@@ -737,6 +766,7 @@
     BitAnd
     (IntegerConstant -1 (Integer 4 []))
     (Integer 4 []))))
+
 
 (def honker-3
   '(IntegerBinOp

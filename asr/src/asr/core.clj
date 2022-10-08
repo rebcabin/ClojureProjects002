@@ -1,16 +1,17 @@
 (ns asr.core
   (:gen-class)
-  (:require [clojure.spec.alpha            :as s]
-            [clojure.pprint                :refer [pprint]]
-            [instaparse.core               :as insta]
-            [clojure.zip                   :as zip]
-            [camel-snake-kebab.core        :as csk]
-            [clojure.spec.gen.alpha        :as gen]
-            [clojure.spec.test.alpha       :as stest]
-            [clojure.test.check.generators :as tgen]
-            [clojure.math.numeric-tower    :refer [expt]]
+  (:require [clojure.spec.alpha            :as    s             ]
+            [clojure.pprint                :refer [pprint]      ]
+            [instaparse.core               :as    insta         ]
+            [clojure.zip                   :as    zip           ]
+            [camel-snake-kebab.core        :as    csk           ]
+            [clojure.spec.gen.alpha        :as    gen           ]
+            [clojure.spec.test.alpha       :as    stest         ]
+            [clojure.test.check.generators :as    tgen          ]
+            [clojure.math.numeric-tower    :refer [expt]        ] ;; bigint
             [clojure.inspector             :refer [inspect-tree]]
-            [clojure.set :as set]))
+            [clojure.math                  :refer [pow]         ] ;; int
+            [clojure.set                   :as    set           ]))
 
 (println "+-------------------------------+")
 (println "|                               |")
@@ -1610,7 +1611,7 @@ discarded. We save it as a lesson in this kind of dead end.
             (tgen/large-integer* {:min (- b_) :max (- b_ 1)})))
         (smkr [e]
           (let [b_ (b e)]
-            (s/and integer? #(>= % (- b_)) #(< % b_))))]
+            (s/and int? #(>= % (- b_)) #(< % b_))))]
   (let [gi8  (fn [] (gmkr 8))
         gi16 (fn [] (gmkr 16))
         gi32 (fn [] (gmkr 32))
@@ -1628,7 +1629,7 @@ discarded. We save it as a lesson in this kind of dead end.
 ;; (s/exercise ::i8)
 ;; (s/exercise ::i16)
 ;; (s/exercise ::i32)
-;; (s/exercise ::i64)
+;; (s/exercise ::i64 100)
 
 
 ;;  ____              ___      _        _   _
@@ -1643,7 +1644,7 @@ discarded. We save it as a lesson in this kind of dead end.
             (tgen/large-integer* {:min (- b_) :max (- b_ 1)})))
         (smkr [e]
           (let [b_ (b e)]
-            (s/and integer?
+            (s/and int?
                    #(not (zero? %))
                    #(>= % (- b_)) #(< % b_))))]
   (let [gi8nz  (fn [] (gmkr 8))
@@ -1849,7 +1850,7 @@ discarded. We save it as a lesson in this kind of dead end.
             :ttype ::i32-scalar-ttype-semnasr
             :value (s/? or-leaf))) ))
 
-(s/exercise ::binop)
+#_(s/exercise ::binop)
 ;; => ([BitOr BitOr]
 ;;     [BitXor BitXor]
 ;;     [Div Div]
@@ -1865,7 +1866,7 @@ discarded. We save it as a lesson in this kind of dead end.
   (set/difference (eval (s/describe ::binop))
                   #{'Div}))
 
-(s/exercise ::binop-no-div)
+#_(s/exercise ::binop-no-div)
 ;; => ([Mul Mul]
 ;;     [Add Add]
 ;;     [BitOr BitOr]
@@ -1925,6 +1926,150 @@ discarded. We save it as a lesson in this kind of dead end.
             :right nz-leaf
             :ttype ::i32-scalar-ttype-semnasr
             :value (s/? or-leaf)))))
+
+
+(gen/generate (s/gen ::i32))
+(gen/generate (s/gen ::binop))
+
+;; for generation:
+(defn i32-constant-semnasr
+  [value]
+  (let [b (expt 2 31)]
+    (assert (and (>= value (- b)) (< value b))))
+  (list 'IntegerConstant
+        value
+        '(Integer 4 [])))
+
+(gen/generate (tgen/return (i32-constant-semnasr 42)))
+
+(s/describe ::binop)
+;; => (set
+;;     '(Add Sub Mul Div Pow BitAnd BitOr BitXor BitLShift BitRShift))
+(s/def ::binop-no-bits
+  (set/difference
+   (eval (s/describe ::binop))
+   #{'BitAnd 'BitOr 'BitXor 'BitLShift, 'BitRShift}))
+
+(s/exercise ::binop-no-bits)
+;; => ([Pow Pow]
+;;     [Add Add]
+;;     [Div Div]
+;;     [Sub Sub]
+;;     [Pow Pow]
+;;     [Mul Mul]
+;;     [Sub Sub]
+;;     [Mul Mul]
+;;     [Sub Sub]
+;;     [Add Add])
+
+;; java.lang integer types are pre-loaded
+Long/MAX_VALUE
+;; => 9223372036854775807
+Integer/MAX_VALUE
+;; => 2147483647
+Short/MAX_VALUE
+;; => 32767
+Byte/MAX_VALUE
+;; => 127
+
+;; Need different exceptions for the various types
+
+(gen/sample (s/gen ::i32))
+
+(try (int (+ (gen/generate (s/gen ::i32)) 1))
+     (catch ArithmeticException e
+       (-> e ex-message)))
+
+(try (long (+ Long/MAX_VALUE 1))
+     (catch ArithmeticException e
+       (-> e ex-message)))
+
+(try (int (+ Integer/MAX_VALUE 1))
+     (catch ArithmeticException e
+       (-> e ex-message)))
+
+(try (short (+ Short/MAX_VALUE 1))
+     (catch IllegalArgumentException e
+       (->> e ex-message)))
+
+(try (byte (+ Byte/MAX_VALUE 1))
+     (catch IllegalArgumentException e
+       (-> e ex-message)))
+
+(type (+ (byte 127) (byte 1)))
+(type (byte 127))
+
+(def asr-binop->clojure-op
+  {'Add +, 'Sub -, 'Mul *,
+   'Div unchecked-divide-int #_quot,
+   'Pow #(-> pow int),
+   'BitAnd bit-and, 'BitOr bit-or, 'BitXor bit-xor,
+   'BitLShift bit-shift-left, 'BitRShift bit-shift-right})
+
+(def i32-bin-op-leaf-gen
+  (tgen/let [left  (s/gen ::i32)
+             binop (s/gen #{'Pow} #_::binop-no-bits)
+             right (if (= binop 'Div)
+                     (s/gen ::i32nz)
+                     (s/gen ::i32))
+             _     (tgen/return
+                    (pprint {:left left, :binop binop, :right right}))
+             value (tgen/return
+                    ((asr-binop->clojure-op binop)
+                     left right))]
+    (let [tt '(Integer 4 [])
+          ic (fn [i] (list 'IngeterConstant i tt))]
+      (list 'IntegerBinOp (ic left) binop (ic right)
+            tt (ic value)))))
+
+(defn fast-int-exp
+  "exponent of x^n (int pos or neg n), with tail recursion and O(logn)"
+  [x n]
+  (if (neg? n)
+    (/ 1 (fast-int-exp x (- n)))
+    (loop [acc 1,  b x,  e n]
+      (if (= e 0)
+        acc
+        (if (even? e)
+          (recur acc (* b b) (/ e 2))
+          (recur  (* acc b) b (dec e)))))))
+
+(def i32-bin-op-leaf-gen
+  (tgen/let [left  (s/gen ::i32)
+             binop (s/gen #{'Pow 'Div} #_::binop-no-bits)
+             right (case binop
+                     Div (s/gen ::i32nz)
+                     Pow (if (zero? left)
+                           (tgen/fmap abs (s/gen ::i32))
+                           (s/gen ::i32)))
+             _     (tgen/return
+                    (pprint {:left left, :binop binop, :right right}))
+             value (tgen/return
+                    ((asr-binop->clojure-op binop)
+                     left right))]
+    (let [tt '(Integer 4 [])
+          ic (fn [i] (list 'IngeterConstant i tt))]
+      (list 'IntegerBinOp (ic left) binop (ic right)
+            tt (ic value)))))
+
+(gen/sample i32-bin-op-leaf-gen)
+
+
+
+#_(s/def ::i32-bin-op-semnasr-static-arithmetic
+  (s/with-gen
+    int?
+    (tgen/let [left  (s/gen ::i32)
+               binop (s/gen ::binop)
+               right (if (= binop 'Div)
+                       (s/gen ::i32nz)
+                       (s/gen ::i32))
+               value ((asr-binop->clojure-op binop)
+                      left right)
+               ]
+      (fn [] (s/gen #{42})))))
+
+#_(s/exercise ::i32-bin-op-semnasr-static-arithmetic)
 
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 
