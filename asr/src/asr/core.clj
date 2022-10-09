@@ -5,9 +5,7 @@
         [asr.grammar])
   (:require [clojure.spec.alpha            :as    s             ]
             [clojure.pprint                :refer [pprint]      ]
-            [instaparse.core               :as    insta         ]
             [clojure.zip                   :as    zip           ]
-            [camel-snake-kebab.core        :as    csk           ]
             [clojure.spec.gen.alpha        :as    gen           ]
             [clojure.spec.test.alpha       :as    stest         ]
             [clojure.test.check.generators :as    tgen          ]
