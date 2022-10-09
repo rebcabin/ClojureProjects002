@@ -1,6 +1,7 @@
 (ns asr.core-test
   (:use [asr.core]
-        [asr.utils])
+        [asr.utils]
+        [asr.data])
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
