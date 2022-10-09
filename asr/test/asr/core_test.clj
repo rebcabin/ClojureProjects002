@@ -1,21 +1,22 @@
 (ns asr.core-test
   (:use [asr.core]
+
         [asr.utils]
         [asr.data]
         [asr.parsed]
         [asr.autospecs]
         [asr.specs])
-  (:require [clojure.test :refer :all]
-            [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen]
-            [clojure.test.check.generators :as tgen]
-            [clojure.test.check.properties :as tprop]))
+  (:require [clojure.test                  :refer :all]
+            [clojure.spec.alpha            :as s      ]
+            [clojure.spec.gen.alpha        :as gen    ]
+            [clojure.test.check.generators :as tgen   ]
+            [clojure.test.check.properties :as tprop  ]))
 
 
 ;; Failure of the NSPECS number check will remind you to write
 ;; tests for your new specs!
 
-(def NSPECS          137) ;; Adjust to the number of specs in core.clj.
+(def NSPECS          136) ;; Adjust to the number of specs in core.clj.
 (def NTESTS           50) ;; Bigger for more stress, smaller for more speed
 (def RECURSION-LIMIT   4) ;; ditto
 
@@ -386,16 +387,14 @@
                 count)))))
 
 
-;;  _       _        _                   _
-;; | |_ ___| |_ __ _| |  __ ___ _  _ _ _| |_
-;; |  _/ _ \  _/ _` | | / _/ _ \ || | ' \  _|
-;;  \__\___/\__\__,_|_| \__\___/\_,_|_||_\__|
-
-;; Every time a spec is added, must bump this number.
-
+;;                       _        _
+;;  ____ __  ___ __   __| |_ __ _| |_ ___
+;; (_-< '_ \/ -_) _| (_-<  _/ _` |  _(_-<
+;; /__/ .__/\___\__| /__/\__\__,_|\__/__/
+;;    |_|
 
 (deftest count-asr-specs-test
-  (is (= NSPECS (count-asr-specs))))
+  (is (= NSPECS (count-asr-core-specs))))
 
 
 ;;                               _     _
