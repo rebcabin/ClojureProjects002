@@ -170,7 +170,7 @@
   (let [type (nskw-kebab-from (:ASDL-TYPE arg))
         nym (:ASDL-NYM arg)]
     (case (:MULTIPLICITY arg)
-      :asr.parsed/once `(s/spec ~type)
+      :asr.parsed/once         `(s/spec ~type)
       :asr.parsed/at-most-once `(s/? (s/spec ~type))
       :asr.parsed/zero-or-more `(s/* (s/spec ~type)))))
 
@@ -199,7 +199,6 @@
 ;;  \__|\_,_| .__/_\___/__/
 ;;          |_|
 
-#_
 (defn tuple-head-spec-from-stuff [tuple-stuff]
   #_(println "tuple-head-spec-from-stuff")
   (let [nskw (-> tuple-stuff :head name nskw-kebab-from #_echo)
@@ -207,7 +206,6 @@
     `(s/def ~nskw ~(spec-from-args args))))  ;; side effect!
 
 
-#_
 (def tuple-stuffs
   "# Tuple Specs
 
@@ -215,11 +213,9 @@
   run-to-run because the names are gensymmed.
   "
   (->> big-list-of-stuff
-       echo
        (filter #(= (:kind %) :ASDL-TUPLE))))
 
 
-#_
 (def tuple-stuffss-by-term
   "## Tuple Term-Specs
 
@@ -235,7 +231,6 @@
 
 ;; To register the 6 term-specs, `eval` them.
 
-#_
 (defn tuple-term-spec-from-stuffs [stuffs]
   #_(println "tuple-term-spec-from-stuffs")
   (let [term (-> stuffs first :term                      #_echo)
@@ -259,7 +254,6 @@
 ;;; Manual topological sort shows we must spec ::dimension before
 ;;; the others.
 
-#_
 (defn do-one-tuple-spec-head-and-term!
   "Spec one tuple type, head-spec and term-spec, by term."
   [term]
