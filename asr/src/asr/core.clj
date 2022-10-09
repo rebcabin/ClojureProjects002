@@ -1,5 +1,6 @@
 (ns asr.core
   (:gen-class)
+  (:use [asr.utils])
   (:require [clojure.spec.alpha            :as    s             ]
             [clojure.pprint                :refer [pprint]      ]
             [instaparse.core               :as    insta         ]
@@ -22,13 +23,6 @@
 (println "|     (s/describe ::binop)      |")
 (println "|                               |")
 (println "+-------------------------------+")
-
-;; TODO: macro?
-(defn echo
-  "Print and return argument. Convenient for debugging -> call
-  chains."
-  [x]
-  (pprint x) x)
 
 ;;  ___                   _               _        _   _  _         _
 ;; | __|_ ___ __  ___ _ _(_)_ __  ___ _ _| |_ __ _| | | || |___ _ _(_)______ _ _
@@ -109,33 +103,6 @@ main0()
        (SymbolTable 3 {})
        main_program []
        [(SubroutineCall 1 _lpython_main_program () [] ())])}) []))
-
-
-(defn nskw-kebab-from ;; TODO: macro?
-
-  "### Kebab'bed Namespaced Keywords for Specs from Symbols in ASR
-
-  Transform conventional names in ASR PascalCase to conventional
-  namespaced keywords in kebab-case in clojure.spec. It works on
-  symbols or on strings. We can write a spec for this function,
-  too? Specs all the way down!
-  "
-
-  [sym-or-string]
-
-  (keyword "asr.core" (name (csk/->kebab-case sym-or-string)))
-  ;; Found by experiment that ->> doesn't work, here. Something
-  ;; to do with macros.
-  #_(->> sym csk/->kebab-case #(keyword "asr.core" %)) )
-
-;;; Experimental Function Spec for nskw-kebab-from. This is an
-;;; ansatz for future function specs.
-
-(s/fdef nskw-kebab-from
-  :args (s/alt :str string? :sym symbol?)
-  :ret keyword?)
-
-(stest/instrument `nskw-kebab-from)
 
 
 ;;; An immutable scrape from lcompilers web site, to have stable

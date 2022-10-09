@@ -1,6 +1,7 @@
 (ns asr.core-test
+  (:use [asr.core]
+        [asr.utils])
   (:require [clojure.test :refer :all]
-            [asr.core :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [clojure.test.check.generators :as tgen]
@@ -10,7 +11,7 @@
 ;; Failure of the NSPECS number check will remind you to write
 ;; tests for your new specs!
 
-(def NSPECS          139) ;; Adjust to the number of specs in core.clj.
+(def NSPECS          138) ;; Adjust to the number of specs in core.clj.
 (def NTESTS           50) ;; Bigger for more stress, smaller for more speed
 (def RECURSION-LIMIT   4) ;; ditto
 
