@@ -93,18 +93,16 @@
 ;; / _` | || | '  \| '  \| / -_|_-<
 ;; \__,_|\_,_|_|_|_|_|_|_|_\___/__/
 
-#_
 (defn dummy-generator-for-heads
   "A dummy generator for argument lists for heads which just
   inserts a list of random length of random identifiers. Not
   suitable long-term."
   [heads]
   (tgen/let [head (s/gen heads)
-             rest (gen/list (s/gen ::identifier))]
+             rest (gen/list (s/gen :asr.specs/identifier))]
     (cons head rest)))
 
 
-#_
 (defn dummy-lpred
   "A predicate for dummy specs that checks simply that the
   instance is a list with an appropriate head and zero or
@@ -121,7 +119,6 @@
 ;; /__/ .__/\___\__/__/ |_| \___/_|   \__\___/_|_|_| .__/\___/__/_|\__\___/__/
 ;;    |_|                                          |_|
 
-#_
 (defn heads-for-composite
   "Produce a list of symbolic heads (like 'RealUnaryMinus and
   'ArraySection), from a term like :asr.core/expr. See
@@ -132,30 +129,28 @@
        (map :ASDL-COMPOSITE)
        (map :ASDL-HEAD)
        (map symbol)
-       set))
+       set
+       #_echo))
 
 
 ;;; Try (s/exercise ::symbol) and (s/exercise ::expr in the REPL.
 
-#_
-(let [heads (heads-for-composite ::symbol)]
-  (s/def ::symbol
+(let [heads (heads-for-composite :asr.core/symbol)]
+  (s/def :asr.core/symbol
     (s/with-gen
       (dummy-lpred heads)
       (fn [] (dummy-generator-for-heads heads)))))
 
 
-#_
-(let [heads (heads-for-composite ::expr)]
-  (s/def ::expr
+(let [heads (heads-for-composite :asr.core/expr)]
+  (s/def :asr.core/expr
     (s/with-gen
       (dummy-lpred heads)
       (fn [] (dummy-generator-for-heads heads)))))
 
 
-#_
-(let [heads (heads-for-composite ::stmt)]
-  (s/def ::stmt
+(let [heads (heads-for-composite :asr.core/stmt)]
+  (s/def :asr.core/stmt
     (s/with-gen
       (dummy-lpred heads)
       (fn [] (dummy-generator-for-heads heads)))))
@@ -166,7 +161,6 @@
 ;; \__,_|_| \__, /__/
 ;;          |___/
 
-#_
 (defn spec-from-arg
   "### Spec Fragment from Arg, Args
 
@@ -176,12 +170,11 @@
   (let [type (nskw-kebab-from (:ASDL-TYPE arg))
         nym (:ASDL-NYM arg)]
     (case (:MULTIPLICITY arg)
-      ::once `(s/spec ~type)
+      :asr.parsed/once `(s/spec ~type)
       :asr.parsed/at-most-once `(s/? (s/spec ~type))
-      ::zero-or-more `(s/* (s/spec ~type)))))
+      :asr.parsed/zero-or-more `(s/* (s/spec ~type)))))
 
 
-#_
 (defn spec-from-args [args]
   (let [nyms (->> args (map :ASDL-NYM)           #_echo)
         kyms (->> nyms (map (comp keyword name)) #_echo)
@@ -190,7 +183,6 @@
     `(s/cat ~@riffle)))
 
 
-#_
 (defn spec-from-head-and-args [head args]
   (let [nyms (->> args (map :ASDL-NYM)           #_echo)
         kyms (->> nyms (map (comp keyword name)) #_echo)

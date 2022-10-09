@@ -15,7 +15,7 @@
 ;; Failure of the NSPECS number check will remind you to write
 ;; tests for your new specs!
 
-(def NSPECS          138) ;; Adjust to the number of specs in core.clj.
+(def NSPECS          137) ;; Adjust to the number of specs in core.clj.
 (def NTESTS           50) ;; Bigger for more stress, smaller for more speed
 (def RECURSION-LIMIT   4) ;; ditto
 
