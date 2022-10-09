@@ -3,7 +3,8 @@
   (:use [asr.utils]
         [asr.data]
         [asr.grammar]
-        [asr.parsed])
+        [asr.parsed]
+        [asr.autospecs])
   (:require [clojure.spec.alpha            :as    s             ]
             [clojure.pprint                :refer [pprint]      ]
             [clojure.zip                   :as    zip           ]
@@ -36,37 +37,7 @@
 ;;; generating syntactically valid nonsense ASR
 ;;; programs (SynNASR).
 
-(defn spec-from-symconst-stuff
-  "## Symconst-Head-Specs
-
-  This next code block REGISTERS the (about) 72 head-specs by
-  `eval`'ing the `s/defs` written by `` `(s/def ...) ``. A spec is
-  *registered* into a hidden Clojure Spec Registry by side-effect
-  and is associated with the namespaced keyword produced by
-  `nskw-kebab-from`. Once this next code block runs, we'll
-  have (about) 72 head-specs magically registered and we can refer
-  to them by namespaced kebab'bed keyword name. For example,
-  `::implementation` will be registered and we can refer to it
-  via `(s/spec ::implementation)`.
-
-  All specs, head-specs and term-specs alike must be registered
-  before being referred-to. Later, we'll break co-recursive cycles
-  by registering defective specs then backpatching them. For
-  example, the term-spec for `::symbol` refers to the term-spec
-  for `::symbol-table`, which refers to the term-spec for
-  `::symbol`. Clojure.spec can't tolerate that, but it can
-  tolerate a defective term-spec for `::symbol-table` that we
-  backpatch later.
-
-  Construct and register all (approximately) 72 symconst
-  head-specs:
-  "
-  [symconst-stuff]
-  (let [symconst (-> symconst-stuff :form :ASDL-SYMCONST)
-        nskw (nskw-kebab-from symconst)]
-    `(s/def ~nskw #{(quote ~(symbol symconst))})))
-
-
+#_
 (defn symconst-spec-for-term
   "### Symconst Spec for Term [sic]
 

@@ -2,7 +2,8 @@
   (:use [asr.core]
         [asr.utils]
         [asr.data]
-        [asr.parsed])
+        [asr.parsed]
+        [asr.autospecs])
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
