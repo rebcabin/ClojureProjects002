@@ -4,7 +4,8 @@
         [asr.data]
         [asr.grammar]
         [asr.parsed]
-        [asr.autospecs])
+        [asr.autospecs]
+        [asr.specs])
   (:require [clojure.spec.alpha            :as    s             ]
             [clojure.pprint                :refer [pprint]      ]
             [clojure.zip                   :as    zip           ]
@@ -32,83 +33,6 @@
 ;; |___/_\_\ .__/\___|_| |_|_|_|_\___|_||_\__\__,_|_| |_||_\___/_| |_/__\___/_||_|
 ;;         |_|
 
-;;; Code below this line, up to the lines marked "Production
-;;; Horizon" is experimental. Most of it concerns automatically
-;;; generating syntactically valid nonsense ASR
-;;; programs (SynNASR).
-
-#_
-(defn symconst-spec-for-term
-  "### Symconst Spec for Term [sic]
-
-  For each term, write a `set` containing its alternative heads,
-  e.g., the term `binop` is one of the ten heads `Add`, `Sub`, and
-  so on, to `BitRShift`.
-
-  To unit-test `spec-for-term`, `eval` one of them and check it:
-  "
-  [stuffs-for-term]
-  (let [term (-> stuffs-for-term first :term)
-        ;; same for all! TODO: assert
-        term-nskw (nskw-kebab-from (name term))
-        ss1
-        (->> stuffs-for-term
-             (map (fn [stuff]
-                    (let [head
-                          (head-from-kind-form
-                           (:kind stuff) (:form stuff))]
-                      (-> head symbol)))))]
-    `(s/def ~term-nskw (set (quote ~ss1)))))
-
-
-;;; TEACHING NOTE: Experiment that failed.
-
-"## Spec for *identifier*
-
-We can't use just `symbol?` because it generates namespaced
-symbols, and they aren't useful for testing LPython. We'll need a
-custom
-generator (<https://clojure.org/guides/spec#_custom_generators>).
-
-The following attempt has performance problems and will be
-discarded. We save it as a lesson in this kind of dead end.
-"
-
-#_(def identifier-re #"[a-zA-Z_][a-zA-Z0-9_]*")
-
-#_(s/def ::identifier
-  (s/with-gen
-    symbol?
-    (fn []
-      (gen/such-that
-       #(re-matches
-         identifier-re
-         (name %))
-       (gen/symbol)))))
-
-;;; Better solution that, sadly but harmlessly, lacks underscores
-;;; because gen/char-alpha doesn't generate underscores. TODO: fix
-;;; this.
-
-(let [alpha-re #"[a-zA-Z]"  ;; The famous "let over lambda."
-      alphameric-re #"[a-zA-Z0-9]*"]
-  (def alpha?
-    #(re-matches alpha-re %))
-  (def alphameric?
-    #(re-matches alphameric-re %))
-  (defn identifier? [s]
-    (and (alpha? (subs s 0 1))
-         (alphameric? (subs s 1))))
-  (def identifier-generator
-    (tgen/let [c (gen/char-alpha)
-               s (gen/string-alphanumeric)]
-      (str c s)))
-  (s/def ::identifier  ;; side effects the spec registry!
-    (s/with-gen
-      identifier?
-      (fn [] identifier-generator))))
-
-
 (defn heads-for-composite
   "Produce a list of symbolic heads (like 'RealUnaryMinus and
   'ArraySection), from a term like :asr.core/expr. See
@@ -128,7 +52,7 @@ discarded. We save it as a lesson in this kind of dead end.
   suitable long-term."
   [heads]
   (tgen/let [head (s/gen heads)
-             rest (gen/list (s/gen ::identifier))]
+             rest (gen/list (s/gen :asr.specs/identifier))]
     (cons head rest)))
 
 

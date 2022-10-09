@@ -1,5 +1,5 @@
 (ns asr.autospecs
-  (:use asr.utils)
+  (:use [asr.utils])
 
   (:require [asr.parsed :refer [big-map-of-speclets-from-terms
                                 big-list-of-stuff

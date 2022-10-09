@@ -36,7 +36,11 @@
 
   [sym-or-string]
 
-  (keyword "asr.core" (name (csk/->kebab-case sym-or-string)))
+  (let [namespace (case (str sym-or-string)
+                    "identifier" "asr.specs"
+                    #_default    "asr.core")]
+    (keyword namespace
+             (name (csk/->kebab-case sym-or-string))))
   ;; Found by experiment that ->> doesn't work, here. Something
   ;; to do with macros.
   #_(->> sym csk/->kebab-case #(keyword "asr.core" %)) )
