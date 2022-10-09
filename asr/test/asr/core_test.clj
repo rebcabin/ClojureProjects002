@@ -1,7 +1,8 @@
 (ns asr.core-test
   (:use [asr.core]
         [asr.utils]
-        [asr.data])
+        [asr.data]
+        [asr.parsed])
   (:require [clojure.test :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
@@ -86,10 +87,10 @@
                {:ASDL-HEAD "TranslationUnit",
                 :ASDL-ARGS
                 ({:ASDL-TYPE "symbol_table",
-                  :MULTIPLICITY :asr.core/once,
+                  :MULTIPLICITY :asr.parsed/once,
                   :ASDL-NYM "global_scope"}
                  {:ASDL-TYPE "node",
-                  :MULTIPLICITY :asr.core/zero-or-more,
+                  :MULTIPLICITY :asr.parsed/zero-or-more,
                   :ASDL-NYM "items"})}})}))
 
     (is (= (hashmap-from-speclet (speclets 3))
@@ -466,12 +467,12 @@
          {:ASDL-COMPOSITE
           {:ASDL-HEAD "IntegerBinOp",
            :ASDL-ARGS
-           ({:ASDL-TYPE "expr", :MULTIPLICITY :asr.core/once, :ASDL-NYM "left"}
-            {:ASDL-TYPE "binop", :MULTIPLICITY :asr.core/once, :ASDL-NYM "op"}
-            {:ASDL-TYPE "expr", :MULTIPLICITY :asr.core/once, :ASDL-NYM "right"}
-            {:ASDL-TYPE "ttype", :MULTIPLICITY :asr.core/once, :ASDL-NYM "type"}
+           ({:ASDL-TYPE "expr", :MULTIPLICITY :asr.parsed/once, :ASDL-NYM "left"}
+            {:ASDL-TYPE "binop", :MULTIPLICITY :asr.parsed/once, :ASDL-NYM "op"}
+            {:ASDL-TYPE "expr", :MULTIPLICITY :asr.parsed/once, :ASDL-NYM "right"}
+            {:ASDL-TYPE "ttype", :MULTIPLICITY :asr.parsed/once, :ASDL-NYM "type"}
             {:ASDL-TYPE "expr",
-             :MULTIPLICITY :asr.core/at-most-once,
+             :MULTIPLICITY :asr.parsed/at-most-once,
              :ASDL-NYM "value"})}}})]
 
   (deftest IntegerBinop-stuff-test
