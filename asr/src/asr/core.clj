@@ -641,6 +641,34 @@
       (list 'IntegerBinOp (ic left) binop (ic right)
             tt (ic value)))))
 
+
+;;  _ _______    _    _
+;; (_)__ /_  )__| |__(_)_ _ ___ ___ _ __ ___ ___ ___ _ __  ___ ___ _ __
+;; | ||_ \/ /___| '_ \ | ' \___/ _ \ '_ \___(_-</ -_) '  \(_-</ -_) '  \
+;; |_|___/___|  |_.__/_|_||_|  \___/ .__/   /__/\___|_|_|_/__/\___|_|_|_|
+;;                                 |_|
+
+(s/def ::i32-bin-op-semsem
+  (s/or
+   ;; The base case is necessary. Try commenting it out and
+   ;; running "lein test" at a terminal.
+   :base
+   (s/cat :head  #{'IntegerBinOp}
+          :left  ::i32-constant-semnasr
+          :op    :asr.autospecs/binop
+          :right ::i32-constant-semnasr
+          :ttype ::i32-scalar-ttype-semnasr
+          :value (s/? ::i32-constant-semnasr))
+
+   :recurse
+   (let [or-leaf (s/or :leaf   ::i32-constant-semnasr
+                       :branch ::i32-bin-op-semnasr)]
+     (s/cat :head  #{'IntegerBinOp}
+            :left  or-leaf
+            :op    :asr.autospecs/binop
+            :right or-leaf
+            :ttype ::i32-scalar-ttype-semnasr
+            :value (s/? or-leaf))) ))
 #_
 (gen/sample (i32-bin-op-leaf-gen-pluggable
              asr-i32-unchecked-binop->clojure-op) 20)
@@ -787,6 +815,21 @@
       eval
       #_echo
       ))
+
+(s/describe :asr.autospecs/integer-bin-op)
+;; => (cat
+;;     :head
+;;     #function[asr.autospecs/spec-from-head-and-args/lpred--2572]
+;;     :left
+;;     (spec :asr.autospecs/expr)
+;;     :op
+;;     (spec :asr.autospecs/binop)
+;;     :right
+;;     (spec :asr.autospecs/expr)
+;;     :type
+;;     (spec :asr.autospecs/ttype)
+;;     :value
+;;     (? (spec :asr.autospecs/expr)))
 
 
 ;;  _       _        _                   _

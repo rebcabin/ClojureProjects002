@@ -20,7 +20,7 @@ cd ClojureProjects002/asr
 lein test
 ```
 
-## Devlopment
+## Development
 
 [CIDER](https://docs.cider.mx/cider/index.html) is almost
 essential. We make heavy use of its debugger (C-u C-M-x)
@@ -42,8 +42,9 @@ written in ASDL.
 The grammar for ASDL is written in
 [instaparse](https://github.com/Engelberg/instaparse). Instaparse
 gives us a parser for the ASR written in ASDL. From that, we get
-lots of autospecs (see `autospecs.clj`).
-
+lots of autospecs (see `autospecs.clj`) in
+[`clojure.spec`](https://www.google.com/search?client=firefox-b-1-d&q=clojure.spec.alpha).
+We write lots of those specs automatically in `autoparse.clj`.
 We also write some specs by hand, committed ones in `specs.cls`
 and experimental ones in `core.clj`.
 
@@ -52,6 +53,33 @@ hooks and crooks.
 
 The development horizon is in `core.clj`. As stuff evolves from
 experimental into production, it migrates into `specs.clj`
+
+## Naming Conventions
+
+ASR heads, like
+
+```
+IntegerBinOp(expr left, binop op, expr right, ttype type, expr? value)
+```
+
+are in PascalCase. The corresponding clojure.specs are in
+kebab-case, as in
+
+```clojure
+(s/describe :asr.autospecs/integer-bin-op)
+;; => (cat
+;;     :head  #function[asr.autospecs/spec-from-head-and-args/lpred--2572]
+;;     :left  (spec :asr.autospecs/expr)
+;;     :op    (spec :asr.autospecs/binop)
+;;     :right (spec :asr.autospecs/expr)
+;;     :type  (spec :asr.autospecs/ttype)
+;;     :value (? (spec :asr.autospecs/expr)))
+```
+
+Converting a name to kebab-case is ***kebabulating***. The
+function for doing that is `nskw-kebab-from` in `utils.clj` *nskw*
+means *namespaced keyword*. Clojure.spec requires spec names to be
+namespaced keywords, as in `:asr.autospecs/integer-bin-op`
 
 ## Namespaces and DataFlow
 
