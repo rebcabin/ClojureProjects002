@@ -30,6 +30,8 @@ See also `echo` in `utils.clj`.
 
 ## Generating Documentation
 
+See https://github.com/weavejester/codox.
+
 ```
 lein codox
 ```
