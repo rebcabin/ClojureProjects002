@@ -23,10 +23,17 @@ lein test
 ## Development
 
 [CIDER](https://docs.cider.mx/cider/index.html) is almost
-essential. We make heavy use of its debugger (C-u C-M-x)
-and its pretty-print-to-comment (C-c C-v C-f C-c e).
+essential. We make heavy use of its debugger (C-u C-M-x) and its
+pretty-print-to-comment (C-c C-v C-f C-c e). In-place evaluation
+(C-c e, C-M-x) is also priceless.
 
-See also `echo` in `utils.clj`.
+See also `echo` in `utils.clj` for standard "printf" debugging in
+the REPL.
+
+Many other things, like paredit and multiple-cursors, make
+Clojure programming the most joyous experience in the industry.
+Look for the video series "Emacs Rocks." There is no close
+second, except maybe Python's pudb.
 
 ## Generating Documentation
 
@@ -36,32 +43,26 @@ See https://github.com/weavejester/codox.
 lein codox
 ```
 
+Codox doesn't handle specs. You'll have to read comments in
+`autodocs.clj`, `spec.clj`, `core.clj`. Sorry about that. TODO:
+figure out a work-around.
+
 Look for generated docs in
 
 ```
 target
 `-- default
-    |-- doc
-    |   |-- asr.asr.html
-    |   |-- asr.autospecs.html
-    |   |-- asr.core.html
-    |   |-- asr.data.html
-    |   |-- asr.grammar.html
-    |   |-- asr.parsed.html
-    |   |-- asr.specs.html
-    |   |-- asr.utils.html
-    |   |-- css
-    |   |   |-- default.css
-    |   |   `-- highlight.css
-    |   |-- index.html
-    |   |-- intro.html
-    |   `-- js
-    |       |-- highlight.min.js
-    |       |-- jquery.min.js
-    |       `-- page_effects.js
-    |-- repl-port
-    `-- stale
-        `-- leiningen.core.classpath.extract-native-dependencies
+    `-- doc
+        |-- asr.asr.html
+        |-- asr.autospecs.html
+        |-- asr.core.html
+        |-- asr.data.html
+        |-- asr.grammar.html
+        |-- asr.parsed.html
+        |-- asr.specs.html
+        |-- asr.utils.html
+        |-- index.html
+        `-- intro.html
 ```
 
 ## Theory of Operation

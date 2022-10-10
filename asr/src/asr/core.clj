@@ -542,6 +542,7 @@
 ;; |_|_|_|_| .__/_| \___/\_/\___\__,_| |_|_||_\__| |_.__/_|_||_\___/ .__/
 ;;         |_|                                                     |_|
 
+;; For testing, exclude bit-ops from IntegerBinOps.
 (s/def ::binop-no-bits
   (set/difference
    (eval (s/describe :asr.autospecs/binop))
@@ -552,7 +553,8 @@
   operations.
 
   Partially evaluate this on its operations, for example:
-  (partial unchecked-multiply-int,
+  (partial fast-int-exp-pluggable
+           unchecked-multiply-int,
            unchecked-divide-int,
            unchecked-subtract-int,
            Integer/MIN_VALUE)"
@@ -647,6 +649,13 @@
 ;; | ||_ \/ /___| '_ \ | ' \___/ _ \ '_ \___(_-</ -_) '  \(_-</ -_) '  \
 ;; |_|___/___|  |_.__/_|_||_|  \___/ .__/   /__/\___|_|_|_/__/\___|_|_|_|
 ;;                                 |_|
+
+;; Sem-Sem means specs that are doubly semantically correct:
+;;
+;; - They have correct *types* in their argument lists
+;;
+;; - They have correct arithmetic for expressions that can (and
+;; - should) be evaluated at compile time.
 
 (s/def ::i32-bin-op-semsem
   (s/or
