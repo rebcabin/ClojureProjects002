@@ -76,8 +76,10 @@
 ;; \__,_/__/\__,_|_|   |_| \___/_| |_|_|_|
 
 
-(defmulti asdl-form first #_"Convert three `ASDL` kinds into
-Clojure hashmaps" )
+(defmulti asdl-form
+  "Convert three `ASDL` kinds, `ASDL-SYMCONST`, `ASDL-COMPOSITE`,
+  and `ASDL-TUPLE`, into Clojure hashmaps"
+  first )
 
 (defmethod asdl-form :ASDL-SYMCONST
   #_"Convert `ASDL-SYMCONST` into a Clojure hashmap."

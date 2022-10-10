@@ -10,11 +10,7 @@
 
 (def all-asr
 
-  "## A Grammar for ASR in ASDL
-
-  from https://github.com/lcompilers/libasr/blob/main/src/libasr/ASR.asdl
-
-  ## ASDL Spec for ASR
+  "From https://github.com/lcompilers/libasr/blob/main/src/libasr/ASR.asdl
 
   Here is a big string that contains the ASR.asdl, the spec that
   any ASR instance must conform to. I had to escape the

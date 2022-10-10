@@ -26,29 +26,23 @@
 ;; /__/\__|\_,_|_| |_|
 
 (defn spec-from-symconst-stuff
-  "## Symconst-Head-Specs
+  "Construct and register all (approximately) 72 symconst
+  head-specs:
 
-  This next code block REGISTERS the (about) 72 head-specs by
-  `eval`'ing the `s/defs` written by `` `(s/def ...) ``. A spec is
-  *registered* into a hidden Clojure Spec Registry by side-effect
-  and is associated with the namespaced keyword produced by
-  `nskw-kebab-from`. Once this next code block runs, we'll
-  have (about) 72 head-specs magically registered and we can refer
-  to them by namespaced kebab'bed keyword name. For example,
-  `::implementation` will be registered and we can refer to it
-  via `(s/spec ::implementation)`.
+  A spec is *registered* into a hidden Clojure Spec Registry by
+  side-effect and is associated with a namespaced keyword produced
+  by `asr.utils/nskw-kebab-from`. For example,
+  `:asr.autospecs/implementation`.
 
   All specs, head-specs and term-specs alike must be registered
-  before being referred-to. Later, we'll break co-recursive cycles
-  by registering defective specs then backpatching them. For
-  example, the term-spec for `::symbol` refers to the term-spec
-  for `::symbol-table`, which refers to the term-spec for
-  `::symbol`. Clojure.spec can't tolerate that, but it can
-  tolerate a defective term-spec for `::symbol-table` that we
-  backpatch later.
-
-  Construct and register all (approximately) 72 symconst
-  head-specs:
+  before being referred-to. We break co-recursive cycles by
+  registering defective autospecs then backpatching them by
+  hand-written specs in namespace `asr.specs`. For example, the
+  term-spec for `::symbol` refers to the term-spec for
+  `::symbol-table`, which refers to the term-spec for `::symbol`.
+  Clojure.spec can't tolerate that, but it can tolerate a
+  defective term-spec for `::symbol-table` that we backpatch
+  later by hand.
   "
   [symconst-stuff]
   (let [symconst (-> symconst-stuff :form :ASDL-SYMCONST)
@@ -67,13 +61,10 @@
 ;;  \__\___|_| |_|_|_|
 
 (defn symconst-spec-for-term
-  "### Symconst Spec for Term [sic]
-
-  For each term, write a `set` containing its alternative heads,
+  "For each term, spec a `set` containing its alternative heads,
   e.g., the term `binop` is one of the ten heads `Add`, `Sub`, and
-  so on, to `BitRShift`.
-
-  To unit-test `spec-for-term`, `eval` one of them and check it:
+  so on, to `BitRShift`. The spec produced by this function must
+  be `eval`'ed to register the spec.
   "
   [stuffs-for-term]
   (let [term (-> stuffs-for-term first :term)
@@ -95,9 +86,8 @@
 ;; \__,_|\_,_|_|_|_|_|_|_|_\___/__/
 
 (defn dummy-generator-for-heads
-  "A dummy generator for argument lists for heads which just
-  inserts a list of random length of random identifiers. Not
-  suitable long-term."
+  "Insert a list of random length of random identifiers. For
+  producing dummy specs that are later backpatched by hand."
   [heads]
   (tgen/let [head (s/gen heads)
              rest (gen/list (s/gen :asr.specs/identifier))]
@@ -105,9 +95,9 @@
 
 
 (defn dummy-lpred
-  "A predicate for dummy specs that checks simply that the
-  instance is a list with an appropriate head and zero or
-  more items of any type. Not suitable long-term."
+  "Check simply that the instance is a list with an appropriate head
+  and zero or more items of any type. For producing dummy specs
+  that are later backpatched by hand."
   [heads]
   (s/and seq?
          (fn [lyst] (-> lyst count (>= 1)))
@@ -121,9 +111,8 @@
 ;;    |_|                                          |_|
 
 (defn heads-for-composite
-  "Produce a list of symbolic heads (like 'RealUnaryMinus and
-  'ArraySection), from a term like :asr.core/expr. See
-  all-heads-for-exprs-test in core_test.clj."
+  "Produce a list of symbolic heads (like `RealUnaryMinus` and
+  `ArraySection`), from a term like `:asr.autospecs/expr`."
   [term]
   (->> big-map-of-speclets-from-terms
        term
@@ -170,9 +159,7 @@
 ;;          |___/
 
 (defn spec-from-arg
-  "### Spec Fragment from Arg, Args
-
-  Convert multiplicities into clojure.spec equivalents.
+  "Convert multiplicities from `asr.parsed` into clojure.spec equivalents.
   "
   [arg]
   (let [type (nskw-kebab-from (:ASDL-TYPE arg))
@@ -183,7 +170,9 @@
       :asr.parsed/zero-or-more `(s/* (s/spec ~type)))))
 
 
-(defn spec-from-args [args]
+(defn spec-from-args
+  "Write a spec to be eval'ed later from an args tuple."
+  [args]
   (let [nyms (->> args (map :ASDL-NYM)           #_echo)
         kyms (->> nyms (map (comp keyword name)) #_echo)
         specules (->> args (map spec-from-arg)   #_echo)
@@ -191,7 +180,9 @@
     `(s/cat ~@riffle)))
 
 
-(defn spec-from-head-and-args [head args]
+(defn spec-from-head-and-args
+  "Write a spec to be eval'ed later from a head and an args tuple."
+  [head args]
   (let [nyms (->> args (map :ASDL-NYM)           #_echo)
         kyms (->> nyms (map (comp keyword name)) #_echo)
         specules (->> args (map spec-from-arg)   #_echo)
@@ -207,7 +198,10 @@
 ;;  \__|\_,_| .__/_\___/__/
 ;;          |_|
 
-(defn tuple-head-spec-from-stuff [tuple-stuff]
+(defn tuple-head-spec-from-stuff
+  "Write a spec to be eval'ed later from tuple stuff (see
+  `asr.parsed` for definition of *stuff*)."
+  [tuple-stuff]
   #_(println "tuple-head-spec-from-stuff")
   (let [nskw (-> tuple-stuff :head name nskw-kebab-from #_echo)
         args (-> tuple-stuff :form :ASDL-ARGS           #_echo)]
@@ -215,22 +209,18 @@
 
 
 (def tuple-stuffs
-  "# Tuple Specs
-
-  There are six tuple heads. Their names will change from
-  run-to-run because the names are gensymmed.
+  "List of all six tuple stuffs. There are six tuple heads. Their
+  names will change from run-to-run because the names are
+  gensymmed.
   "
   (->> big-list-of-stuff
        (filter #(= (:kind %) :ASDL-TUPLE))))
 
 
 (def tuple-stuffss-by-term
-  "## Tuple Term-Specs
-
-  As before, we really need clojure.specs for the terms
-  corresponding to the heads.
-
-  ### Tuple Stuffss [sic] by Term (one extra level of lists)
+  "Lists of tuple stuffs for each term. As before, we really need
+  clojure.specs for the terms corresponding to the heads, an
+  inverted index.
   "
   (partition-by :term tuple-stuffs))
 
@@ -239,7 +229,10 @@
 
 ;; To register the 6 term-specs, `eval` them.
 
-(defn tuple-term-spec-from-stuffs [stuffs]
+(defn tuple-term-spec-from-stuffs
+  "Write a tuple term-spec to be eval'ed later from tuple stuffs
+  (see `asr.parsed` for definition of *stuff*)."
+  [stuffs]
   #_(println "tuple-term-spec-from-stuffs")
   (let [term (-> stuffs first :term                      #_echo)
         nskw (-> term name nskw-kebab-from               #_echo)
@@ -289,24 +282,15 @@
 ;;    |_|                                                |_|
 
 (defn spec-from-composite
-  "# Back-patching Symbol
-
-  TODO
-
-  # First Composite Spec: `TranslationUnit`
-
-  Write specs as data lists and `eval` them later. Turns out it's
+  "Write specs as data lists and `eval` them later. Turns out it's
   necessary to do that, and it's a beneficial accident lest we
   clutter up the namespace of specs.
 
   Composites and tuples have lists of type-var pairs, that is, of
   args. We've already handled arg lists in `spec-from-args` above.
 
-  Specs for all tuples' heads and terms have already been
-  registered.
-
-  Specs for all symconsts' heads and terms have already been
-  registered.
+  Assumes specs for all tuples' heads and terms have already been
+  registered. Don't call this function too early.
   "
   [composite]
   (let [head (-> composite :ASDL-HEAD symbol echo)
@@ -352,7 +336,7 @@
 ;; specs. Our first example of SemNASR will be IntegerBinOp.
 
 (defn do-synnasr
-  "Automated items for the spec registry. W.I.P."
+  "Side-effecting automated items for the spec registry. W.I.P."
   []
 
   (print "symconst head specs: ")
