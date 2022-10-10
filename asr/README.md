@@ -36,6 +36,34 @@ See https://github.com/weavejester/codox.
 lein codox
 ```
 
+Look for generated docs in
+
+```
+target
+`-- default
+    |-- doc
+    |   |-- asr.asr.html
+    |   |-- asr.autospecs.html
+    |   |-- asr.core.html
+    |   |-- asr.data.html
+    |   |-- asr.grammar.html
+    |   |-- asr.parsed.html
+    |   |-- asr.specs.html
+    |   |-- asr.utils.html
+    |   |-- css
+    |   |   |-- default.css
+    |   |   `-- highlight.css
+    |   |-- index.html
+    |   |-- intro.html
+    |   `-- js
+    |       |-- highlight.min.js
+    |       |-- jquery.min.js
+    |       `-- page_effects.js
+    |-- repl-port
+    `-- stale
+        `-- leiningen.core.classpath.extract-native-dependencies
+```
+
 ## Theory of Operation
 
 The grammar for [ASR](https://github.com/lcompilers/libasr) is
