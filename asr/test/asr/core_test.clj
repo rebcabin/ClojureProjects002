@@ -28,31 +28,31 @@
 
 
 (deftest kebab-test
-  (testing "kebab-case"
-    (is (= (nskw-kebab-from 'TranslationUnit)
+  (testing "kebab-case from asr.utils"
+    (is (= (asr.utils/nskw-kebab-from 'TranslationUnit)
            :asr.autospecs/translation-unit))
-    (is (= (nskw-kebab-from "TranslationUnit")
+    (is (= (asr.utils/nskw-kebab-from "TranslationUnit")
            :asr.autospecs/translation-unit))
     (is (thrown?
          Exception
-         (nskw-kebab-from :should-fail)))))
+         (asr.utils/nskw-kebab-from :should-fail)))))
 
 
 (deftest whole-spec-test
   (testing "whole example passes trivial spec"
-    (is (s/valid? list? expr-01-211000))))
+    (is (s/valid? list? asr.data/expr-01-211000))))
 
 
 (deftest shallow-map-from-speclet-test
 
   (testing "shallow map from speclet"
 
-    (is (= (shallow-map-from-speclet (speclets 3))
+    (is (= (asr.parsed/shallow-map-from-speclet (speclets 3))
            {:ASDL-FORMS
             '([:ASDL-SYMCONST "Public"] [:ASDL-SYMCONST "Private"]),
             :ASDL-TERM "access"}))
 
-    (is (= (shallow-map-from-speclet (speclets 0))
+    (is (= (asr.parsed/shallow-map-from-speclet (speclets 0))
            {:ASDL-FORMS
             '([:ASDL-COMPOSITE
                [:ASDL-HEAD "TranslationUnit"]
@@ -65,7 +65,7 @@
                  [:ASDL-NYM "items"]]]]),
             :ASDL-TERM "unit"}))
 
-    (is (= (shallow-map-from-speclet (speclets 22))
+    (is (= (asr.parsed/shallow-map-from-speclet (speclets 22))
            {:ASDL-FORMS
             '([:ASDL-TUPLE
                [:ASDL-ARGS
@@ -458,7 +458,7 @@
              :asr.autospecs/xor
              }
            (->> symconst-stuffs
-                (map spec-from-symconst-stuff)
+                (map asr.autospecs/spec-from-symconst-stuff)
                 (map eval)
                 set)))))
 
@@ -470,7 +470,7 @@
               ClassType           Module              EnumType
               DerivedType         AssociateBlock      Variable
               Program}
-           (heads-for-composite :asr.autospecs/symbol)))))
+           (asr.autospecs/heads-for-composite :asr.autospecs/symbol)))))
 
 
 (deftest all-heads-for-stmts-test
