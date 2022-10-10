@@ -14,9 +14,7 @@
 
 (def asdl-grammar
 
-  "## Instaparse Grammar for ASDL
-
-  We'll parse the ASDL spec for ASR into Clojure vectors and
+  "We'll parse the ASDL spec for ASR into Clojure vectors and
   hashmaps, then generate clojure.specs for terms and forms from
   the vectors and hashmaps.
 
