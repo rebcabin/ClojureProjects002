@@ -582,7 +582,6 @@
 ;;                 |___/                       |_|
 
 
-#_
 (let [test-vector '(IntegerBinOp
                     (IntegerBinOp
                      (IntegerConstant
@@ -601,10 +600,9 @@
                     (IntegerConstant
                      25 (Integer 4 [])))]
 
-  (s/explain :asr.core/integer-bin-op test-vector))
+  (s/explain :asr.autospecs/integer-bin-op test-vector))
 
 
-#_
 (let [test-vector '(IntegerBinOp
                     (IntegerBinOp
                      (IntegerConstant
@@ -628,15 +626,14 @@
               to evolving integer-bin-op spec."
 
       (is (= test-vector
-             (s/conform :asr.core/expr test-vector)))
+             (s/conform :asr.autospecs/expr test-vector)))
 
-      (is (s/valid? :asr.core/integer-bin-op test-vector)))))
+      (is (s/valid? :asr.autospecs/integer-bin-op test-vector)))))
 
 
-#_
 (let [integer-bin-op-stuff
-      '({:head :asr.core/IntegerBinOp,
-         :term :asr.core/expr,
+      '({:head :asr.autospecs/IntegerBinOp,
+         :term :asr.autospecs/expr,
          :kind :ASDL-COMPOSITE,
          :form
          {:ASDL-COMPOSITE
@@ -653,7 +650,7 @@
   (deftest IntegerBinop-stuff-test
     (testing "stuff for IntegerBinOp has expected data"
       (is (= integer-bin-op-stuff
-             (filter #(= (:head %) :asr.core/IntegerBinOp)
+             (filter #(= (:head %) :asr.autospecs/IntegerBinOp)
                      big-list-of-stuff))))))
 
 

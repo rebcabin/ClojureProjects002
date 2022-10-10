@@ -17,10 +17,24 @@
             [clojure.set                   :as    set           ]))
 
 
+;;  _    _      _     _  ___
+;; | |__(_)__ _(_)_ _| ||__ \
+;; | '_ \ / _` | | ' \  _|/_/
+;; |_.__/_\__, |_|_||_\__(_)
+;;        |___/
+
+
 (defn bigint?
   "Doesn't seem to be defined in system-supplied libraries."
   [n]
   (instance? clojure.lang.BigInt n))
+
+
+;;  _ _   _    _                _
+;; (_|_) | |__(_)__ _ _ _  __ _| |_
+;;  _ _  | '_ \ / _` | ' \/ _` |  _|
+;; (_|_) |_.__/_\__, |_||_\__,_|\__|
+;;              |___/
 
 ;; Overwrite print-method for clojure BigInt to get rid of
 ;; the "N" at the end (can't do this inside (-main) lest
@@ -44,9 +58,15 @@
 ;; CIDER Emacs buffer. We follow this convenience convention
 ;; frequently in this development section. Comments are cheap.
 
-#_(->> ::bignat s/exercise (map second))
+#_
+(->> ::bignat s/exercise (map second))
 ;; => (7 13 63 98225932 4572 28 31914670493 80 252 256185)
 
+
+;;  _ _      _ _                   _
+;; (_|_)  __| (_)_ __  ___ _ _  __(_)___ _ _  ___
+;;  _ _  / _` | | '  \/ -_) ' \(_-< / _ \ ' \(_-<
+;; (_|_) \__,_|_|_|_|_\___|_||_/__/_\___/_||_/__/
 
 (s/def ::dimensions
   (s/coll-of (s/or :nat-int nat-int?, :bigint ::bignat)
@@ -54,11 +74,22 @@
              :max-count 2,
              :into []))
 
-#_(-> ::dimensions (s/exercise 4))
-;; => ([[1 0] [[:nat-int 1] [:bigint 0]]]
-;;     [[1 0] [[:nat-int 1] [:nat-int 0]]]
+#_
+(-> ::dimensions (s/exercise))
+;; => ([[6] [[:bigint 6]]]
+;;     [[0] [[:nat-int 0]]]
+;;     [[13755145] [[:bigint 13755145]]]
+;;     [[222953 793456588] [[:bigint 222953] [:bigint 793456588]]]
+;;     [[8037912] [[:bigint 8037912]]]
 ;;     [[] []]
-;;     [[459] [[:bigint 459]]])
+;;     [[6694 3] [[:bigint 6694] [:nat-int 3]]])
+
+
+;;  _ _   _     _                        _   _
+;; (_|_) (_)_ _| |_ ___ __ _ ___ _ _ ___| |_| |_ _  _ _ __  ___   ___ ___ _ __
+;;  _ _  | | ' \  _/ -_) _` / -_) '_|___|  _|  _| || | '_ \/ -_) (_-</ -_) '  \
+;; (_|_) |_|_||_\__\___\__, \___|_|      \__|\__|\_, | .__/\___| /__/\___|_|_|_|
+;;                     |___/                     |__/|_|
 
 (s/def ::integer-ttype-semnasr
   (s/spec              ; means "nestable" not "spliceable" in other "regex" specs
@@ -66,17 +97,41 @@
           :kind        #{1 2 4 8} ;; i8, i16, i32, i64
           :dimensionss (s/+ ::dimensions))))
 
-#_(->> ::integer-ttype-semnasr
+(->> ::integer-ttype-semnasr
      s/gen
      gen/generate)
-;; => (Integer ;; head
-;;     4       ;; kind
-;;     [3223318265799195456]  ;; (dimensionss), bunch of dimensions
+;; => (Integer
+;;     1
 ;;     []
-;;     [28]
-;;     [8 313679744843364260991]
-;;     [87100772691971102709151610292570444761])
+;;     []
+;;     [352256673885445370349486716111 1624332]
+;;     [2]
+;;     []
+;;     [86580034 64261]
+;;     [8 458885090506053219617214830343524119916]
+;;     [27173 1610173734]
+;;     [48685 24306766029009794]
+;;     [1150789934200849078335609340599 6]
+;;     [2 403103245552]
+;;     [3]
+;;     [253202094266565303897073]
+;;     [38482940056007176601892386 290444503362439372561]
+;;     [2720]
+;;     [44]
+;;     [8627550682561420745323677756919725945686847947214688 1361957]
+;;     [12683960 712272279223862022492880049742732644816473428]
+;;     [883899]
+;;     [4060631819931453961107624898943598271095916602396458]
+;;     [4 0]
+;;     [25370]
+;;     [2375688583602594078904527])
 
+
+;;  _     _                                  _            _   _
+;; (_)_ _| |_ ___ __ _ ___ _ _   ___ __ __ _| |__ _ _ _  | |_| |_ _  _ _ __  ___
+;; | | ' \  _/ -_) _` / -_) '_| (_-</ _/ _` | / _` | '_| |  _|  _| || | '_ \/ -_)
+;; |_|_||_\__\___\__, \___|_|   /__/\__\__,_|_\__,_|_|    \__|\__|\_, | .__/\___|
+;;               |___/                                            |__/|_|
 
 ;; Often, we need a scalar that has no dimensionss [sic].
 
@@ -86,6 +141,7 @@
           :kind        #{1 2 4 8}
           :dimensionss #{[]})))
 
+#_
 (-> ::integer-scalar-ttype-semnasr
       (s/exercise 4))
 ;; => ([(Integer 2 []) {:head Integer, :kind 2, :dimensionss []}]
@@ -311,6 +367,7 @@
         :i32 ::i32-non-zero-constant-semnasr
         :i64 ::i64-non-zero-constant-semnasr))
 
+#_
 (-> ::integer-non-zero-constant-semnasr
     (s/exercise 4))
 ;; => ([(IntegerConstant 1 (Integer 2 []))
@@ -340,7 +397,6 @@
 ;; | | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \ \__ \ _|| |\/| |
 ;; |_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/ |___/___|_|  |_|
 ;;               |___/                               |_|
-
 
 ;; This section tests some SemNASR, some semantically valid
 ;; nonsense ASR programs. There are multiple levels of semantics,
@@ -476,7 +532,15 @@
         value
         '(Integer 4 [])))
 
+#_
 (gen/generate (tgen/return (i32-constant-semnasr 42)))
+
+
+;;  _                               _   _     _     _    _
+;; (_)_ __  _ __ _ _ _____ _____ __| | (_)_ _| |_  | |__(_)_ _  ___ _ __
+;; | | '  \| '_ \ '_/ _ \ V / -_) _` | | | ' \  _| | '_ \ | ' \/ _ \ '_ \
+;; |_|_|_|_| .__/_| \___/\_/\___\__,_| |_|_||_\__| |_.__/_|_||_\___/ .__/
+;;         |_|                                                     |_|
 
 (s/def ::binop-no-bits
   (set/difference
@@ -577,6 +641,7 @@
       (list 'IntegerBinOp (ic left) binop (ic right)
             tt (ic value)))))
 
+#_
 (gen/sample (i32-bin-op-leaf-gen-pluggable
              asr-i32-unchecked-binop->clojure-op) 20)
 ;; => ((IntegerBinOp
@@ -709,36 +774,7 @@
 ;; | _|| ' \/ _` | / _ \  _| |  _/ '_/ _ \/ _` | || / _|  _| / _ \ ' \
 ;; |___|_||_\__,_| \___/_|   |_| |_| \___/\__,_|\_,_\__|\__|_\___/_||_|
 
-;;; END OF PRODUCTION HORIZON
-;;; Code below this line is, again, experimental
 
-;; The following breaks some semantics by mixing integer kinds.
-;; It's not fully syntactical, but might be useful.
-
-(s/def ::integer-bin-op-mixed-kind-base-semnasr
-  (s/tuple
-   #{'IntegerBinOp}
-   ::integer-constant-semnasr ; stack overflow if integer-bin-op-semnsasr
-   :asr.autospecs/binop
-   ::integer-constant-semnasr
-   ::integer-scalar-ttype-semnasr))
-
-;; for interactive testing in CIDER:
-;; C-x C-e after the closing parenthesis
-#_(->> ::integer-bin-op-mixed-kind-base-semnasr
-     s/gen
-     gen/generate)
-
-;;                     _        _   _    _
-;;  __ _ _ _  ___ __ _| |_ ___ (_) | |__(_)_ _    ___ _ __
-;; / _` | ' \(_-</ _` |  _|_ / | | | '_ \ | ' \  / _ \ '_ \
-;; \__,_|_||_/__/\__,_|\__/__| |_| |_.__/_|_||_| \___/ .__/
-;;                                                   |_|
-
-;; The following ansatz is automatically created from the ASDL
-;; parse and satisfies a conformance test in core_test.clj.
-
-#_
 (let [integer-bin-op-stuff ;; SynNASR
       (filter #(= (:head %) :asr.autospecs/IntegerBinOp)
               big-list-of-stuff)]
