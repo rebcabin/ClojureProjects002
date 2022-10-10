@@ -1,11 +1,9 @@
 (ns asr.core-test
   (:use [asr.core]
-
         [asr.utils]
         [asr.data]
         [asr.parsed]
-        [asr.autospecs]
-        [asr.specs])
+        [asr.autospecs])
   (:require [clojure.test                  :refer :all]
             [clojure.spec.alpha            :as s      ]
             [clojure.spec.gen.alpha        :as gen    ]
@@ -13,10 +11,6 @@
             [clojure.test.check.properties :as tprop  ]))
 
 
-;; Failure of the NSPECS number check will remind you to write
-;; tests for your new specs!
-
-(def NSPECS          136) ;; Adjust to the number of specs in core.clj.
 (def NTESTS           50) ;; Bigger for more stress, smaller for more speed
 (def RECURSION-LIMIT   4) ;; ditto
 
@@ -36,9 +30,9 @@
 (deftest kebab-test
   (testing "kebab-case"
     (is (= (nskw-kebab-from 'TranslationUnit)
-           :asr.core/translation-unit))
+           :asr.autospecs/translation-unit))
     (is (= (nskw-kebab-from "TranslationUnit")
-           :asr.core/translation-unit))
+           :asr.autospecs/translation-unit))
     (is (thrown?
          Exception
          (nskw-kebab-from :should-fail)))))
@@ -106,20 +100,36 @@
 (deftest all-terms-test
   (testing "check all 28 terms"
     (is (= 28 (->> big-list-of-stuff (map :term) set count)))
-    (is (= #{:asr.core/array_index    :asr.core/cast_kind
-             :asr.core/ttype          :asr.core/stmt
-             :asr.core/expr           :asr.core/restriction
-             :asr.core/binop          :asr.core/dimension
-             :asr.core/abi            :asr.core/attribute_arg
-             :asr.core/unit           :asr.core/presence
-             :asr.core/cmpop          :asr.core/tbind
-             :asr.core/attribute      :asr.core/arraybound
-             :asr.core/deftype        :asr.core/alloc_arg
-             :asr.core/call_arg       :asr.core/storage_type
-             :asr.core/do_loop_head   :asr.core/symbol
-             :asr.core/access         :asr.core/integerboz
-             :asr.core/intent         :asr.core/case_stmt
-             :asr.core/trait          :asr.core/logicalbinop}
+    (is (= #{
+             :asr.autospecs/abi
+             :asr.autospecs/access
+             :asr.autospecs/alloc_arg
+             :asr.autospecs/array_index
+             :asr.autospecs/arraybound
+             :asr.autospecs/attribute
+             :asr.autospecs/attribute_arg
+             :asr.autospecs/binop
+             :asr.autospecs/call_arg
+             :asr.autospecs/case_stmt
+             :asr.autospecs/cast_kind
+             :asr.autospecs/cmpop
+             :asr.autospecs/deftype
+             :asr.autospecs/dimension
+             :asr.autospecs/do_loop_head
+             :asr.autospecs/expr
+             :asr.autospecs/integerboz
+             :asr.autospecs/intent
+             :asr.autospecs/logicalbinop
+             :asr.autospecs/presence
+             :asr.autospecs/restriction
+             :asr.autospecs/stmt
+             :asr.autospecs/storage_type
+             :asr.autospecs/symbol
+             :asr.autospecs/tbind
+             :asr.autospecs/trait
+             :asr.autospecs/ttype
+             :asr.autospecs/unit
+             }
            (set (map :term big-list-of-stuff))))))
 
 
@@ -141,117 +151,229 @@
                 (filter not-asr-tuple)
                 set
                 count)))
-    (is (= #{:asr.core/ArrayPack             :asr.core/WhileLoop
-             :asr.core/Interactive           :asr.core/LogicalNot
-             :asr.core/TemplateBinOp         :asr.core/Add
-             :asr.core/ListSection           :asr.core/StringItem
-             :asr.core/Hex                   :asr.core/DerivedType
-             :asr.core/LFortranModule        :asr.core/RealUnaryMinus
-             :asr.core/StringRepeat          :asr.core/SetInsert
-             :asr.core/NEqv                  :asr.core/IntegerConstant
-             :asr.core/FunctionCall          :asr.core/ArraySection
-             :asr.core/BitAnd                :asr.core/CaseStmt_Range
-             :asr.core/Parameter             :asr.core/IfArithmetic
-             :asr.core/IntegerToCharacter    :asr.core/Associate
-             :asr.core/Pow                   :asr.core/Allocatable
-             :asr.core/FileOpen              :asr.core/LogicalToCharacter
-             :asr.core/TranslationUnit       :asr.core/ComplexIm
-             :asr.core/AssociateBlock        :asr.core/DerivedTypeConstructor
-             :asr.core/FileRewind            :asr.core/ComplexConstant
-             :asr.core/DictInsert            :asr.core/RealToReal
-             :asr.core/InOut                 :asr.core/ComplexRe
-             :asr.core/GFortranModule        :asr.core/Dict
-             :asr.core/FileWrite             :asr.core/ComplexBinOp
-             :asr.core/LogicalToReal         :asr.core/Character
-             :asr.core/Public                :asr.core/IntegerToComplex
-             :asr.core/Eqv                   :asr.core/RealToCharacter
-             :asr.core/ArrayConstant         :asr.core/DoLoop
-             :asr.core/ArrayTranspose        :asr.core/IntegerUnaryMinus
-             :asr.core/ComplexUnaryMinus     :asr.core/Complex
-             :asr.core/ComplexCompare        :asr.core/Class
-             :asr.core/RealToComplex         :asr.core/And
-             :asr.core/DoConcurrentLoop      :asr.core/ErrorStop
-             :asr.core/Return                :asr.core/Xor
-             :asr.core/ListClear             :asr.core/LBound
-             :asr.core/In                    :asr.core/SetLen
-             :asr.core/Print                 :asr.core/Attribute
-             :asr.core/GoTo                  :asr.core/ImpliedDoLoop
-             :asr.core/Source                :asr.core/Intrinsic
-             :asr.core/Program               :asr.core/Implementation
-             :asr.core/IntegerBOZ            :asr.core/Real
-             :asr.core/SubroutineCall        :asr.core/Required
-             :asr.core/IntegerBitLen         :asr.core/SupportsPlus
-             :asr.core/LtE                   :asr.core/EnumRef
-             :asr.core/ArrayMatMul           :asr.core/TupleLen
-             :asr.core/ComplexToReal         :asr.core/StringSection
-             :asr.core/ComplexConstructor    :asr.core/BitOr
-             :asr.core/RealCompare           :asr.core/IntegerBitNot
-             :asr.core/Sub                   :asr.core/ReturnVar
-             :asr.core/LogicalCompare        :asr.core/IfExp
-             :asr.core/Div                   :asr.core/Var
-             :asr.core/FileInquire           :asr.core/CPtrToPointer
-             :asr.core/Private               :asr.core/ListConstant
-             :asr.core/Eq                    :asr.core/Lt
-             :asr.core/RealToLogical         :asr.core/IntegerBinOp
-             :asr.core/Enum                  :asr.core/SetRemove
-             :asr.core/LogicalToInteger      :asr.core/CPtr
-             :asr.core/Local                 :asr.core/ListInsert
-             :asr.core/Mul                   :asr.core/PointerToCPtr
-             :asr.core/Default               :asr.core/DictConstant
-             :asr.core/Out                   :asr.core/RealConstant
-             :asr.core/StringLen             :asr.core/ExplicitDeallocate
-             :asr.core/ListAppend            :asr.core/NamedExpr
-             :asr.core/BitLShift             :asr.core/Where
-             :asr.core/Integer               :asr.core/CharacterToLogical
-             :asr.core/BindC                 :asr.core/Unspecified
-             :asr.core/Exit                  :asr.core/UBound
-             :asr.core/TypeParameter         :asr.core/OverloadedBinOp
-             :asr.core/ImplicitDeallocate    :asr.core/Select
-             :asr.core/BlockCall             :asr.core/Block
-             :asr.core/DerivedRef            :asr.core/Stop
-             :asr.core/Assert                :asr.core/Optional
-             :asr.core/SupportsZero          :asr.core/DictItem
-             :asr.core/FileRead              :asr.core/ArrayItem
-             :asr.core/IntegerToInteger      :asr.core/DictPop
-             :asr.core/DictLen               :asr.core/BitRShift
-             :asr.core/ListLen               :asr.core/GtE
-             :asr.core/ComplexToComplex      :asr.core/Binary
-             :asr.core/SetConstant           :asr.core/Bind
-             :asr.core/StringConstant        :asr.core/StringOrd
-             :asr.core/ComplexToLogical      :asr.core/Nullify
-             :asr.core/OverloadedCompare     :asr.core/Tuple
-             :asr.core/RealBinOp             :asr.core/ListPop
-             :asr.core/Function              :asr.core/CLoc
-             :asr.core/StringCompare         :asr.core/CaseStmt
-             :asr.core/RealToInteger         :asr.core/Or
-             :asr.core/ListItem              :asr.core/Save
-             :asr.core/AssociateBlockCall    :asr.core/TupleConstant
-             :asr.core/Gt                    :asr.core/IntegerToReal
-             :asr.core/Allocate              :asr.core/GenericProcedure
-             :asr.core/Cycle                 :asr.core/ForAllSingle
-             :asr.core/ClassProcedure        :asr.core/IntegerCompare
-             :asr.core/ExternalSymbol        :asr.core/Interface
-             :asr.core/Any                   :asr.core/Octal
-             :asr.core/Assign                :asr.core/FileClose
-             :asr.core/Logical               :asr.core/Derived
-             :asr.core/StringConcat          :asr.core/ListRemove
-             :asr.core/List                  :asr.core/Flush
-             :asr.core/ListConcat            :asr.core/ClassType
-             :asr.core/Variable              :asr.core/CharacterToList
-             :asr.core/Assignment            :asr.core/ArrayBound
-             :asr.core/LogicalBinOp          :asr.core/CustomOperator
-             :asr.core/IntegerToLogical      :asr.core/Divisible
-             :asr.core/LogicalConstant       :asr.core/GetPointer
-             :asr.core/CharacterToInteger    :asr.core/BitXor
-             :asr.core/Set                   :asr.core/StringChr
-             :asr.core/ArrayReshape          :asr.core/EnumTypeConstructor
-             :asr.core/BitCast               :asr.core/Cast
-             :asr.core/SetPop                :asr.core/TupleItem
-             :asr.core/NotEq                 :asr.core/If
-             :asr.core/Pointer               :asr.core/GoToTarget
-             :asr.core/Module                :asr.core/ArraySize
-             :asr.core/TemplateToReal        :asr.core/EnumType
-             :asr.core/Restriction}
+    (is (= #{
+             :asr.autospecs/Add
+             :asr.autospecs/Allocatable
+             :asr.autospecs/Allocate
+             :asr.autospecs/And
+             :asr.autospecs/Any
+             :asr.autospecs/ArrayBound
+             :asr.autospecs/ArrayConstant
+             :asr.autospecs/ArrayItem
+             :asr.autospecs/ArrayMatMul
+             :asr.autospecs/ArrayPack
+             :asr.autospecs/ArrayReshape
+             :asr.autospecs/ArraySection
+             :asr.autospecs/ArraySize
+             :asr.autospecs/ArrayTranspose
+             :asr.autospecs/Assert
+             :asr.autospecs/Assign
+             :asr.autospecs/Assignment
+             :asr.autospecs/Associate
+             :asr.autospecs/AssociateBlock
+             :asr.autospecs/AssociateBlockCall
+             :asr.autospecs/Attribute
+             :asr.autospecs/Binary
+             :asr.autospecs/Bind
+             :asr.autospecs/BindC
+             :asr.autospecs/BitAnd
+             :asr.autospecs/BitCast
+             :asr.autospecs/BitLShift
+             :asr.autospecs/BitOr
+             :asr.autospecs/BitRShift
+             :asr.autospecs/BitXor
+             :asr.autospecs/Block
+             :asr.autospecs/BlockCall
+             :asr.autospecs/CLoc
+             :asr.autospecs/CPtr
+             :asr.autospecs/CPtrToPointer
+             :asr.autospecs/CaseStmt
+             :asr.autospecs/CaseStmt_Range
+             :asr.autospecs/Cast
+             :asr.autospecs/Character
+             :asr.autospecs/CharacterToInteger
+             :asr.autospecs/CharacterToList
+             :asr.autospecs/CharacterToLogical
+             :asr.autospecs/Class
+             :asr.autospecs/ClassProcedure
+             :asr.autospecs/ClassType
+             :asr.autospecs/Complex
+             :asr.autospecs/ComplexBinOp
+             :asr.autospecs/ComplexCompare
+             :asr.autospecs/ComplexConstant
+             :asr.autospecs/ComplexConstructor
+             :asr.autospecs/ComplexIm
+             :asr.autospecs/ComplexRe
+             :asr.autospecs/ComplexToComplex
+             :asr.autospecs/ComplexToLogical
+             :asr.autospecs/ComplexToReal
+             :asr.autospecs/ComplexUnaryMinus
+             :asr.autospecs/CustomOperator
+             :asr.autospecs/Cycle
+             :asr.autospecs/Default
+             :asr.autospecs/Derived
+             :asr.autospecs/DerivedRef
+             :asr.autospecs/DerivedType
+             :asr.autospecs/DerivedTypeConstructor
+             :asr.autospecs/Dict
+             :asr.autospecs/DictConstant
+             :asr.autospecs/DictInsert
+             :asr.autospecs/DictItem
+             :asr.autospecs/DictLen
+             :asr.autospecs/DictPop
+             :asr.autospecs/Div
+             :asr.autospecs/Divisible
+             :asr.autospecs/DoConcurrentLoop
+             :asr.autospecs/DoLoop
+             :asr.autospecs/Enum
+             :asr.autospecs/EnumRef
+             :asr.autospecs/EnumType
+             :asr.autospecs/EnumTypeConstructor
+             :asr.autospecs/Eq
+             :asr.autospecs/Eqv
+             :asr.autospecs/ErrorStop
+             :asr.autospecs/Exit
+             :asr.autospecs/ExplicitDeallocate
+             :asr.autospecs/ExternalSymbol
+             :asr.autospecs/FileClose
+             :asr.autospecs/FileInquire
+             :asr.autospecs/FileOpen
+             :asr.autospecs/FileRead
+             :asr.autospecs/FileRewind
+             :asr.autospecs/FileWrite
+             :asr.autospecs/Flush
+             :asr.autospecs/ForAllSingle
+             :asr.autospecs/Function
+             :asr.autospecs/FunctionCall
+             :asr.autospecs/GFortranModule
+             :asr.autospecs/GenericProcedure
+             :asr.autospecs/GetPointer
+             :asr.autospecs/GoTo
+             :asr.autospecs/GoToTarget
+             :asr.autospecs/Gt
+             :asr.autospecs/GtE
+             :asr.autospecs/Hex
+             :asr.autospecs/If
+             :asr.autospecs/IfArithmetic
+             :asr.autospecs/IfExp
+             :asr.autospecs/Implementation
+             :asr.autospecs/ImplicitDeallocate
+             :asr.autospecs/ImpliedDoLoop
+             :asr.autospecs/In
+             :asr.autospecs/InOut
+             :asr.autospecs/Integer
+             :asr.autospecs/IntegerBOZ
+             :asr.autospecs/IntegerBinOp
+             :asr.autospecs/IntegerBitLen
+             :asr.autospecs/IntegerBitNot
+             :asr.autospecs/IntegerCompare
+             :asr.autospecs/IntegerConstant
+             :asr.autospecs/IntegerToCharacter
+             :asr.autospecs/IntegerToComplex
+             :asr.autospecs/IntegerToInteger
+             :asr.autospecs/IntegerToLogical
+             :asr.autospecs/IntegerToReal
+             :asr.autospecs/IntegerUnaryMinus
+             :asr.autospecs/Interactive
+             :asr.autospecs/Interface
+             :asr.autospecs/Intrinsic
+             :asr.autospecs/LBound
+             :asr.autospecs/LFortranModule
+             :asr.autospecs/List
+             :asr.autospecs/ListAppend
+             :asr.autospecs/ListClear
+             :asr.autospecs/ListConcat
+             :asr.autospecs/ListConstant
+             :asr.autospecs/ListInsert
+             :asr.autospecs/ListItem
+             :asr.autospecs/ListLen
+             :asr.autospecs/ListPop
+             :asr.autospecs/ListRemove
+             :asr.autospecs/ListSection
+             :asr.autospecs/Local
+             :asr.autospecs/Logical
+             :asr.autospecs/LogicalBinOp
+             :asr.autospecs/LogicalCompare
+             :asr.autospecs/LogicalConstant
+             :asr.autospecs/LogicalNot
+             :asr.autospecs/LogicalToCharacter
+             :asr.autospecs/LogicalToInteger
+             :asr.autospecs/LogicalToReal
+             :asr.autospecs/Lt
+             :asr.autospecs/LtE
+             :asr.autospecs/Module
+             :asr.autospecs/Mul
+             :asr.autospecs/NEqv
+             :asr.autospecs/NamedExpr
+             :asr.autospecs/NotEq
+             :asr.autospecs/Nullify
+             :asr.autospecs/Octal
+             :asr.autospecs/Optional
+             :asr.autospecs/Or
+             :asr.autospecs/Out
+             :asr.autospecs/OverloadedBinOp
+             :asr.autospecs/OverloadedCompare
+             :asr.autospecs/Parameter
+             :asr.autospecs/Pointer
+             :asr.autospecs/PointerToCPtr
+             :asr.autospecs/Pow
+             :asr.autospecs/Print
+             :asr.autospecs/Private
+             :asr.autospecs/Program
+             :asr.autospecs/Public
+             :asr.autospecs/Real
+             :asr.autospecs/RealBinOp
+             :asr.autospecs/RealCompare
+             :asr.autospecs/RealConstant
+             :asr.autospecs/RealToCharacter
+             :asr.autospecs/RealToComplex
+             :asr.autospecs/RealToInteger
+             :asr.autospecs/RealToLogical
+             :asr.autospecs/RealToReal
+             :asr.autospecs/RealUnaryMinus
+             :asr.autospecs/Required
+             :asr.autospecs/Restriction
+             :asr.autospecs/Return
+             :asr.autospecs/ReturnVar
+             :asr.autospecs/Save
+             :asr.autospecs/Select
+             :asr.autospecs/Set
+             :asr.autospecs/SetConstant
+             :asr.autospecs/SetInsert
+             :asr.autospecs/SetLen
+             :asr.autospecs/SetPop
+             :asr.autospecs/SetRemove
+             :asr.autospecs/Source
+             :asr.autospecs/Stop
+             :asr.autospecs/StringChr
+             :asr.autospecs/StringCompare
+             :asr.autospecs/StringConcat
+             :asr.autospecs/StringConstant
+             :asr.autospecs/StringItem
+             :asr.autospecs/StringLen
+             :asr.autospecs/StringOrd
+             :asr.autospecs/StringRepeat
+             :asr.autospecs/StringSection
+             :asr.autospecs/Sub
+             :asr.autospecs/SubroutineCall
+             :asr.autospecs/SupportsPlus
+             :asr.autospecs/SupportsZero
+             :asr.autospecs/TemplateBinOp
+             :asr.autospecs/TemplateToReal
+             :asr.autospecs/TranslationUnit
+             :asr.autospecs/Tuple
+             :asr.autospecs/TupleConstant
+             :asr.autospecs/TupleItem
+             :asr.autospecs/TupleLen
+             :asr.autospecs/TypeParameter
+             :asr.autospecs/UBound
+             :asr.autospecs/Unspecified
+             :asr.autospecs/Var
+             :asr.autospecs/Variable
+             :asr.autospecs/Where
+             :asr.autospecs/WhileLoop
+             :asr.autospecs/Xor
+             }
            (set
             (filter
              not-asr-tuple
@@ -261,42 +383,80 @@
 (deftest install-all-symconst-specs-test
   (testing "install all 72 symconst specs"
     (is (= 72 (->> symconst-stuffs set count)))
-    (is (= (set '(:asr.core/implementation        :asr.core/interface
-                  :asr.core/l-bound               :asr.core/u-bound
-                  :asr.core/default               :asr.core/save
-                  :asr.core/parameter             :asr.core/allocatable
-                  :asr.core/add                   :asr.core/sub
-                  :asr.core/mul                   :asr.core/div
-                  :asr.core/pow                   :asr.core/bit-and
-                  :asr.core/bit-or                :asr.core/bit-xor
-                  :asr.core/bit-l-shift           :asr.core/bit-r-shift
-                  :asr.core/required              :asr.core/optional
-                  :asr.core/binary                :asr.core/hex
-                  :asr.core/octal                 :asr.core/and
-                  :asr.core/or                    :asr.core/xor
-                  :asr.core/n-eqv                 :asr.core/eqv
-                  :asr.core/supports-zero         :asr.core/supports-plus
-                  :asr.core/divisible             :asr.core/any
-                  :asr.core/source                :asr.core/l-fortran-module
-                  :asr.core/g-fortran-module      :asr.core/bind-c
-                  :asr.core/interactive           :asr.core/intrinsic
-                  :asr.core/real-to-integer       :asr.core/integer-to-real
-                  :asr.core/logical-to-real       :asr.core/real-to-real
-                  :asr.core/template-to-real      :asr.core/integer-to-integer
-                  :asr.core/real-to-complex       :asr.core/integer-to-complex
-                  :asr.core/integer-to-logical    :asr.core/real-to-logical
-                  :asr.core/character-to-logical  :asr.core/character-to-integer
-                  :asr.core/character-to-list     :asr.core/complex-to-logical
-                  :asr.core/complex-to-complex    :asr.core/complex-to-real
-                  :asr.core/logical-to-integer    :asr.core/real-to-character
-                  :asr.core/integer-to-character  :asr.core/logical-to-character
-                  :asr.core/local                 :asr.core/in
-                  :asr.core/out                   :asr.core/in-out
-                  :asr.core/return-var            :asr.core/unspecified
-                  :asr.core/public                :asr.core/private
-                  :asr.core/eq                    :asr.core/not-eq
-                  :asr.core/lt                    :asr.core/lt-e
-                  :asr.core/gt                    :asr.core/gt-e))
+    (is (= #{
+             :asr.autospecs/add
+             :asr.autospecs/allocatable
+             :asr.autospecs/and
+             :asr.autospecs/any
+             :asr.autospecs/binary
+             :asr.autospecs/bind-c
+             :asr.autospecs/bit-and
+             :asr.autospecs/bit-l-shift
+             :asr.autospecs/bit-or
+             :asr.autospecs/bit-r-shift
+             :asr.autospecs/bit-xor
+             :asr.autospecs/character-to-integer
+             :asr.autospecs/character-to-list
+             :asr.autospecs/character-to-logical
+             :asr.autospecs/complex-to-complex
+             :asr.autospecs/complex-to-logical
+             :asr.autospecs/complex-to-real
+             :asr.autospecs/default
+             :asr.autospecs/div
+             :asr.autospecs/divisible
+             :asr.autospecs/eq
+             :asr.autospecs/eqv
+             :asr.autospecs/g-fortran-module
+             :asr.autospecs/gt
+             :asr.autospecs/gt-e
+             :asr.autospecs/hex
+             :asr.autospecs/implementation
+             :asr.autospecs/in
+             :asr.autospecs/in-out
+             :asr.autospecs/integer-to-character
+             :asr.autospecs/integer-to-complex
+             :asr.autospecs/integer-to-integer
+             :asr.autospecs/integer-to-logical
+             :asr.autospecs/integer-to-real
+             :asr.autospecs/interactive
+             :asr.autospecs/interface
+             :asr.autospecs/intrinsic
+             :asr.autospecs/l-bound
+             :asr.autospecs/l-fortran-module
+             :asr.autospecs/local
+             :asr.autospecs/logical-to-character
+             :asr.autospecs/logical-to-integer
+             :asr.autospecs/logical-to-real
+             :asr.autospecs/lt
+             :asr.autospecs/lt-e
+             :asr.autospecs/mul
+             :asr.autospecs/n-eqv
+             :asr.autospecs/not-eq
+             :asr.autospecs/octal
+             :asr.autospecs/optional
+             :asr.autospecs/or
+             :asr.autospecs/out
+             :asr.autospecs/parameter
+             :asr.autospecs/pow
+             :asr.autospecs/private
+             :asr.autospecs/public
+             :asr.autospecs/real-to-character
+             :asr.autospecs/real-to-complex
+             :asr.autospecs/real-to-integer
+             :asr.autospecs/real-to-logical
+             :asr.autospecs/real-to-real
+             :asr.autospecs/required
+             :asr.autospecs/return-var
+             :asr.autospecs/save
+             :asr.autospecs/source
+             :asr.autospecs/sub
+             :asr.autospecs/supports-plus
+             :asr.autospecs/supports-zero
+             :asr.autospecs/template-to-real
+             :asr.autospecs/u-bound
+             :asr.autospecs/unspecified
+             :asr.autospecs/xor
+             }
            (->> symconst-stuffs
                 (map spec-from-symconst-stuff)
                 (map eval)
@@ -310,7 +470,7 @@
               ClassType           Module              EnumType
               DerivedType         AssociateBlock      Variable
               Program}
-           (heads-for-composite :asr.core/symbol)))))
+           (heads-for-composite :asr.autospecs/symbol)))))
 
 
 (deftest all-heads-for-stmts-test
@@ -331,7 +491,7 @@
               DictInsert          DoLoop              FileWrite
               GoToTarget          Return              ErrorStop
               DoConcurrentLoop    FileClose           IfArithmetic}
-           (heads-for-composite :asr.core/stmt)))))
+           (heads-for-composite :asr.autospecs/stmt)))))
 
 
 (deftest all-heads-for-exprs-test
@@ -365,7 +525,7 @@
               StringItem              StringConcat    SetLen
               ComplexCompare          ArrayBound      ComplexRe
               ComplexBinOp}
-           (heads-for-composite :asr.core/expr)))))
+           (heads-for-composite :asr.autospecs/expr)))))
 
 
 (deftest count-of-big-list-of-stuff
@@ -382,19 +542,9 @@
   (testing "count of composite exprs"
     (is (= 73
            (->> big-map-of-speclets-from-terms
-                :asr.core/expr
+                :asr.autospecs/expr
                 (map :ASDL-COMPOSITE)
                 count)))))
-
-
-;;                       _        _
-;;  ____ __  ___ __   __| |_ __ _| |_ ___
-;; (_-< '_ \/ -_) _| (_-<  _/ _` |  _(_-<
-;; /__/ .__/\___\__| /__/\__\__,_|\__/__/
-;;    |_|
-
-(deftest count-asr-specs-test
-  (is (= NSPECS (count-asr-core-specs))))
 
 
 ;;                               _     _
@@ -406,19 +556,19 @@
 
 (deftest install-symconst-stuffss-by-term-test
   (testing "installing symconst stuffss by term"
-    (is (= (set '(:asr.core/deftype     ; why is this indented?
-                     :asr.core/arraybound
-                     :asr.core/storage-type
-                     :asr.core/binop
-                     :asr.core/presence
-                     :asr.core/integerboz
-                     :asr.core/logicalbinop
-                     :asr.core/trait
-                     :asr.core/abi
-                     :asr.core/cast-kind
-                     :asr.core/intent
-                     :asr.core/access
-                     :asr.core/cmpop))
+    (is (= #{:asr.autospecs/deftype
+             :asr.autospecs/arraybound
+             :asr.autospecs/storage-type
+             :asr.autospecs/binop
+             :asr.autospecs/presence
+             :asr.autospecs/integerboz
+             :asr.autospecs/logicalbinop
+             :asr.autospecs/trait
+             :asr.autospecs/abi
+             :asr.autospecs/cast-kind
+             :asr.autospecs/intent
+             :asr.autospecs/access
+             :asr.autospecs/cmpop}
            (->> symconst-stuffss-by-term
                 (map symconst-spec-for-term)
                 (map eval)
@@ -432,6 +582,29 @@
 ;;                 |___/                       |_|
 
 
+#_
+(let [test-vector '(IntegerBinOp
+                    (IntegerBinOp
+                     (IntegerConstant
+                      2 (Integer 4 []))
+                     Add
+                     (IntegerConstant
+                      3
+                      (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant
+                      5 (Integer 4 [])))
+                    Mul
+                    (IntegerConstant
+                     5 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant
+                     25 (Integer 4 [])))]
+
+  (s/explain :asr.core/integer-bin-op test-vector))
+
+
+#_
 (let [test-vector '(IntegerBinOp
                     (IntegerBinOp
                      (IntegerConstant
@@ -460,6 +633,7 @@
       (is (s/valid? :asr.core/integer-bin-op test-vector)))))
 
 
+#_
 (let [integer-bin-op-stuff
       '({:head :asr.core/IntegerBinOp,
          :term :asr.core/expr,

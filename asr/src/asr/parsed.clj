@@ -122,7 +122,7 @@
 
 
 (defn map-pair-from-speclet-map [speclet-map]
-  [(keyword "asr.core" (:ASDL-TERM speclet-map)) ;; no kebab'bing!
+  [(keyword "asr.autospecs" (:ASDL-TERM speclet-map)) ;; no kebab'bing!
    (:ASDL-FORMS speclet-map)])
 
 
@@ -167,7 +167,7 @@
 (defn stuff-from-term-form [term form]
   (let [kind (-> form kind-from-form)
         ghead (head-from-kind-form kind form)
-        kwh (keyword "asr.core" ghead)] ;; no kebab'bing
+        kwh (keyword "asr.autospecs" ghead)] ;; no kebab'bing
     {:head kwh,:term term,:kind kind,:form,form}))
 
 

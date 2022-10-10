@@ -1,5 +1,6 @@
 (ns asr.autospecs
-  (:use [asr.utils])
+  (:use [asr.utils]
+        [asr.specs])
 
   (:require [asr.parsed :refer [big-map-of-speclets-from-terms
                                 big-list-of-stuff
@@ -135,25 +136,32 @@
 
 ;;; Try (s/exercise ::symbol) and (s/exercise ::expr in the REPL.
 
-(let [heads (heads-for-composite :asr.core/symbol)]
-  (s/def :asr.core/symbol
+(let [heads (heads-for-composite ::symbol)]
+  (s/def ::symbol
     (s/with-gen
       (dummy-lpred heads)
       (fn [] (dummy-generator-for-heads heads)))))
 
 
-(let [heads (heads-for-composite :asr.core/expr)]
-  (s/def :asr.core/expr
+(let [heads (heads-for-composite ::expr)]
+  (s/def ::expr
     (s/with-gen
       (dummy-lpred heads)
       (fn [] (dummy-generator-for-heads heads)))))
 
 
-(let [heads (heads-for-composite :asr.core/stmt)]
-  (s/def :asr.core/stmt
+(let [heads (heads-for-composite ::stmt)]
+  (s/def ::stmt
     (s/with-gen
       (dummy-lpred heads)
       (fn [] (dummy-generator-for-heads heads)))))
+
+
+(let [heads (heads-for-composite ::ttype)]
+  (->> (s/def ::ttype
+         (s/with-gen
+           (dummy-lpred heads)
+           (fn [] (dummy-generator-for-heads heads))))))
 
 
 ;;  __ _ _ _ __ _ ___
@@ -274,6 +282,39 @@
        echo))
 
 
+;;                       __                                            _ _
+;;  ____ __  ___ __ ___ / _|_ _ ___ _ __ ___ __ ___ _ __  _ __  ___ __(_) |_ ___
+;; (_-< '_ \/ -_) _|___|  _| '_/ _ \ '  \___/ _/ _ \ '  \| '_ \/ _ (_-< |  _/ -_)
+;; /__/ .__/\___\__|   |_| |_| \___/_|_|_|  \__\___/_|_|_| .__/\___/__/_|\__\___|
+;;    |_|                                                |_|
+
+(defn spec-from-composite
+  "# Back-patching Symbol
+
+  TODO
+
+  # First Composite Spec: `TranslationUnit`
+
+  Write specs as data lists and `eval` them later. Turns out it's
+  necessary to do that, and it's a beneficial accident lest we
+  clutter up the namespace of specs.
+
+  Composites and tuples have lists of type-var pairs, that is, of
+  args. We've already handled arg lists in `spec-from-args` above.
+
+  Specs for all tuples' heads and terms have already been
+  registered.
+
+  Specs for all symconsts' heads and terms have already been
+  registered.
+  "
+  [composite]
+  (let [head (-> composite :ASDL-HEAD symbol echo)
+        nskw (-> head nskw-kebab-from        echo)
+        args (-> composite :ASDL-ARGS        #_echo)]
+    `(s/def ~nskw ~(spec-from-head-and-args head args))))
+
+
 ;;     _
 ;;  __| |___ ___ ____  _ _ _  _ _  __ _ ____ _
 ;; / _` / _ \___(_-< || | ' \| ' \/ _` (_-< '_|
@@ -310,7 +351,6 @@
 ;; SynNASR. SemNASR requires humans to write at least parts of the
 ;; specs. Our first example of SemNASR will be IntegerBinOp.
 
-#_
 (defn do-synnasr
   "Automated items for the spec registry. W.I.P."
   []
@@ -356,70 +396,6 @@
        count
        echo)
 
-  ;;  _ _               _         _
-  ;; (_|_)____  _ _ __ | |__  ___| |
-  ;;  _ _(_-< || | '  \| '_ \/ _ \ |
-  ;; (_|_)__/\_, |_|_|_|_.__/\___/_|
-  ;;         |__/
-
-  (println "dummy spec for symbol: ")
-
-  (let [heads (heads-for-composite ::symbol)]
-    (->> (s/def ::symbol
-           (s/with-gen
-             (dummy-lpred heads)
-             (fn [] (dummy-generator-for-heads heads))))
-         echo))
-  (pprint (s/describe ::symbol))
-
-  ;;  _ _
-  ;; (_|_)_____ ___ __ _ _
-  ;;  _ _/ -_) \ / '_ \ '_|
-  ;; (_|_)___/_\_\ .__/_|
-  ;;             |_|
-
-  (println "dummy spec for expr: ")
-
-  (let [heads (heads-for-composite ::expr)]
-    (->> (s/def ::expr
-           (s/with-gen
-             (dummy-lpred heads)
-             (fn [] (dummy-generator-for-heads heads))))
-         echo))
-  (pprint (s/describe ::expr))
-
-  ;;  _ _    _        _
-  ;; (_|_)__| |_ _ __| |_
-  ;;  _ _(_-<  _| '  \  _|
-  ;; (_|_)__/\__|_|_|_\__|
-
-  (println "dummy spec for stmt: ")
-
-  (let [heads (heads-for-composite ::stmt)]
-    (->> (s/def ::stmt
-           (s/with-gen
-             (dummy-lpred heads)
-             (fn [] (dummy-generator-for-heads heads))))
-         echo))
-  (pprint (s/describe ::stmt))
-
-  ;;  _ _ _   _
-  ;; (_|_) |_| |_ _  _ _ __  ___
-  ;;  _ _|  _|  _| || | '_ \/ -_)
-  ;; (_|_)\__|\__|\_, | .__/\___|
-  ;;              |__/|_|
-
-  (println "dummy spec for ttype: ")
-
-  (let [heads (heads-for-composite ::ttype)]
-    (->> (s/def ::ttype
-           (s/with-gen
-             (dummy-lpred heads)
-             (fn [] (dummy-generator-for-heads heads))))
-         echo))
-  (pprint (s/describe ::ttype))
-
-
   ;; This isn't good enough. Let's write some head specs for it by
   ;; hand.
 
@@ -434,3 +410,5 @@
 
   ;; WORK-IN-PROGRESS
   )
+
+(do-synnasr)

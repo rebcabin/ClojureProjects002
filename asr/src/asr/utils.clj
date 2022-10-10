@@ -38,14 +38,10 @@
 
   (let [namespace (case (str sym-or-string)
                     "identifier" "asr.specs"
-                    #_default    "asr.core")]
+                    #_default    "asr.autospecs")]
 
     (keyword namespace
-             (name (csk/->kebab-case sym-or-string))))
-
-  ;; Found by experiment that ->> doesn't work, here. Something
-  ;; to do with macros.
-  #_(->> sym csk/->kebab-case #(keyword "asr.core" %)) )
+             (name (csk/->kebab-case sym-or-string)))))
 
 
 ;;; Experimental Function Spec for nskw-kebab-from. This is an

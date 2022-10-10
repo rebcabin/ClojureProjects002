@@ -4,8 +4,7 @@
         [asr.data]
         [asr.grammar]
         [asr.parsed]
-        [asr.autospecs]
-        [asr.specs])
+        [asr.autospecs])
   (:require [clojure.spec.alpha            :as    s             ]
             [clojure.pprint                :refer [pprint]      ]
             [clojure.zip                   :as    zip           ]
@@ -17,217 +16,6 @@
             [clojure.math                  :refer [pow]         ] ;; int
             [clojure.set                   :as    set           ]))
 
-(println "+-------------------------------+")
-(println "|                               |")
-(println "|     Try this at the REPL:     |")
-(println "|                               |")
-(println "|     (-main)                   |")
-(println "|     (s/exercise ::binop)      |")
-(println "|     (s/describe ::binop)      |")
-(println "|                               |")
-(println "+-------------------------------+")
-
-
-;;     _
-;;  __| |___ ___ ____  _ _ _  _ _  __ _ ____ _
-;; / _` / _ \___(_-< || | ' \| ' \/ _` (_-< '_|
-;; \__,_\___/   /__/\_, |_||_|_||_\__,_/__/_|
-;;                  |__/
-
-;; At this point, we distinguish syntactically correct nonsense
-;; ASR (SynNASR) from semantically constrained nonsense
-;; ASR (SemNASR).
-;;
-;; - SynNASR is for testing error paths in the ASR backends. A
-;;   random utterance is overwhelmingly unlikely to be meaningful,
-;;   but it must NEVER crash a back-end nor cause it to go into an
-;;   infinite loop (spin). An example is a IntegerBinOp expression
-;;   with a string and a float as arguments. ASDL allows this, but
-;;   backends must reject it.
-;;
-;; - SemNASR is for testing happy paths in the backends. SemNASR
-;;   should be semantically valid, we should be able to
-;;   independently compute results, and we should be able to
-;;   round-trip examples. For example, an IntegerBinOp with two
-;;   IntegerConstant instances of the same kind, say i16, should
-;;   generate code to compute the results, or perhaps, with
-;;   optimizations turned on, compute the results at compile time.
-;;   Types must match and zero divisors must be rejected. Such
-;;   checks are distinct layers or sibling domains of semantics.
-;;
-;; We will write Clojure specs for both SynNASR and SemNASR.
-;; clojure.spec.gen.alpha, clojure.spec.test.alpha, and
-;; clojure.test.check.generators give us ways to quickly generate
-;; large numbers of NASR strings/trees. SynNASR is the default
-;; because we can generate SynNASR directly from the ASDL grammar.
-;; Names of terms and heads from ASDL with no `semnasr` suffix are
-;; SynNASR. SemNASR requires humans to write at least parts of the
-;; specs. Our first example of SemNASR will be IntegerBinOp.
-
-(defn do-synnasr
-  "Automated items for the spec registry. W.I.P."
-  []
-
-  (print "symconst head specs: ")
-
-  (->> symconst-stuffs
-       (map spec-from-symconst-stuff)
-       (map eval)
-       count
-       echo)
-
-  (print "symconst term specs: ")
-
-  (->> symconst-stuffss-by-term
-       (map symconst-spec-for-term)
-       (map eval)
-       count
-       echo)
-
-;;; We need a cycle-breaking spec for dimension to bootstrap the
-;;; following constructions.
-
-  (println "cycle-breaking with ::dimension")
-
-  (do-one-tuple-spec-head-and-term! ::dimension)
-
-  (println "tuple heads and terms are 1-to-1, unlike symconsts an composites.")
-  (print "tuple head specs: ")
-
-  (->> tuple-stuffs
-       (map tuple-head-spec-from-stuff)
-       (map eval)
-       count
-       echo)
-
-  (print "tuple term specs: ")
-
-  (->> tuple-stuffss-by-term
-       (map tuple-term-spec-from-stuffs)
-       #_echo
-       (map eval)
-       count
-       echo)
-
-  ;;  _ _               _         _
-  ;; (_|_)____  _ _ __ | |__  ___| |
-  ;;  _ _(_-< || | '  \| '_ \/ _ \ |
-  ;; (_|_)__/\_, |_|_|_|_.__/\___/_|
-  ;;         |__/
-
-  (println "dummy spec for symbol: ")
-
-  (let [heads (heads-for-composite ::symbol)]
-    (->> (s/def ::symbol
-           (s/with-gen
-             (dummy-lpred heads)
-             (fn [] (dummy-generator-for-heads heads))))
-         echo))
-  (pprint (s/describe ::symbol))
-
-  ;;  _ _
-  ;; (_|_)_____ ___ __ _ _
-  ;;  _ _/ -_) \ / '_ \ '_|
-  ;; (_|_)___/_\_\ .__/_|
-  ;;             |_|
-
-  (println "dummy spec for expr: ")
-
-  (let [heads (heads-for-composite ::expr)]
-    (->> (s/def ::expr
-           (s/with-gen
-             (dummy-lpred heads)
-             (fn [] (dummy-generator-for-heads heads))))
-         echo))
-  (pprint (s/describe ::expr))
-
-  ;;  _ _    _        _
-  ;; (_|_)__| |_ _ __| |_
-  ;;  _ _(_-<  _| '  \  _|
-  ;; (_|_)__/\__|_|_|_\__|
-
-  (println "dummy spec for stmt: ")
-
-  (let [heads (heads-for-composite ::stmt)]
-    (->> (s/def ::stmt
-           (s/with-gen
-             (dummy-lpred heads)
-             (fn [] (dummy-generator-for-heads heads))))
-         echo))
-  (pprint (s/describe ::stmt))
-
-  ;;  _ _ _   _
-  ;; (_|_) |_| |_ _  _ _ __  ___
-  ;;  _ _|  _|  _| || | '_ \/ -_)
-  ;; (_|_)\__|\__|\_, | .__/\___|
-  ;;              |__/|_|
-
-  (println "dummy spec for ttype: ")
-
-  (let [heads (heads-for-composite ::ttype)]
-    (->> (s/def ::ttype
-           (s/with-gen
-             (dummy-lpred heads)
-             (fn [] (dummy-generator-for-heads heads))))
-         echo))
-  (pprint (s/describe ::ttype))
-
-
-  ;; This isn't good enough. Let's write some head specs for it by
-  ;; hand.
-
-  (s/def ::int   int?)
-  (s/def ::float float?)
-  (s/def ::bool  (s/or :clj-bool boolean?
-                       :asr-bool #(or (= % '.true.) (= % '.false))))
-
-  ;; ttype
-  ;;     = Integer(int kind, dimension* dims)
-  ;;     | ...
-
-  ;; WORK-IN-PROGRESS
-  )
-
-;;  ___             _         _   _            _  _         _
-;; | _ \_ _ ___  __| |_  _ __| |_(_)___ _ _   | || |___ _ _(_)______ _ _
-;; |  _/ '_/ _ \/ _` | || / _|  _| / _ \ ' \  | __ / _ \ '_| |_ / _ \ ' \
-;; |_| |_| \___/\__,_|\_,_\__|\__|_\___/_||_| |_||_\___/_| |_/__\___/_||_|
-
-;; Code below this line is ready for testing in production.
-
-;; Define some automatically generated SynNASR specs. This is
-;; experimental, but some of the subsequent production specs
-;; may depend on some of these definitions.
-
-(do-synnasr)
-
-;;  _ _ _     _                        _    _
-;; (_|_|_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __
-;;  _ _| | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \
-;; (_|_)_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/
-;;                   |___/                               |_|
-
-;;  ___     _                      _   _
-;; |_ _|_ _| |_ ___ __ _ ___ _ _  | |_| |_ _  _ _ __  ___
-;;  | || ' \  _/ -_) _` / -_) '_| |  _|  _| || | '_ \/ -_)
-;; |___|_||_\__\___\__, \___|_|    \__|\__|\_, | .__/\___|
-;;                 |___/                   |__/|_|
-
-
-;; NOTA BENE: s/cat specs wrapped in s/spec are nestable.
-;; Unwrapped regex specs are spliced. Regex specs arise from s/*,
-;; s/+, s/?, s/alt, s/cat, as explained here
-;; https://clojure.org/guides/spec#_sequences. This point bears
-;; emphasis because, although the docs are clear, it takes some
-;; experience to internalize the conceptual differences between
-;; regex sequences and normal specs combined with s/and and s/or.
-
-;;  _ _    _ _                   _
-;; (_|_)__| (_)_ __  ___ _ _  __(_)___ _ _
-;;  _ _/ _` | | '  \/ -_) ' \(_-< / _ \ ' \
-;; (_|_)__,_|_|_|_|_\___|_||_/__/_\___/_||_|
-
-;; Redefinition; try (s/exercise ::dimension
 
 (defn bigint?
   "Doesn't seem to be defined in system-supplied libraries."
@@ -608,7 +396,7 @@
    :base
    (s/cat :head  #{'IntegerBinOp}
           :left  ::i32-constant-semnasr
-          :op    ::binop
+          :op    :asr.autospecs/binop
           :right ::i32-constant-semnasr
           :ttype ::i32-scalar-ttype-semnasr
           :value (s/? ::i32-constant-semnasr))
@@ -618,38 +406,16 @@
                        :branch ::i32-bin-op-semnasr)]
      (s/cat :head  #{'IntegerBinOp}
             :left  or-leaf
-            :op    ::binop
+            :op    :asr.autospecs/binop
             :right or-leaf
             :ttype ::i32-scalar-ttype-semnasr
             :value (s/? or-leaf))) ))
 
-#_(s/exercise ::binop)
-;; => ([BitOr BitOr]
-;;     [BitXor BitXor]
-;;     [Div Div]
-;;     [BitLShift BitLShift]
-;;     [BitRShift BitRShift]
-;;     [BitXor BitXor]
-;;     [Div Div]
-;;     [BitOr BitOr]
-;;     [BitRShift BitRShift]
-;;     [Div Div])
 
 (s/def ::binop-no-div
-  (set/difference (eval (s/describe ::binop))
+  (set/difference (eval (s/describe :asr.autospecs/binop))
                   #{'Div}))
 
-#_(s/exercise ::binop-no-div)
-;; => ([Mul Mul]
-;;     [Add Add]
-;;     [BitOr BitOr]
-;;     [BitOr BitOr]
-;;     [BitLShift BitLShift]
-;;     [BitRShift BitRShift]
-;;     [BitXor BitXor]
-;;     [BitAnd BitAnd]
-;;     [Sub Sub]
-;;     [BitAnd BitAnd])
 
 ;; To visualize the tree, uncomment this and do "lein run" at a
 ;; terminal.
@@ -701,9 +467,6 @@
             :value (s/? or-leaf)))))
 
 
-(gen/generate (s/gen ::i32))
-(gen/generate (s/gen ::binop))
-
 ;; for generation:
 (defn i32-constant-semnasr
   [value]
@@ -715,25 +478,10 @@
 
 (gen/generate (tgen/return (i32-constant-semnasr 42)))
 
-(s/describe ::binop)
-;; => (set
-;;     '(Add Sub Mul Div Pow BitAnd BitOr BitXor BitLShift BitRShift))
 (s/def ::binop-no-bits
   (set/difference
-   (eval (s/describe ::binop))
+   (eval (s/describe :asr.autospecs/binop))
    #{'BitAnd 'BitOr 'BitXor 'BitLShift, 'BitRShift}))
-
-(s/exercise ::binop-no-bits)
-;; => ([Pow Pow]
-;;     [Add Add]
-;;     [Div Div]
-;;     [Sub Sub]
-;;     [Pow Pow]
-;;     [Mul Mul]
-;;     [Sub Sub]
-;;     [Mul Mul]
-;;     [Sub Sub]
-;;     [Add Add])
 
 (defn fast-int-exp-pluggable
   "O(lg(n)) x^n, n pos or neg, pluggable primitives for base
@@ -971,7 +719,7 @@
   (s/tuple
    #{'IntegerBinOp}
    ::integer-constant-semnasr ; stack overflow if integer-bin-op-semnsasr
-   ::binop
+   :asr.autospecs/binop
    ::integer-constant-semnasr
    ::integer-scalar-ttype-semnasr))
 
@@ -990,8 +738,9 @@
 ;; The following ansatz is automatically created from the ASDL
 ;; parse and satisfies a conformance test in core_test.clj.
 
+#_
 (let [integer-bin-op-stuff ;; SynNASR
-      (filter #(= (:head %) :asr.core/IntegerBinOp)
+      (filter #(= (:head %) :asr.autospecs/IntegerBinOp)
               big-list-of-stuff)]
   (-> (spec-from-composite
        (-> integer-bin-op-stuff
@@ -1021,9 +770,10 @@
   "Print specs defined in the namespace 'asr.core.' Call this at the
   REPL."
   []
-  (pprint (only-asr-specs "asr.core"))
-  (pprint (only-asr-specs "asr.specs"))
-  (pprint (only-asr-specs "asr.autospecs")))
+  (pprint {"core specs"         (only-asr-specs "asr.core")
+           "parsed specs"       (only-asr-specs "asr.parsed")
+           "hand-written specs" (only-asr-specs "asr.specs")
+           "automatic specs"    (only-asr-specs "asr.autospecs")}))
 
 
 (defn count-asr-core-specs
