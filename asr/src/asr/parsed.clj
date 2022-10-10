@@ -11,10 +11,8 @@
 ;;    |_|
 
 (def speclets
-  "## Raw Hiccup for all Speclets
-
-  Strip off the `module` info, leaving only ASDL-DEFs, i.e.,
-  *speclets*.
+  "Big vector. Strip off the `module` info, leaving only ASDL-DEFs,
+  i.e., *speclets*.
   "
   (vec (rest
         ((-> (zip/vector-zip asr-pre-spec)
@@ -33,8 +31,8 @@
 ;;    |_|
 
 (defn shallow-map-from-speclet
-  "Convert an ASDL-DEF into a map from :ASDL-TERM to the name of the
-  term of the speclet and from :ASDL-FORMS into a list of
+  "Convert an `ASDL-DEF` into a map from `:ASDL-TERM` to the name of
+  the term of the speclet and from `:ASDL-FORMS` into a list of
   alternative forms, still in hiccup format awaiting deeper
   conversion."
   [speclet]
@@ -54,10 +52,10 @@
 ;;                              |_|
 
 (defn decl-map
-  "Convert [:ASDL-DECL [:ASDL-TYPE ...] [:ASDL-NYM ...]] into
-  {:ASDL-TYPE ..., :MULTIPLICITY ..., :ASDL-NYM ...}.
-  Used to convert ASDL-COMPOSITES and ASDL-TUPLES.
-  TODO: Rewrite argument validation with s/fdef."
+  "Convert hiccup `[:ASDL-DECL [:ASDL-TYPE ...] [:ASDL-NYM ...]]`
+  into `{:ASDL-TYPE ..., :MULTIPLICITY ..., :ASDL-NYM ...}`. Used
+  to convert `ASDL-COMPOSITES` and `ASDL-TUPLES`. TODO: Rewrite
+  argument validation with s/fdef."
   [decl-hiccup]
   (let [_ (assert (= (decl-hiccup 0) :ASDL-DECL))
         [signal type-nym & opt] (decl-hiccup 1)
@@ -78,18 +76,25 @@
 ;; \__,_/__/\__,_|_|   |_| \___/_| |_|_|_|
 
 
-(defmulti asdl-form first)
+(defmulti asdl-form first #_"Convert three `ASDL` kinds into
+Clojure hashmaps" )
 
-(defmethod asdl-form :ASDL-SYMCONST [form]
+(defmethod asdl-form :ASDL-SYMCONST
+  #_"Convert `ASDL-SYMCONST` into a Clojure hashmap."
+  [form]
   (apply hash-map form))
 
-(defmethod asdl-form :ASDL-COMPOSITE [form]
+(defmethod asdl-form :ASDL-COMPOSITE
+  #_"Convert `ASDL-COMPOSITE` into a Clojure hashmap."
+  [form]
   (let [[_ head args-pre] form
         [_ & decls] args-pre] ;; & means listify
     {:ASDL-COMPOSITE {:ASDL-HEAD (second head)
                       :ASDL-ARGS (map decl-map decls)}}))
 
-(defmethod asdl-form :ASDL-TUPLE [form]
+(defmethod asdl-form :ASDL-TUPLE
+  #_"Convert `ASDL-TUPLE` into a Clojure hashmap."
+  [form]
   (let [[_ args-pre] form
         [_ & decls] args-pre] ;; & means listify
     {:ASDL-TUPLE (name (gensym "asr-tuple"))
@@ -107,11 +112,9 @@
 ;; |_| |_| \___/_|_|_|  \__\___|_| |_|_|_/__/
 
 (defn hashmap-from-speclet
-  "## Hashmap from Speclet, Itself
+  "Convert one entire speclet to a hashmap.
 
-  A speclet is, roughly, ASDL-TERM '=' ASDL-FORM*
-
-  One entire speclet to a hashmap:
+  A speclet is, roughly, `ASDL-TERM '=' ASDL-FORM*`
   "
   [speclet]
   (let [pre (shallow-map-from-speclet speclet)
@@ -121,22 +124,25 @@
      :ASDL-FORMS forms}))
 
 
-(defn map-pair-from-speclet-map [speclet-map]
+(defn map-pair-from-speclet-map
+  "Convert a speclet hashmap `{:ASDL-TERM <term>, :ASDL-FORMS <forms>}`
+  into an ordered pair `[:ASDL-TERM <term>, :ASDL-FORMS <forms>]` in
+  preparation for the inverted index, `big-map-of-speclets-from-terms`.
+  Prepend the namespace prefix `asr.autospecs` without kebab'bing."
+  [speclet-map]
   [(keyword "asr.autospecs" (:ASDL-TERM speclet-map)) ;; no kebab'bing!
    (:ASDL-FORMS speclet-map)])
 
 
 (def big-map-of-speclets-from-terms
-  "# Big Map of Speclets From Terms
+  "Make a big, inverted index of about 227 heads from about 28
+  terms.
 
   Example: term `::symbol` maps to `::Function`, `::Program`,
   `::Module`, and more.
 
-  Except for `SymbolTable`, which is not written, terms are in
-  `snake_case`.
-
-  Have fun clicking around the large output of this cell. There
-  are about 28 terms with about 227 heads.
+  Except for `SymbolTable`, which is not written in ASDL, terms
+  are in `snake_case`.
   "
   ;; TODO: Make some nice swiss arrows to do all this.
   (apply hash-map
@@ -153,18 +159,26 @@
 ;; |_.__/_\__, | |_|_/__/\__| \___/_|   /__/\__|\_,_|_| |_|
 ;;        |___/
 
-(defn kind-from-form [form]
+(defn kind-from-form
+  "Get the `kind` from an ASDL form. The kind is one of
+  `ASDL-COMPOSITE`, `ASDL-SYMCONST`, or `ASDL-TUPLE`."
+  [form]
   (-> form first first))
 
 
-(defn head-from-kind-form [kind form]
+(defn head-from-kind-form
+  "Get the generalize head from a `kind` and a form."
+  [kind form]
   (case kind
     :ASDL-COMPOSITE (-> form first second :ASDL-HEAD)
     :ASDL-SYMCONST (-> form first second) ;; symconst itself
     :ASDL-TUPLE (-> form first second)))
 
 
-(defn stuff-from-term-form [term form]
+(defn stuff-from-term-form
+  "Construct a *stuff* from a `term` and a form. Prepend the
+  namespace prefix `asr.autospecs`, without kebab'bing."
+  [term form]
   (let [kind (-> form kind-from-form)
         ghead (head-from-kind-form kind form)
         kwh (keyword "asr.autospecs" ghead)] ;; no kebab'bing
@@ -172,43 +186,113 @@
 
 
 (def big-list-of-stuff
-  "# Big List of Stuff
-
-  A ***stuff*** is a map of `:head`, `:term`, `:kind`, and `:form`
+  "A ***stuff*** is a map of `:head`, `:term`, `:kind`, and `:form`
   for the approximately 227 heads & forms of ASR. A stuff is all
   we need for making clojure.specs from terms, heads, & forms. The
   stuff keywords `:head`, `:term`, `:kind`, and `:form` need not
   be namespaced.
 
+  Example of a *stuff*:
+
+      {:head :asr.autospecs/Source,
+       :term :asr.autospecs/abi,
+       :kind :ASDL-SYMCONST,
+       :form {:ASDL-SYMCONST \"Source\"}}
+
   This big list of stuff is like a big, flat, denormalized
   database table.
+
+  ## Kinds
+
+  There are three kinds of stuffs: `ASDL-COMPOSITE`, which look
+  like function declarations with a head and args in parentheses;
+  `ASDL-SYMCONST`, which are symbolic constants, and `ASDL-TUPLE`,
+  which look like headless arg lists. The kinds are distinguished
+  by the `:kind` field.
+
+  ## Terms
+
+  ***Terms*** are the things to the left of an equals sign in the
+  ASDL grammar (namespace `asr.asr`). For example, in the ASDL
+  production
+
+      abi                   -- External     ABI
+        = Source          --   No         Unspecified
+        | LFortranModule  --   Yes        LFortran
+        | GFortranModule  --   Yes        GFortran
+        | BindC           --   Yes        C
+        | Interactive     --   Yes        Unspecified
+        | Intrinsic       --   Yes        Unspecified
+
+  `abi` is a term. `Source` is a generalized head, as we see next.
 
   ## Generalized Heads
 
   For composites, the \"head\" is obvious because it's a symbol
-  followed by an args tuple.
+  followed by an `ASDL-ARGS` tuple in parentheses. Example:
+
+  ASDL:
+
+      case_stmt = CaseStmt(expr* test, stmt* body)
+
+  stuff:
+
+      {:head :asr.autospecs/CaseStmt,
+       :term :asr.autospecs/case_stmt,
+       :kind :ASDL-COMPOSITE,
+       :form
+       {:ASDL-COMPOSITE
+        {:ASDL-HEAD \"CaseStmt\",
+         :ASDL-ARGS
+         ({:ASDL-TYPE \"expr\",
+           :MULTIPLICITY :asr.parsed/zero-or-more,
+           :ASDL-NYM \"test\"}
+          {:ASDL-TYPE \"stmt\",
+           :MULTIPLICITY :asr.parsed/zero-or-more,
+           :ASDL-NYM \"body\"})}}}
 
   For symconsts, the \"heads\" are just the symbolic constants
-  themselves.
+  themselves. Example:
 
-  For all tuples, the head is gensymmed. Example: head
-  `::asr-tuple3805` (kebab-case; exception to the rule for heads),
-  corresponds to term `::alloc_arg`, in snake case, like all
-  terms.
+      {:head :asr.autospecs/Source,
+       :term :asr.autospecs/abi,
+       :kind :ASDL-SYMCONST,
+       :form {:ASDL-SYMCONST \"Source\"}}
 
-  ### Don't Kebab Too Early
+  For all tuples, the head is gensymmed. Example:
+
+  ASDL:
+
+      call_arg = (expr? value)
+
+  stuff:
+
+      {:head :asr.autospecs/asr-tuple2595,
+       :term :asr.autospecs/call_arg,
+       :kind :ASDL-TUPLE,
+       :form
+       {:ASDL-TUPLE \"asr-tuple2595\",
+        :ASDL-ARGS
+        ({:ASDL-TYPE \"expr\",
+          :MULTIPLICITY :asr.parsed/at-most-once,
+          :ASDL-NYM \"value\"})}}
+
+  The head is `:asr.autospecs/asr-tuple2595` (kebab-case;
+  exception to the rule for heads), corresponds to term
+  `:asr.autospecs/call_arg`, in snake case, like all terms.
+  Gensyms change every time the program runs.
+
+  ## Don't Kebab Too Early
 
   Heads, except for gensymmed heads for tuples, are in PascalCase;
   don't kebab them. We'll kebab the derived namespaced keywords
-  for naming clojure.specs.
+  for naming clojure.specs in namespace `asr.autospecs`.
 
-  ## Helper: Stuff from Term & Form
+  ## How-to-Helper: Stuff from Term & Form
 
-  Here we go again, illiterates! Gotta show you how we're doing it
-  before showing you what we're doing!
+  Partially evaluate `stuff-from-term-form` on a term, then map
+  the result over all the forms for that term.
 
-  The intention is to partially evaluate `stuff-from-term-form` on
-  a term, then map the result over all the forms for that term.
   "
   (mapcat
    identity  ; Flatten once.
@@ -228,13 +312,9 @@
 ;;     |__/
 
 (def symconst-stuffs
-  "# All Symconst Specs
-
-  Clojure.specs for symconsts are easiest because they don't
+  "Clojure.specs for symconsts are easiest because they don't
   depend on other clojure.specs. There are about 72
   symconsts (more as ASR grows):
-
-  ## Symconst Stuffs
   "
   (filter #(= (:kind %) :ASDL-SYMCONST) big-list-of-stuff))
 
@@ -250,14 +330,11 @@
 ;;  \__\___|_| |_|_|_|
 
 (def symconst-stuffss-by-term
-  "## Symconst-Term-Specs
+  "To check an instance or utterance of ASR like
+  `asr.data/expr-221000`, we'll need to check its sub-parts by
+  term, not by head.
 
-  To check an instance or utterance of ASR like expr-221000, we'll
-  need to check its sub-parts by term, not by head.
-
-  ### Symconst Stuffss sic by Term
-
-  First, partition the symconst specs by term. There are about 13
+  Partition the symconst specs by term. There are about 13
   terms categorizing the (approx) 72 symconst heads.
   "
   (partition-by :term symconst-stuffs))

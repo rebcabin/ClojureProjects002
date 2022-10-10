@@ -96,6 +96,8 @@
             '({:ASDL-SYMCONST "Public"}
               {:ASDL-SYMCONST "Private"})}))))
 
+#_(->> big-list-of-stuff (filter #(re-matches #"ASDL-SYMCONST" (-> % :kind name))))
+
 
 (deftest all-terms-test
   (testing "check all 28 terms"

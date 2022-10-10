@@ -10,7 +10,7 @@
 
 (def all-asr
 
-  "# A Grammar for ASDL Specs
+  "## A Grammar for ASR in ASDL
 
   from https://github.com/lcompilers/libasr/blob/main/src/libasr/ASR.asdl
 
