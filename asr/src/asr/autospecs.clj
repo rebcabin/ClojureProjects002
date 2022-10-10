@@ -202,7 +202,6 @@
   "Write a spec to be eval'ed later from tuple stuff (see
   `asr.parsed` for definition of *stuff*)."
   [tuple-stuff]
-  #_(println "tuple-head-spec-from-stuff")
   (let [nskw (-> tuple-stuff :head name nskw-kebab-from #_echo)
         args (-> tuple-stuff :form :ASDL-ARGS           #_echo)]
     `(s/def ~nskw ~(spec-from-args args))))  ;; side effect!
@@ -233,7 +232,6 @@
   "Write a tuple term-spec to be eval'ed later from tuple stuffs
   (see `asr.parsed` for definition of *stuff*)."
   [stuffs]
-  #_(println "tuple-term-spec-from-stuffs")
   (let [term (-> stuffs first :term                      #_echo)
         nskw (-> term name nskw-kebab-from               #_echo)
         head (-> stuffs first :head name nskw-kebab-from #_echo)]
@@ -260,16 +258,13 @@
   [term]
 
   (->> tuple-stuffs
-       echo
        (filter #(= term (-> % :term)))
-       echo
        (map tuple-head-spec-from-stuff)
        (map eval)
        echo)
 
   (->> tuple-stuffss-by-term
        (filter #(= term (-> % first :term)))
-       echo
        (map tuple-term-spec-from-stuffs)
        (map eval)
        echo))
@@ -293,8 +288,8 @@
   registered. Don't call this function too early.
   "
   [composite]
-  (let [head (-> composite :ASDL-HEAD symbol echo)
-        nskw (-> head nskw-kebab-from        echo)
+  (let [head (-> composite :ASDL-HEAD symbol #_echo)
+        nskw (-> head nskw-kebab-from        #_echo)
         args (-> composite :ASDL-ARGS        #_echo)]
     `(s/def ~nskw ~(spec-from-head-and-args head args))))
 
@@ -344,7 +339,7 @@
   (->> symconst-stuffs
        (map spec-from-symconst-stuff)
        (map eval)
-       count
+       #_count
        echo)
 
   (print "symconst term specs: ")
@@ -352,13 +347,13 @@
   (->> symconst-stuffss-by-term
        (map symconst-spec-for-term)
        (map eval)
-       count
+       #_count
        echo)
 
 ;;; We need a cycle-breaking spec for dimension to bootstrap the
 ;;; following constructions.
 
-  (println "cycle-breaking with ::dimension")
+  (println "cycle-breaking with :asr.autospecs/dimension")
 
   (do-one-tuple-spec-head-and-term! ::dimension)
 
@@ -368,16 +363,15 @@
   (->> tuple-stuffs
        (map tuple-head-spec-from-stuff)
        (map eval)
-       count
+       #_count
        echo)
 
   (print "tuple term specs: ")
 
   (->> tuple-stuffss-by-term
        (map tuple-term-spec-from-stuffs)
-       #_echo
        (map eval)
-       count
+       #_count
        echo)
 
   ;; This isn't good enough. Let's write some head specs for it by

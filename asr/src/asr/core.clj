@@ -783,10 +783,10 @@
        (-> integer-bin-op-stuff
            first
            :form
-           :ASDL-COMPOSITE
-           echo))
-      echo
-      eval))
+           :ASDL-COMPOSITE))
+      eval
+      #_echo
+      ))
 
 
 ;;  _       _        _                   _
@@ -795,7 +795,7 @@
 ;;  \__\___/\__\__,_|_| \__\___/\_,_|_||_\__|
 
 (defn only-asr-specs
-  "Filter non-asr specs from the keys of the spec registry."
+  "Filter non-ASR specs from the keys of the spec registry."
   [asr-namespace-string]
   []
   (filter
@@ -804,8 +804,8 @@
 
 
 (defn check-registry
-  "Print specs defined in the namespace 'asr.core.' Call this at the
-  REPL."
+  "Print specs defined in the various namespaces. Call this at the
+  REPL (replacing missing codox for specs)."
   []
   (pprint {"core specs"         (only-asr-specs "asr.core")
            "parsed specs"       (only-asr-specs "asr.parsed")
@@ -814,17 +814,14 @@
 
 
 (defn count-asr-core-specs
-  "Count the asr specs. Call this at the REPL."
+  "Count the asr.core specs. Call this at the REPL."
   []
   (count (only-asr-specs "asr.core")))
 
 
-(print "total number of specs registered: ")
+(println "total number of experimental specs registered in the core namespace: ")
 (println (count-asr-core-specs))
 
-;; (pprint (s/exercise ::identifier))
-;; (pprint (s/exercise ::expr))
-;; (pprint (s/exercise ::dimension))
 
 (println "Please see the tests. Main doesn't do a whole lot ... yet.")
 

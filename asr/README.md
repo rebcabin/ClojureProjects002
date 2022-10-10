@@ -13,22 +13,45 @@ git clone https://github.com/rebcabin/ClojureProjects002
 
 ## Usage
 
+Learn the code by reading, running, and writing tests.
+
 ```
 cd ClojureProjects002/asr
 lein test
 ```
 
+## Devlopment
+
+[CIDER](https://docs.cider.mx/cider/index.html) is almost
+essential. We make heavy use of its debugger (C-u C-M-x)
+and its pretty-print-to-comment (C-c C-v C-f C-c e).
+
+See also `echo` in `utils.clj`.
+
+## Generating Documentation
+
+```
+lein codox
+```
+
 ## Theory of Operation
 
-The grammar for ASR is written in ASDL.
+The grammar for [ASR](https://github.com/lcompilers/libasr) is
+written in ASDL.
 
-The grammar for ASDL is written in [instaparse](https://github.com/Engelberg/instaparse).
-Instaparse gives us a parser for the ASR written in ASDL.
-From that, we get lots of autospecs (see `autospecs.clj`).
+The grammar for ASDL is written in
+[instaparse](https://github.com/Engelberg/instaparse). Instaparse
+gives us a parser for the ASR written in ASDL. From that, we get
+lots of autospecs (see `autospecs.clj`).
 
-We also write some specs by hand, committed ones in `specs.cls` and
-experimental ones in `core.clj`.
+We also write some specs by hand, committed ones in `specs.cls`
+and experimental ones in `core.clj`.
 
+Once we have specs, we generate test strings for ASR by various
+hooks and crooks.
+
+The development horizon is in `core.clj`. As stuff evolves from
+experimental into production, it migrates into `specs.clj`
 
 ## Namespaces and DataFlow
 
