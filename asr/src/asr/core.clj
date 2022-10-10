@@ -1,10 +1,10 @@
 (ns asr.core
   (:gen-class)
+
   (:use [asr.utils]
-        [asr.data]
-        [asr.grammar]
         [asr.parsed]
         [asr.autospecs])
+
   (:require [clojure.spec.alpha            :as    s             ]
             [clojure.pprint                :refer [pprint]      ]
             [clojure.zip                   :as    zip           ]
@@ -774,6 +774,7 @@
 ;; | _|| ' \/ _` | / _ \  _| |  _/ '_/ _ \/ _` | || / _|  _| / _ \ ' \
 ;; |___|_||_\__,_| \___/_|   |_| |_| \___/\__,_|\_,_\__|\__|_\___/_||_|
 
+;; Experimental stuff.
 
 (let [integer-bin-op-stuff ;; SynNASR
       (filter #(= (:head %) :asr.autospecs/IntegerBinOp)
