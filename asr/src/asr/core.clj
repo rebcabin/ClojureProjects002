@@ -548,6 +548,7 @@
    (eval (s/describe :asr.autospecs/binop))
    #{'BitAnd 'BitOr 'BitXor 'BitLShift, 'BitRShift}))
 
+
 (defn fast-int-exp-pluggable
   "O(lg(n)) x^n, n pos or neg, pluggable primitives for base
   operations.
@@ -575,6 +576,7 @@
         (if (even? e)
           (recur       acc   (mul b b) (div e 2))
           (recur  (mul acc b)     b    (sub e 1)))))))
+
 
 (def fast-unchecked-exp-int
   "Produces zero for 2^32, 2^33, ... . Underflows negative exponents
@@ -615,24 +617,28 @@
 ;; => (1024 1048576 16777216 1073741824 -2147483648 0 0)
 ;; ----------------------------------------------------------------
 
+
 (def asr-i32-unchecked-binop->clojure-op
   "Substitute particular arithmetic ops for spec ops in Clojure.
   Our arithmetic is double-pluggable: the power operations is
   pluggable (see `fast-unchecked-exp-int`, and the entire
   collection of operations is pluggable, one level up."
-  {'Add unchecked-add-int,
-   'Sub unchecked-subtract-int,
-   'Mul unchecked-multiply-int,
-   'Div unchecked-divide-int,
-   'Pow fast-unchecked-exp-int,
-   'BitAnd bit-and,
-   'BitOr bit-or,
-   'BitXor bit-xor,
+  {'Add       unchecked-add-int,
+   'Sub       unchecked-subtract-int,
+   'Mul       unchecked-multiply-int,
+   'Div       unchecked-divide-int,
+   'Pow       fast-unchecked-exp-int,
+   'BitAnd    bit-and,
+   'BitOr     bit-or,
+   'BitXor    bit-xor,
    'BitLShift bit-shift-left,
    'BitRShift bit-shift-right})
 
+;;; TODO: Note that MOD, REM, QUOTIENT are missing!
+
+
 (defn i32-bin-op-leaf-gen-pluggable
-  "Generator with pluggable operations."
+  "i32 bin-op leaf generator with pluggable operations."
   [ops-map]
   (tgen/let [left  (s/gen ::i32)
              binop (s/gen :asr.autospecs/binop)
@@ -648,68 +654,6 @@
       (list 'IntegerBinOp (ic left) binop (ic right)
             tt (ic value)))))
 
-(gen/sample (i32-bin-op-leaf-gen-pluggable
-             asr-i32-unchecked-binop->clojure-op) 20)
-;;     (IntegerBinOp
-;;      (IntegerConstant -72 (Integer 4 []))
-;;      BitLShift
-;;      (IntegerConstant -59 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant -2304 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -739 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant 0 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 1 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 63 (Integer 4 []))
-;;      BitAnd
-;;      (IntegerConstant -13 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 51 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 48 (Integer 4 []))
-;;      BitAnd
-;;      (IntegerConstant 173 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 32 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 0 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant 2842 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -208 (Integer 4 []))
-;;      BitXor
-;;      (IntegerConstant -450 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 270 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 9921 (Integer 4 []))
-;;      BitXor
-;;      (IntegerConstant 4 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 9925 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -27866 (Integer 4 []))
-;;      BitAnd
-;;      (IntegerConstant 13 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 4 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 1381 (Integer 4 []))
-;;      Add
-;;      (IntegerConstant 25 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 1406 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -66 (Integer 4 []))
-;;      Sub
-;;      (IntegerConstant -34 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant -32 (Integer 4 []))))
 
 ;;  _ _______    _    _
 ;; (_)__ /_  )__| |__(_)_ _ ___ ___ _ __ ___ ___ ___ _ __  ___ ___ _ __
@@ -726,174 +670,48 @@
 
 (s/def ::i32-bin-op-leaf-semsem
   (s/with-gen
-    (fn [x] (let [[head left op right ttype value] x]
+    (fn [x] (let [[head left op right ttype value]  x]
               (let [,[lhead lv lttype] left
                     ,[rhead rv rttype] right
                     ,[vhead vv vttype] value
                     ,ttcheck '(Integer 4 [])]
-                (and #(= 'IntegerBinOp head)
-                     #(= 'IntegerConstant lhead)
-                     #(= 'IntegerConstant rhead)
-                     #(= 'IntegerConstant vhead)
-                     #(= ttcheck ttype)
-                     #(= ttcheck lttype)
-                     #(= ttcheck rttype)
-                     #(= ttcheck vttype)
-                     #(= ((op asr-i32-unchecked-binop->clojure-op)
-                          lv rv) vv)))))
+                (and (= 'IntegerBinOp head)
+                     (= 'IntegerConstant lhead)
+                     (= 'IntegerConstant rhead)
+                     (= 'IntegerConstant vhead)
+                     (= ttcheck ttype)
+                     (= ttcheck lttype)
+                     (= ttcheck rttype)
+                     (= ttcheck vttype)
+                     (= ((op asr-i32-unchecked-binop->clojure-op)
+                         lv rv) vv)))))
     (fn [] (i32-bin-op-leaf-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
 
-#_
-(s/exercise ::i32-bin-op-leaf-semsem)
+;;; This is checked in core_test.clj.
 
-(s/def ::i32-bin-op-semsem
+
+
+
+
+#_(s/def ::i32-bin-op-semsem
   (s/or
    ;; The base case is necessary. Try commenting it out and
-   ;; running "lein test" at a terminal.
+   ;; running "lein test" at a terminal. On second thought, don't.
    :base
-   (s/cat :head  #{'IntegerBinOp}
-          :left  ::i32-constant-semnasr
-          :op    :asr.autospecs/binop
-          :right ::i32-constant-semnasr
-          :ttype ::i32-scalar-ttype-semnasr
-          :value (s/? ::i32-constant-semnasr))
+   (s/cat :i32-bin-op-leaf-semsem)
 
    :recurse
-   (let [or-leaf (s/or :leaf   ::i32-constant-semnasr
-                       :branch ::i32-bin-op-semnasr)]
+   (let [or-leaf (s/or :leaf   ::i32-bin-op-leaf-semsem
+                       :const  ::i32-constant-semnasr
+                       :branch ::i32-bin-op-semsem)]
      (s/cat :head  #{'IntegerBinOp}
             :left  or-leaf
             :op    :asr.autospecs/binop
             :right or-leaf
             :ttype ::i32-scalar-ttype-semnasr
             :value (s/? or-leaf))) ))
-#_
-(gen/sample (i32-bin-op-leaf-gen-pluggable
-             asr-i32-unchecked-binop->clojure-op) 20)
-;; => ((IntegerBinOp
-;;      (IntegerConstant 0 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant -1 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 0 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant -1 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 0 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant 1 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -1 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant -1 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant -1 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -1 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant 1 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant -1 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 0 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant -1 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -3 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant 30 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -1 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant 5 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant -1 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -4 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant 2 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 16 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 2 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant 7 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -32 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant 42 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 0 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant 635 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -481 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant 211 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 1387939935 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -493 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant 1 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant -493 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 142 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant -15 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 1781 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant -22 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant -80 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -3 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant -5896 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -52 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant -1197 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant -2147483648 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 44 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant -16960 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant 0 (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant -16940 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant -22475 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant -2147483648 (Integer 4 []))))
 
-
-;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 
 
 ;;  ___         _        __   ___             _         _   _

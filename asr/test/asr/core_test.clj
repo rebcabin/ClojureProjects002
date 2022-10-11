@@ -1019,7 +1019,7 @@
 ;; |_|___/___|  |_.__/_|_||_|  \___/ .__/   /__/\___|_|_|_/__/\___|_|_|_|
 ;;                                 |_|
 
-(deftest i32-bin-op-leaf-semsem
+(deftest i32-bin-op-leaf-semsem-conformance
   (testing "conformance to :asr.core/i32-bin-op-leaf-semsem"
     (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
                   '(IntegerBinOp
@@ -1154,3 +1154,29 @@
                     (IntegerConstant 630 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 0 (Integer 4 [])))))))
+
+(deftest i32-bin-op-leaf-semsem-non-conformance
+  (testing "non-conformance of :asr.core/i32-bin-op-leaf-semsem"
+    (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                       '(bag
+                         (foo 42 bar)
+                         Pow
+                         (baz 6 bar)
+                         (boo 4 far)
+                         (qux 32 pgh))
+                       )))
+    ;; Check that a nested expr is not valid. It will fail due to
+    ;; structural (syntactical?) constraints on the head, not due
+    ;; to arithmetic (sem-sem) constraints on the values.
+    (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                       '(IntegerBinOp
+                         (IntegerBinOp
+                          (IntegerConstant -657 (Integer 4 []))
+                          BitOr
+                          (IntegerConstant -356 (Integer 4 []))
+                          (Integer 4 [])
+                          (IntegerConstant -1 (Integer 4 [])))
+                         Pow
+                         (IntegerConstant 630 (Integer 4 []))
+                         (Integer 4 [])
+                         (IntegerConstant 0 (Integer 4 []))))))))
