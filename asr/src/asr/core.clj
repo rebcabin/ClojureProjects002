@@ -14,7 +14,12 @@
             [clojure.math.numeric-tower    :refer [expt]        ] ;; bigint
             [clojure.inspector             :refer [inspect-tree]]
             [clojure.math                  :refer [pow]         ] ;; int
-            [clojure.set                   :as    set           ]))
+            [clojure.set                   :as    set           ])
+
+  (:require [cats.core                     :as    m             ]
+            [cats.builtin                                       ]
+            [cats.monad.maybe              :as    maybe         ]
+            [cats.monad.either             :as    either        ]))
 
 
 ;;  _    _      _     _  ___
@@ -97,7 +102,7 @@
           :kind        #{1 2 4 8} ;; i8, i16, i32, i64
           :dimensionss (s/+ ::dimensions))))
 
-(->> ::integer-ttype-semnasr
+#_(->> ::integer-ttype-semnasr
      s/gen
      gen/generate)
 ;; => (Integer
@@ -142,8 +147,7 @@
           :dimensionss #{[]})))
 
 #_
-(-> ::integer-scalar-ttype-semnasr
-      (s/exercise 4))
+(-> ::integer-scalar-ttype-semnasr (s/exercise 4))
 ;; => ([(Integer 2 []) {:head Integer, :kind 2, :dimensionss []}]
 ;;     [(Integer 4 []) {:head Integer, :kind 4, :dimensionss []}]
 ;;     [(Integer 1 []) {:head Integer, :kind 1, :dimensionss []}]
@@ -177,8 +181,7 @@
             :kind        #{8}
             :dimensionss #{[]}))))
 
-#_(-> ::i64-scalar-ttype-semnasr
-    (s/exercise 2))
+#_(-> ::i64-scalar-ttype-semnasr (s/exercise 2))
 ;; => ([(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}]
 ;;     [(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}])
 
@@ -523,19 +526,6 @@
             :value (s/? or-leaf)))))
 
 
-;; for generation:
-(defn i32-constant-semnasr
-  [value]
-  (let [b (expt 2 31)]
-    (assert (and (>= value (- b)) (< value b))))
-  (list 'IntegerConstant
-        value
-        '(Integer 4 [])))
-
-#_
-(gen/generate (tgen/return (i32-constant-semnasr 42)))
-
-
 ;;  _                               _   _     _     _    _
 ;; (_)_ __  _ __ _ _ _____ _____ __| | (_)_ _| |_  | |__(_)_ _  ___ _ __
 ;; | | '  \| '_ \ '_/ _ \ V / -_) _` | | | ' \  _| | '_ \ | ' \/ _ \ '_ \
@@ -598,6 +588,7 @@
            unchecked-subtract-int,
            Integer/MIN_VALUE))
 
+
 ;; ----------------------------------------------------------------
 ;; Because our multiplication plugin is unchecked, this can iterate
 ;; round and round and round on seemingly random values:
@@ -627,7 +618,6 @@
 ;; => (1024 1048576 16777216 1073741824 -2147483648 0 0)
 ;; ----------------------------------------------------------------
 
-
 (def asr-i32-unchecked-binop->clojure-op
   "Substitute particular arithmetic ops for spec ops in Clojure.
   Our arithmetic is double-pluggable: the power operations is
@@ -647,18 +637,28 @@
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 
 
-;;  _ _______    _    _
-;; (_)__ /_  )__| |__(_)_ _ ___ ___ _ __ ___ ___ ___ _ __  ___ ___ _ __
-;; | ||_ \/ /___| '_ \ | ' \___/ _ \ '_ \___(_-</ -_) '  \(_-</ -_) '  \
-;; |_|___/___|  |_.__/_|_||_|  \___/ .__/   /__/\___|_|_|_/__/\___|_|_|_|
-;;                                 |_|
+;;  _ _______   _    _
+;; (_)__ /_  ) | |__(_)_ _    ___ _ __   ___ ___ _ __  ___ ___ _ __
+;; | ||_ \/ /  | '_ \ | ' \  / _ \ '_ \ (_-</ -_) '  \(_-</ -_) '  \
+;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_/__/\___|_|_|_|
+;;                               |_|
 
 ;; Sem-Sem means specs that are doubly semantically correct:
 ;;
 ;; - They have correct *types* in their argument lists
 ;;
 ;; - They have correct arithmetic for expressions that can (and
-;; - should) be evaluated at compile time.
+;;   should) be evaluated at compile time.
+
+
+;;  _ _______   _    _                   _           __
+;; (_)__ /_  ) | |__(_)_ _    ___ _ __  | |___ __ _ / _|
+;; | ||_ \/ /  | '_ \ | ' \  / _ \ '_ \ | / -_) _` |  _|
+;; |_|___/___| |_.__/_|_||_| \___/ .__/ |_\___\__,_|_|
+;;                               |_|
+;;  ___ ___ _ __  ___ ___ _ __
+;; (_-</ -_) '  \(_-</ -_) '  \
+;; /__/\___|_|_|_/__/\___|_|_|_|
 
 (defn i32-bin-op-leaf-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate i32
@@ -678,64 +678,143 @@
       (list 'IntegerBinOp (ic left) binop (ic right)
             tt (ic value)))))
 
-
 (s/def ::i32-bin-op-leaf-semsem
   (s/with-gen
-    (fn [x] (let [[head left op right ttype value]  x]
-              (let [,[lhead lv lttype] left
-                    ,[rhead rv rttype] right
-                    ,[vhead vv vttype] value
-                    ,ttcheck '(Integer 4 [])]
-                (and (= 'IntegerBinOp head)
-                     (= 'IntegerConstant lhead)
-                     (= 'IntegerConstant rhead)
-                     (= 'IntegerConstant vhead)
-                     (= ttcheck ttype)
-                     (= ttcheck lttype)
-                     (= ttcheck rttype)
-                     (= ttcheck vttype)
-                     (= ((op asr-i32-unchecked-binop->clojure-op)
-                         lv rv) vv)))))
+    (fn [x]
+      (try
+        (let [[head left op right ttype value]  x]
+          (let [,[lhead lv lttype] left
+                ,[rhead rv rttype] right
+                ,[vhead vv vttype] value
+                ,ttcheck '(Integer 4 [])]
+            (and (= 'IntegerBinOp head)
+                 (= 'IntegerConstant lhead)
+                 (= 'IntegerConstant rhead)
+                 (= 'IntegerConstant vhead)
+                 (= ttcheck ttype)
+                 (= ttcheck lttype)
+                 (= ttcheck rttype)
+                 (= ttcheck vttype)
+                 (= ((op asr-i32-unchecked-binop->clojure-op)
+                     lv rv) vv))))
+        (catch UnsupportedOperationException e
+          #_"bad structure" false)))
     (fn [] (i32-bin-op-leaf-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
 
 ;;; ::i32-bin-op-leaf-semsem is checked in core_test.clj.
 
-
-(defn eval-i32-bin-op-and-check-value
-  "Recursively evaluate an ASR i32 bin op. Needed for the recursive
-  generator."
-  [i32bo]
-  (let [[head, left, op, right, ttype, value] i32bo]
-    (let [,[lh, lv, ltt] left
-          ,[rh, rv, rtt] right
-          ,[vh, vv, vtt] value
-          ,ttcheck '(Integer 4 [])]
-      ))
-  )
+(gen/generate (s/gen ::i32-bin-op-leaf-semsem))
 
 
+;;  _ _______   _    _
+;; (_)__ /_  ) | |__(_)_ _    ___ _ __   ___ ___ _ __  ___ ___ _ __
+;; | ||_ \/ /  | '_ \ | ' \  / _ \ '_ \ (_-</ -_) '  \(_-</ -_) '  \
+;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_/__/\___|_|_|_|
+;;                               |_|
 
+;; for generation:
+(defn i32-constant-semnasr-gen
+  [value]
+  (let [b (expt 2 31)]
+    (assert (and (>= value (- b)) (< value b))))
+  (list 'IntegerConstant
+        value
+        '(Integer 4 [])))
+
+#_(gen/generate (tgen/return (i32-constant-semnasr 42)))
+
+#_
+(defn i32-bin-op-semsem-gen
+  "Given an ops-map from ASR binops to implementations, generate i32
+  ASR IntegerBinOp node, recursively."
+  [ops-map]
+  (gen/one-of
+   [(s/gen ::i32-bin-op-leaf-semsem)
+
+    ]))
+
+#_(gen/generate i32-bin-op-semsem-gen)
+
+;;; forward reference (backpatch later)
+
+(s/def ::i32-bin-op-semsem
+  ::i32-bin-op-leaf-semsem)
+
+(defn maybe-value-i32-semsem
+  "Given an IntegerConstant or an IntegerBinOp, fetch the value, if
+  there is one. Return it in the maybe monad."
+  [icobo]
+  (cond
+    ,(s/valid? ::i32-bin-op-leaf-semsem icobo)
+    (let [[_, _, _, _, _, cv] icobo]
+      (let [[_, v, _] cv] (maybe/just v)))
+    ,(s/valid? ::i32-constant-semnasr icobo)
+    (let [[_, v, _] icobo] (maybe/just v))
+    ,:else
+    (maybe/nothing)))
+
+(gen/generate (s/gen ::i32-bin-op-semsem))
+
+
+
+
+(s/def ::i32-bin-op-semsem
+  (s/with-gen
+    (s/or ,:base
+          ::i32-bin-op-leaf-semsem
+          ,:lrecurse
+          (let [or-leaf (s/or :cleaf   ::i32-constant-semnasr
+                              :branch ::i32-bin-op-semsem)]
+            (s/cat :head  #{'IntegerBinOp}
+                   :left  or-leaf
+                   :op    :asr.autospecs/binop
+                   :right or-leaf
+                   :ttype ::i32-scalar-ttype-semnasr
+                   :value (s/? or-leaf)))
+          )
+    (fn [] (gen/return 42))))
+
+(s/valid? ::i32-bin-op-semsem
+          '(IntegerBinOp
+            (IntegerConstant -1 (Integer 4 []))
+            Add
+            (IntegerConstant 284 (Integer 4 []))
+            (Integer 4 [])
+            (IntegerConstant 283 (Integer 4 []))))
+
+(s/describe ::i32-bin-op-semsem)
+
+
+
+
+#_
+(eval-i32-bin-op-semsem
+ '(IntegerBinOp
+   (IntegerConstant -131974 (Integer 4 []))
+   Pow
+   (IntegerConstant 630 (Integer 4 []))
+   (Integer 4 [])
+   (IntegerConstant 43 (Integer 4 []))))
 
 
 #_(s/def ::i32-bin-op-semsem
-  (s/or
-   ;; The base case is necessary. Try commenting it out and
-   ;; running "lein test" at a terminal. On second thought, don't.
-   :base
-   (s/cat :i32-bin-op-leaf-semsem)
+    (s/or
+     ;; The base case is necessary. Try commenting it out and
+     ;; running "lein test" at a terminal. On second thought, don't.
+     :base
+     (s/cat :i32-bin-op-leaf-semsem)
 
-   :recurse
-   (let [or-leaf (s/or :leaf   ::i32-bin-op-leaf-semsem
-                       :const  ::i32-constant-semnasr
-                       :branch ::i32-bin-op-semsem)]
-     (s/cat :head  #{'IntegerBinOp}
-            :left  or-leaf
-            :op    :asr.autospecs/binop
-            :right or-leaf
-            :ttype ::i32-scalar-ttype-semnasr
-            :value (s/? or-leaf))) ))
-
+     :recurse
+     (let [or-leaf (s/or :leaf   ::i32-bin-op-leaf-semsem
+                         :const  ::i32-constant-semnasr
+                         :branch ::i32-bin-op-semsem)]
+       (s/cat :head  #{'IntegerBinOp}
+              :left  or-leaf
+              :op    :asr.autospecs/binop
+              :right or-leaf
+              :ttype ::i32-scalar-ttype-semnasr
+              :value (s/? or-leaf))) ))
 
 
 ;;  ___         _        __   ___             _         _   _
@@ -745,18 +824,21 @@
 
 ;; Experimental stuff.
 
+(println "Experimental hand-aided autospec for IntegerBinOp ~~~> integer-bin-op")
+
 (let [integer-bin-op-stuff ;; SynNASR
       (filter #(= (:head %) :asr.autospecs/IntegerBinOp)
               big-list-of-stuff)]
-  (-> (spec-from-composite
+  (-> (asr.autospecs/spec-from-composite
        (-> integer-bin-op-stuff
            first
            :form
            :ASDL-COMPOSITE))
       eval
-      #_echo
+      echo
       ))
 
+#_
 (s/describe :asr.autospecs/integer-bin-op)
 ;; => (cat
 ;;     :head

@@ -4,11 +4,17 @@
         [asr.data]
         [asr.parsed]
         [asr.autospecs])
-  (:require [clojure.test                  :refer :all]
-            [clojure.spec.alpha            :as s      ]
-            [clojure.spec.gen.alpha        :as gen    ]
-            [clojure.test.check.generators :as tgen   ]
-            [clojure.test.check.properties :as tprop  ]))
+
+  (:require [clojure.test                  :refer :all   ]
+            [clojure.spec.alpha            :as    s      ]
+            [clojure.spec.gen.alpha        :as    gen    ]
+            [clojure.test.check.generators :as    tgen   ]
+            [clojure.test.check.properties :as    tprop  ])
+
+  (:require [cats.core                     :as    m      ]
+            [cats.builtin                                ]
+            [cats.monad.maybe              :as    maybe  ]
+            [cats.monad.either             :as    either ]))
 
 
 (def NTESTS           50) ;; Bigger for more stress, smaller for more speed
@@ -583,28 +589,6 @@
 ;; |___|_||_\__\___\__, \___|_| |___/_|_||_\___/ .__/
 ;;                 |___/                       |_|
 
-
-(let [test-vector '(IntegerBinOp
-                    (IntegerBinOp
-                     (IntegerConstant
-                      2 (Integer 4 []))
-                     Add
-                     (IntegerConstant
-                      3
-                      (Integer 4 []))
-                     (Integer 4 [])
-                     (IntegerConstant
-                      5 (Integer 4 [])))
-                    Mul
-                    (IntegerConstant
-                     5 (Integer 4 []))
-                    (Integer 4 [])
-                    (IntegerConstant
-                     25 (Integer 4 [])))]
-
-  (s/explain :asr.autospecs/integer-bin-op test-vector))
-
-
 (let [test-vector '(IntegerBinOp
                     (IntegerBinOp
                      (IntegerConstant
@@ -655,15 +639,20 @@
              (filter #(= (:head %) :asr.autospecs/IntegerBinOp)
                      big-list-of-stuff))))))
 
+;;  _     _                      _   _
+;; (_)_ _| |_ ___ __ _ ___ _ _  | |_| |_ _  _ _ __  ___
+;; | | ' \  _/ -_) _` / -_) '_| |  _|  _| || | '_ \/ -_)
+;; |_|_||_\__\___\__, \___|_|    \__|\__|\_, | .__/\___|
+;;               |___/                   |__/|_|
 
 (deftest integer-ttype-semnasr-conformance
   (testing "Integer ttype conformance"
     (is (s/valid? :asr.core/integer-ttype-semnasr
                   '(Integer 4 [])                ))
     (is (s/valid? :asr.core/integer-ttype-semnasr
-                  '(Integer 4 [1 2])             ))
+                  '(Integer 1 [1 2])             ))
     (is (s/valid? :asr.core/integer-ttype-semnasr
-                  '(Integer 4 [] [1 2] [] [3 4]) ))
+                  '(Integer 8 [] [1 2] [] [3 4]) ))
     (is (not (s/valid? :asr.core/integer-ttype-semnasr  ;; NOT case!
                   '(Integer 4)                   )))
     (is (s/valid? :asr.core/integer-ttype-semnasr
@@ -672,13 +661,57 @@
                   '(Integer 2 (1 2))             ))
     (is (s/valid? :asr.core/integer-ttype-semnasr
                   '(Integer 2 () (1 2) () (3 4)) ))
-
     (is (every?
          (partial s/valid? :asr.core/integer-ttype-semnasr)
          (for [_ (range NTESTS)]
            (gen/generate (s/gen :asr.core/integer-ttype-semnasr)))))
     ))
 
+
+;;  _ _______                  _            _
+;; (_)__ /_  )  __ ___ _ _  __| |_ __ _ _ _| |_   ___ ___ _ __  _ _  __ _ ____ _
+;; | ||_ \/ /  / _/ _ \ ' \(_-<  _/ _` | ' \  _| (_-</ -_) '  \| ' \/ _` (_-< '_|
+;; |_|___/___| \__\___/_||_/__/\__\__,_|_||_\__| /__/\___|_|_|_|_||_\__,_/__/_|
+
+(deftest i32-constant-semnasr-conformance
+  (testing "i32-constant-semnasr conformance"
+    (testing "list"
+      (is (s/valid? :asr.core/i32-constant-semnasr
+                    '(IntegerConstant 5 (Integer 4 [])))))
+    (testing "vector"
+      (is (s/valid? :asr.core/i32-constant-semnasr
+                    '[IntegerConstant 5 (Integer 4 [])])))))
+
+
+(deftest i32-constant-semnasr-non-conformance
+  (testing "i32-constant-semnasr NON-conformance"
+    (testing "wrong \"kind\", i.e., integer size"
+      (is (not (s/valid? :asr.core/i32-constant-semnasr
+                         '(IntegerConstant 5 (Integer 8 []))))))
+    (testing "wrong type of value"
+      (is (not (s/valid? :asr.core/i32-constant-semnasr
+                         '(IntegerConstant 5.0 (Integer 4 []))))))
+    (testing "wrong tag"
+      (is (not (s/valid? :asr.core/i32-constant-semnasr
+                         '(foobarConstant 5 (Integer 4 []))))))
+    (testing "wrong ttype"
+      (is (not (s/valid? :asr.core/i32-constant-semnasr
+                         '(IntegerConstant 5 (Float 4 []))))))
+    (testing "missing ttype"
+      (is (not (s/valid? :asr.core/i32-constant-semnasr
+                         '(IntegerConstant 5)))))
+    (testing "wrong structure"
+      (is (not (s/valid? :asr.core/i32-constant-semnasr
+                         43)))
+      (is (not (s/valid? :asr.core/i32-constant-semnasr
+                         '((IntegerConstant 5.0 (Integer 8 [])))))))))
+
+
+;;  _ _______   _    _
+;; (_)__ /_  ) | |__(_)_ _    ___ _ __   ___ ___ _ __  _ _  __ _ ____ _
+;; | ||_ \/ /  | '_ \ | ' \  / _ \ '_ \ (_-</ -_) '  \| ' \/ _` (_-< '_|
+;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_|_||_\__,_/__/_|
+;;                               |_|
 
 (deftest i32-bin-op-semnasr-conformance
   ;; Base case, base-answer
@@ -850,6 +883,13 @@
                s/gen
                gen/generate))))))
 
+
+;;  _     _                                                 _
+;; (_)_ _| |_ ___ __ _ ___ _ _   __ _ ___ _ _  ___ _ _ __ _| |_ ___ _ _ ___
+;; | | ' \  _/ -_) _` / -_) '_| / _` / -_) ' \/ -_) '_/ _` |  _/ _ \ '_(_-<
+;; |_|_||_\__\___\__, \___|_|   \__, \___|_||_\___|_| \__,_|\__\___/_| /__/
+;;               |___/          |___/
+
 (deftest integer-generators
   (testing "::i8, ::i8nz, ::i16, etc."
     (is (not-any? zero?
@@ -877,6 +917,12 @@
     (is (not-any? #(< % Long/MIN_VALUE)
                   (gen/sample (s/gen :asr.core/i64) NTESTS)))))
 
+
+;;  _     _                                          _   _
+;; (_)_ _| |_ ___ __ _ ___ _ _   _____ ____ ___ _ __| |_(_)___ _ _  ___
+;; | | ' \  _/ -_) _` / -_) '_| / -_) \ / _/ -_) '_ \  _| / _ \ ' \(_-<
+;; |_|_||_\__\___\__, \___|_|   \___/_\_\__\___| .__/\__|_\___/_||_/__/
+;;               |___/                         |_|
 
 (deftest integer-exceptions
   (testing "small integer exceptions; Need different exceptions
@@ -918,6 +964,12 @@
          (inc Long/MAX_VALUE)))))
 
 
+;;  _     _                      _
+;; (_)_ _| |_ ___ __ _ ___ _ _  | |_ _  _ _ __  ___ ___
+;; | | ' \  _/ -_) _` / -_) '_| |  _| || | '_ \/ -_|_-<
+;; |_|_||_\__\___\__, \___|_|    \__|\_, | .__/\___/__/
+;;               |___/               |__/|_|
+
 (deftest integer-types
   (testing "integer types, clojure and java")
   (is clojure.lang.BigInt
@@ -935,6 +987,16 @@
        #{'Div}
        (s/exercise :asr.core/binop-no-div NTESTS))))
 
+
+;;  _ _______   _    _
+;; (_)__ /_  ) | |__(_)_ _    ___ _ __   ___ ___ _ __  _ _  __ _ ____ _
+;; | ||_ \/ /  | '_ \ | ' \  / _ \ '_ \ (_-</ -_) '  \| ' \/ _` (_-< '_|
+;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_|_||_\__,_/__/_|
+;;                               |_|
+;;                                 _ _     _
+;;  _ _  ___   ______ _ _ ___   __| (_)_ _(_)___ ___ _ _
+;; | ' \/ _ \ |_ / -_) '_/ _ \ / _` | \ V / (_-</ _ \ '_|
+;; |_||_\___/ /__\___|_| \___/ \__,_|_|\_/|_/__/\___/_|
 
 (def honker-2
   '(IntegerBinOp
@@ -1012,6 +1074,7 @@
                        honker-2)))
     (is (not (s/valid? :asr.core/i32-bin-op-semnasr-no-zero-divisor
                        honker-3)))))
+
 
 ;;  _ _______    _    _
 ;; (_)__ /_  )__| |__(_)_ _ ___ ___ _ __ ___ ___ ___ _ __  ___ ___ _ __
@@ -1153,10 +1216,21 @@
                     Pow
                     (IntegerConstant 630 (Integer 4 []))
                     (Integer 4 [])
-                    (IntegerConstant 0 (Integer 4 [])))))))
+                    (IntegerConstant 0 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant -41056462 (Integer 4 []))
+                    Pow
+                    (IntegerConstant -266578627 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -2147483648 (Integer 4 [])))))))
+
 
 (deftest i32-bin-op-leaf-semsem-non-conformance
   (testing "non-conformance of :asr.core/i32-bin-op-leaf-semsem"
+    (testing "wrong structure"
+      (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                         'foo))))
     (testing "wrong keywords"
       (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
                          '(bag
@@ -1175,7 +1249,8 @@
                            (IntegerConstant 43 (Integer 4 [])))))))
     ;; Check that a nested expr is not valid. It will fail due to
     ;; structural (syntactical?) constraints on the head, not due
-    ;; to arithmetic (sem-sem) constraints on the values.
+    ;; to types and kinds (semnasr) on the preimage or
+    ;; arithmetic (sem-sem) constraints on the values.
     (testing "nested structure (not leaf)"
       (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
                          '(IntegerBinOp
@@ -1189,3 +1264,37 @@
                            (IntegerConstant 630 (Integer 4 []))
                            (Integer 4 [])
                            (IntegerConstant 0 (Integer 4 [])))))))))
+
+
+;;                  _                    _            _ _______
+;;  _ __  __ _ _  _| |__  ___  __ ____ _| |_  _ ___  (_)__ /_  )
+;; | '  \/ _` | || | '_ \/ -_) \ V / _` | | || / -_) | ||_ \/ /
+;; |_|_|_\__,_|\_, |_.__/\___|  \_/\__,_|_|\_,_\___| |_|___/___|
+;;             |__/
+
+(deftest maybe-value-i32-semsem-test
+  (testing "various returns in the maybe monad"
+    (is (= (maybe/just 0)
+           (maybe-value-i32-semsem
+            '(IntegerBinOp
+              (IntegerConstant -131974 (Integer 4 []))
+              Pow
+              (IntegerConstant 630 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 []))))))
+    (is (= (maybe/just -131974)
+           (maybe-value-i32-semsem
+            '(IntegerConstant -131974 (Integer 4 [])))))
+    (testing "wrong \"kind\""
+      (is (maybe/nothing?
+           (maybe-value-i32-semsem
+            '(IntegerConstant -131974 (Integer 8 []))))))
+    (testing "wrong value"
+      (is (maybe/nothing?
+           (maybe-value-i32-semsem
+            '(IntegerBinOp
+              (IntegerConstant -131974 (Integer 4 []))
+              Pow
+              (IntegerConstant 630 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 434343 (Integer 4 [])))))))))

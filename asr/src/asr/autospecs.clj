@@ -270,11 +270,11 @@
        echo))
 
 
-;;                       __                                            _ _
-;;  ____ __  ___ __ ___ / _|_ _ ___ _ __ ___ __ ___ _ __  _ __  ___ __(_) |_ ___
-;; (_-< '_ \/ -_) _|___|  _| '_/ _ \ '  \___/ _/ _ \ '  \| '_ \/ _ (_-< |  _/ -_)
-;; /__/ .__/\___\__|   |_| |_| \___/_|_|_|  \__\___/_|_|_| .__/\___/__/_|\__\___|
-;;    |_|                                                |_|
+;;                     __                                           _ _
+;;  ____ __  ___ __   / _|_ _ ___ _ __    __ ___ _ __  _ __  ___ __(_) |_ ___
+;; (_-< '_ \/ -_) _| |  _| '_/ _ \ '  \  / _/ _ \ '  \| '_ \/ _ (_-< |  _/ -_)
+;; /__/ .__/\___\__| |_| |_| \___/_|_|_| \__\___/_|_|_| .__/\___/__/_|\__\___|
+;;    |_|                                             |_|
 
 (defn spec-from-composite
   "Write specs as data lists and `eval` them later. Turns out it's
@@ -295,10 +295,10 @@
 
 
 ;;     _
-;;  __| |___ ___ ____  _ _ _  _ _  __ _ ____ _
-;; / _` / _ \___(_-< || | ' \| ' \/ _` (_-< '_|
-;; \__,_\___/   /__/\_, |_||_|_||_\__,_/__/_|
-;;                  |__/
+;;  __| |___   ____  _ _ __  _ _  __ _ ____ _
+;; / _` / _ \ (_-< || | '  \| ' \/ _` (_-< '_|
+;; \__,_\___/ /__/\_, |_|_|_|_||_\__,_/__/_|
+;;                |__/
 
 ;; At this point, we distinguish syntactically correct nonsense
 ;; ASR (SynNASR) from semantically constrained nonsense
@@ -334,7 +334,7 @@
   "Side-effecting automated items for the spec registry. W.I.P."
   []
 
-  (print "symconst head specs: ")
+  (println "symconst head specs: ")
 
   (->> symconst-stuffs
        (map spec-from-symconst-stuff)
@@ -342,7 +342,7 @@
        #_count
        echo)
 
-  (print "symconst term specs: ")
+  (println "symconst term specs: ")
 
   (->> symconst-stuffss-by-term
        (map symconst-spec-for-term)
@@ -358,7 +358,7 @@
   (do-one-tuple-spec-head-and-term! ::dimension)
 
   (println "tuple heads and terms are 1-to-1, unlike symconsts an composites.")
-  (print "tuple head specs: ")
+  (println "tuple head specs: ")
 
   (->> tuple-stuffs
        (map tuple-head-spec-from-stuff)
@@ -366,7 +366,7 @@
        #_count
        echo)
 
-  (print "tuple term specs: ")
+  (println "tuple term specs: ")
 
   (->> tuple-stuffss-by-term
        (map tuple-term-spec-from-stuffs)
