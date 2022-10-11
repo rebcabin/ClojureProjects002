@@ -549,6 +549,16 @@
    #{'BitAnd 'BitOr 'BitXor 'BitLShift, 'BitRShift}))
 
 
+;;       _                     _    _
+;;  _ __| |_  _ __ _ __ _ __ _| |__| |___
+;; | '_ \ | || / _` / _` / _` | '_ \ / -_)
+;; | .__/_|\_,_\__, \__, \__,_|_.__/_\___|
+;; |_|         |___/|___/
+;;           _ _   _              _   _
+;;  __ _ _ _(_) |_| |_  _ __  ___| |_(_)__
+;; / _` | '_| |  _| ' \| '  \/ -_)  _| / _|
+;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
+
 (defn fast-int-exp-pluggable
   "O(lg(n)) x^n, n pos or neg, pluggable primitives for base
   operations.
@@ -637,8 +647,22 @@
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 
 
+;;  _ _______    _    _
+;; (_)__ /_  )__| |__(_)_ _ ___ ___ _ __ ___ ___ ___ _ __  ___ ___ _ __
+;; | ||_ \/ /___| '_ \ | ' \___/ _ \ '_ \___(_-</ -_) '  \(_-</ -_) '  \
+;; |_|___/___|  |_.__/_|_||_|  \___/ .__/   /__/\___|_|_|_/__/\___|_|_|_|
+;;                                 |_|
+
+;; Sem-Sem means specs that are doubly semantically correct:
+;;
+;; - They have correct *types* in their argument lists
+;;
+;; - They have correct arithmetic for expressions that can (and
+;; - should) be evaluated at compile time.
+
 (defn i32-bin-op-leaf-gen-pluggable
-  "i32 bin-op leaf generator with pluggable operations."
+  "Given an ops-map from ASR binops to implementations, generate i32
+  ASR IntegerBinOp leaf node."
   [ops-map]
   (tgen/let [left  (s/gen ::i32)
              binop (s/gen :asr.autospecs/binop)
@@ -654,19 +678,6 @@
       (list 'IntegerBinOp (ic left) binop (ic right)
             tt (ic value)))))
 
-
-;;  _ _______    _    _
-;; (_)__ /_  )__| |__(_)_ _ ___ ___ _ __ ___ ___ ___ _ __  ___ ___ _ __
-;; | ||_ \/ /___| '_ \ | ' \___/ _ \ '_ \___(_-</ -_) '  \(_-</ -_) '  \
-;; |_|___/___|  |_.__/_|_||_|  \___/ .__/   /__/\___|_|_|_/__/\___|_|_|_|
-;;                                 |_|
-
-;; Sem-Sem means specs that are doubly semantically correct:
-;;
-;; - They have correct *types* in their argument lists
-;;
-;; - They have correct arithmetic for expressions that can (and
-;; - should) be evaluated at compile time.
 
 (s/def ::i32-bin-op-leaf-semsem
   (s/with-gen
@@ -688,7 +699,20 @@
     (fn [] (i32-bin-op-leaf-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
 
-;;; This is checked in core_test.clj.
+;;; ::i32-bin-op-leaf-semsem is checked in core_test.clj.
+
+
+(defn eval-i32-bin-op-and-check-value
+  "Recursively evaluate an ASR i32 bin op. Needed for the recursive
+  generator."
+  [i32bo]
+  (let [[head, left, op, right, ttype, value] i32bo]
+    (let [,[lh, lv, ltt] left
+          ,[rh, rv, rtt] right
+          ,[vh, vv, vtt] value
+          ,ttcheck '(Integer 4 [])]
+      ))
+  )
 
 
 
