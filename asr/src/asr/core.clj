@@ -587,7 +587,7 @@
            Integer/MIN_VALUE))
 
 ;; ----------------------------------------------------------------
-;; Because our multiplication plugin is unchecked, this can spin
+;; Because our multiplication plugin is unchecked, this can iterate
 ;; round and round and round on seemingly random values:
 ;;
 #_(fast-unchecked-exp-int -481 211)
@@ -616,6 +616,10 @@
 ;; ----------------------------------------------------------------
 
 (def asr-i32-unchecked-binop->clojure-op
+  "Substitute particular arithmetic ops for spec ops in Clojure.
+  Our arithmetic is double-pluggable: the power operations is
+  pluggable (see `fast-unchecked-exp-int`, and the entire
+  collection of operations is pluggable, one level up."
   {'Add unchecked-add-int,
    'Sub unchecked-subtract-int,
    'Mul unchecked-multiply-int,
@@ -628,21 +632,84 @@
    'BitRShift bit-shift-right})
 
 (defn i32-bin-op-leaf-gen-pluggable
-  "with pluggable operations"
+  "Generator with pluggable operations."
   [ops-map]
   (tgen/let [left  (s/gen ::i32)
-             binop (s/gen #{'Pow 'Div} #_::binop-no-bits)
+             binop (s/gen :asr.autospecs/binop)
              right (case binop
                      Div (s/gen ::i32nz)  ; don't / 0
                      Pow (if (zero? left) ; don't 0^(negative int)
                            (tgen/fmap abs (s/gen ::i32))
-                           (s/gen ::i32)))
+                           (s/gen ::i32))
+                     #_default (s/gen ::i32))
              value (tgen/return  ((ops-map binop)  left right))]
     (let [tt '(Integer 4 [])
           ic (fn [i] (list 'IntegerConstant i tt))]
       (list 'IntegerBinOp (ic left) binop (ic right)
             tt (ic value)))))
 
+(gen/sample (i32-bin-op-leaf-gen-pluggable
+             asr-i32-unchecked-binop->clojure-op) 20)
+;;     (IntegerBinOp
+;;      (IntegerConstant -72 (Integer 4 []))
+;;      BitLShift
+;;      (IntegerConstant -59 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant -2304 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -739 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant 0 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 1 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 63 (Integer 4 []))
+;;      BitAnd
+;;      (IntegerConstant -13 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 51 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 48 (Integer 4 []))
+;;      BitAnd
+;;      (IntegerConstant 173 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 32 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 0 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant 2842 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 0 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -208 (Integer 4 []))
+;;      BitXor
+;;      (IntegerConstant -450 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 270 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 9921 (Integer 4 []))
+;;      BitXor
+;;      (IntegerConstant 4 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 9925 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -27866 (Integer 4 []))
+;;      BitAnd
+;;      (IntegerConstant 13 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 4 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 1381 (Integer 4 []))
+;;      Add
+;;      (IntegerConstant 25 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant 1406 (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant -66 (Integer 4 []))
+;;      Sub
+;;      (IntegerConstant -34 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant -32 (Integer 4 []))))
 
 ;;  _ _______    _    _
 ;; (_)__ /_  )__| |__(_)_ _ ___ ___ _ __ ___ ___ ___ _ __  ___ ___ _ __
@@ -656,6 +723,29 @@
 ;;
 ;; - They have correct arithmetic for expressions that can (and
 ;; - should) be evaluated at compile time.
+
+(s/def ::i32-bin-op-leaf-semsem
+  (s/with-gen
+    (fn [x] (let [[head left op right ttype value] x]
+              (let [,[lhead lv lttype] left
+                    ,[rhead rv rttype] right
+                    ,[vhead vv vttype] value
+                    ,ttcheck '(Integer 4 [])]
+                (and #(= 'IntegerBinOp head)
+                     #(= 'IntegerConstant lhead)
+                     #(= 'IntegerConstant rhead)
+                     #(= 'IntegerConstant vhead)
+                     #(= ttcheck ttype)
+                     #(= ttcheck lttype)
+                     #(= ttcheck rttype)
+                     #(= ttcheck vttype)
+                     #(= ((op asr-i32-unchecked-binop->clojure-op)
+                          lv rv) vv)))))
+    (fn [] (i32-bin-op-leaf-gen-pluggable
+            asr-i32-unchecked-binop->clojure-op))))
+
+#_
+(s/exercise ::i32-bin-op-leaf-semsem)
 
 (s/def ::i32-bin-op-semsem
   (s/or

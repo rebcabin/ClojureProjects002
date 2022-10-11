@@ -1012,3 +1012,145 @@
                        honker-2)))
     (is (not (s/valid? :asr.core/i32-bin-op-semnasr-no-zero-divisor
                        honker-3)))))
+
+;;  _ _______    _    _
+;; (_)__ /_  )__| |__(_)_ _ ___ ___ _ __ ___ ___ ___ _ __  ___ ___ _ __
+;; | ||_ \/ /___| '_ \ | ' \___/ _ \ '_ \___(_-</ -_) '  \(_-</ -_) '  \
+;; |_|___/___|  |_.__/_|_||_|  \___/ .__/   /__/\___|_|_|_/__/\___|_|_|_|
+;;                                 |_|
+
+(deftest i32-bin-op-leaf-semsem
+  (testing "conformance to :asr.core/i32-bin-op-leaf-semsem"
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant -1 (Integer 4 []))
+                    BitOr
+                    (IntegerConstant 0 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -1 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant -1 (Integer 4 []))
+                    BitLShift
+                    (IntegerConstant 0 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -1 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 1 (Integer 4 []))
+                    BitRShift
+                    (IntegerConstant 0 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 1 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant -4 (Integer 4 []))
+                    BitAnd
+                    (IntegerConstant -4 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -4 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 0 (Integer 4 []))
+                    Add
+                    (IntegerConstant 0 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 0 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 5 (Integer 4 []))
+                    Add
+                    (IntegerConstant -1 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 4 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 61 (Integer 4 []))
+                    BitRShift
+                    (IntegerConstant -4 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 0 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 13 (Integer 4 []))
+                    BitOr
+                    (IntegerConstant -1 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -1 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 0 (Integer 4 []))
+                    Div
+                    (IntegerConstant 246 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 0 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 14 (Integer 4 []))
+                    Mul
+                    (IntegerConstant -54 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -756 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant -82 (Integer 4 []))
+                    Pow
+                    (IntegerConstant -25 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 0 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant -43 (Integer 4 []))
+                    Pow
+                    (IntegerConstant -1002 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 0 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 2316 (Integer 4 []))
+                    BitXor
+                    (IntegerConstant -3 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -2319 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 622 (Integer 4 []))
+                    Sub
+                    (IntegerConstant 34 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 588 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 17 (Integer 4 []))
+                    BitRShift
+                    (IntegerConstant -2403 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 0 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant 3207 (Integer 4 []))
+                    Sub
+                    (IntegerConstant -1108 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 4315 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant -1 (Integer 4 []))
+                    Add
+                    (IntegerConstant 284 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 283 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant -657 (Integer 4 []))
+                    BitOr
+                    (IntegerConstant -356 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -1 (Integer 4 [])))))
+    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                  '(IntegerBinOp
+                    (IntegerConstant -131974 (Integer 4 []))
+                    Pow
+                    (IntegerConstant 630 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 0 (Integer 4 [])))))))
