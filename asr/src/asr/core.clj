@@ -739,8 +739,29 @@
 
 
 (defn maybe-value-i32-semsem
-  "Given an IntegerConstant or an IntegerBinOp, fetch the value, if
-  there is one. Return it in the maybe monad."
+  "Given an IntegerConstant or an IntegerBinOp (icobo), fetch the
+  value, if there is one. Return it in the maybe monad: get
+  #<Nothing> if there is anything invalid about the input. An
+  IntegerBinOp is semsem-valid if its two inputs, left and right,
+  are semsem-valid and its output value equals the operator
+  applied to the two inputs.
+
+  There are two difficult cases: explicit Div by zero and zero to
+  a negative Pow, an implicit div-by-0 (0^0 is defined as 1).
+  Because they both reduce to div-by-0, they are instances of the
+  same difficult case.
+
+  Alternative 1 (structural) is to exclude these cases, i.e.,
+  never generate instances of div-by0.
+
+  Alternative 2 (arithmetic) is to include these cases with an
+  overflow sigil like Integer/MAX_VALUE in the value slot. Because
+  the purpose of this entire project is to generate test strings
+  for ASR back ends, and because instances might trip bugs in the
+  back ends, this alternative is viable.
+
+  Because the arithmetic is pluggable, both alternatives are easy
+  to implement. "
   [icobo]
   (cond
     ,(s/valid? ::i32-bin-op-semsem icobo)
@@ -777,6 +798,15 @@
                   binop
                   (ic right)
                   tt (ic value))))))
+    ;; recurse right
+    (tgen/let [right-bop (s/gen ::i32-bin-op-leaf-semsem)
+               binop_    (s/gen :asr.autospecs/binop)]
+      (pprint {"right-bop" right-bop})
+      (let [right (deref (maybe-value-i32-semsem right-bop)) ; PRAY!
+            _     (assert right)
+            binop (ops-map binop_)]
+        (pprint {"right" right})
+))
     ]))
 
 (gen/generate (i32-bin-op-semsem-gen-pluggable
