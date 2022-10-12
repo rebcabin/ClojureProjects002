@@ -1228,7 +1228,8 @@
                     Pow
                     (IntegerConstant -266578627 (Integer 4 []))
                     (Integer 4 [])
-                    (IntegerConstant -2147483648 (Integer 4 [])))))))
+                    ;; Changed underflow from Integer/MIN_VALUE to 0
+                    (IntegerConstant 0 #_-2147483648 (Integer 4 [])))))))
 
 
 (deftest i32-bin-op-leaf-semsem-non-conformance
@@ -1281,7 +1282,32 @@
 ;; / _` | '_| |  _| ' \| '  \/ -_)  _| / _|
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
-
+(deftest fast-unchecked-exp-int-test
+  (testing "fast unchecked exp i32 with 0 underflow"
+    (testing "uncheked spinning on random-ish values"
+      (is (= 1387939935
+             (fast-unchecked-i32-exp-pluggable -481 211)))
+      (is (= -1387939935
+             (fast-unchecked-i32-exp-pluggable 481 211))))
+    (testing "converging to 0 on pos or neg powers of 2"
+      (is (zero?
+           (fast-unchecked-i32-exp-pluggable 32 499)))
+      (is (zero?
+           (fast-unchecked-i32-exp-pluggable -32 499)))
+      (is (zero?
+           (fast-unchecked-i32-exp-pluggable 32 -499)))
+      (is (zero?
+           (fast-unchecked-i32-exp-pluggable -32 -499))))
+    (testing "underflow"
+      (is (zero?
+           (fast-unchecked-i32-exp-pluggable 1234 -2345))))
+    (testing "0^0 == 1"
+      (is (= 1
+             (fast-unchecked-i32-exp-pluggable 0 0))))
+    (testing "exception on 0 to a negative power"
+      (is (thrown?
+           AssertionError
+           (fast-unchecked-i32-exp-pluggable 0 -1))))))
 
 
 ;;                  _                    _            _ _______

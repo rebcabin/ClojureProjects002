@@ -557,22 +557,33 @@
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
 (defn fast-int-exp-maybe-pluggable
-  "O(lg(n)) x^n, n pos or neg, pluggable primitives for base
-  operations. Produces #<Nothing> if (zero? x) and (neg? n).
+  "O(lg(n)) x^n, x, n zero, pos, or neg, pluggable primitives for
+  base operations. Produces #<Nothing> if (zero? x) and (neg? n).
+  Produces `underflow-val` on underflow.
 
   Partially evaluate this on its operations, for example:
-  (partial fast-int-exp-pluggable
-           unchecked-multiply-int,
-           unchecked-divide-int,
-           unchecked-subtract-int,
-           Integer/MIN_VALUE)"
+
+      (partial fast-int-exp-pluggable
+               unchecked-multiply-int,
+               unchecked-divide-int,
+               unchecked-subtract-int,
+               Integer/MIN_VALUE)
+
+  or
+
+      (partial fast-int-exp-pluggable
+               unchecked-multiply-int,
+               unchecked-divide-int,
+               unchecked-subtract-int,
+               0)
+  "
   [mul, div, sub, underflow-val, x n]
   )
 
 
 (defn fast-int-exp-pluggable
-  "O(lg(n)) x^n, n pos or neg, pluggable primitives for base
-  operations. Asserts if (zero? x) and (neg? n). Produces
+  "O(lg(n)) x^n, x, n zero, pos or neg, pluggable primitives for
+  base operations. Asserts if (zero? x) and (neg? n). Produces
   `underflow-val` on underflow.
 
   Partially evaluate this on its operations, for example:
@@ -611,10 +622,10 @@
           (recur  (mul acc b)     b    (sub e 1)))))))
 
 
-(def fast-unchecked-exp-int
+(def fast-unchecked-i32-exp-pluggable
   "Produces zero for 2^32, 2^33, ... . Underflows negative exponents
   to 0 (Integer/MIN_VALUE?). Spins unchecked multiplications.
-  Spins large (>= 32) powers of 2 on 0."
+  Spins large (>= 32) powers of 2 on 0. See core_test.clj"
   (partial fast-int-exp-pluggable
            unchecked-multiply-int,
            unchecked-divide-int,
@@ -622,45 +633,16 @@
            0 #_Integer/MIN_VALUE))
 
 
-;; ----------------------------------------------------------------
-;; Because our multiplication plugin is unchecked, this can iterate
-;; round and round and round on seemingly random values:
-;;
-#_(fast-unchecked-exp-int -481 211)
-;; => 1387939935
-#_(fast-unchecked-exp-int 481 211)
-;; => -1387939935
-;; ----------------------------------------------------------------
-;; If the base is a positive or negative power of 2, this function
-;; will spin on 0:
-;;
-#_(fast-unchecked-exp-int 32 499)
-;; => 0
-#_(fast-unchecked-exp-int -32 499)
-;; => 0
-;; ----------------------------------------------------------------
-;; Try 2 on some negative exponents, quotient-ed to zero when
-;; small in abs or underflowing to Integer/MIN_VALUE when large:
-;;
-#_(map (partial fast-unchecked-exp-int 2) (range -37 4 4))
-;; => (-2147483648 -2147483648 0 0 0 0 0 0 0 0 8)
-;; ----------------------------------------------------------------
-;; Try it on some large exponents; once it hits 0, it stays there:
-;;
-#_(map (partial fast-unchecked-exp-int 2) '(10 20 24 30 31 32 33))
-;; => (1024 1048576 16777216 1073741824 -2147483648 0 0)
-;; ----------------------------------------------------------------
-
 (def asr-i32-unchecked-binop->clojure-op
   "Substitute particular arithmetic ops for spec ops in Clojure.
   Our arithmetic is double-pluggable: the power operations is
-  pluggable (see `fast-unchecked-exp-int`, and the entire
+  pluggable (see `fast-unchecked-i32-exp-pluggable`, and the entire
   collection of operations is pluggable, one level up."
   {'Add       unchecked-add-int,
    'Sub       unchecked-subtract-int,
    'Mul       unchecked-multiply-int,
    'Div       unchecked-divide-int,
-   'Pow       fast-unchecked-exp-int,
+   'Pow       fast-unchecked-i32-exp-pluggable,
    'BitAnd    bit-and,
    'BitOr     bit-or,
    'BitXor    bit-xor,
