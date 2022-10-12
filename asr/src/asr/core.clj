@@ -713,17 +713,6 @@
 ;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_/__/\___|_|_|_|
 ;;                               |_|
 
-;; for generation:
-(defn i32-constant-semnasr-gen
-  [value]
-  (let [b (expt 2 31)]
-    (assert (and (>= value (- b)) (< value b))))
-  (list 'IntegerConstant
-        value
-        '(Integer 4 [])))
-
-#_(gen/generate (tgen/return (i32-constant-semnasr 42)))
-
 #_
 (defn i32-bin-op-semsem-gen
   "Given an ops-map from ASR binops to implementations, generate i32
@@ -757,8 +746,6 @@
 (gen/generate (s/gen ::i32-bin-op-semsem))
 
 
-
-
 (s/def ::i32-bin-op-semsem
   (s/with-gen
     (s/or ,:base
@@ -784,9 +771,6 @@
             (IntegerConstant 283 (Integer 4 []))))
 
 (s/describe ::i32-bin-op-semsem)
-
-
-
 
 #_
 (eval-i32-bin-op-semsem
@@ -823,6 +807,18 @@
 ;; |___|_||_\__,_| \___/_|   |_| |_| \___/\__,_|\_,_\__|\__|_\___/_||_|
 
 ;; Experimental stuff.
+
+
+;;  _     _                      _    _
+;; (_)_ _| |_ ___ __ _ ___ _ _  | |__(_)_ _    ___ _ __
+;; | | ' \  _/ -_) _` / -_) '_| | '_ \ | ' \  / _ \ '_ \
+;; |_|_||_\__\___\__, \___|_|   |_.__/_|_||_| \___/ .__/
+;;               |___/                            |_|
+;;            _
+;;  __ _ _  _| |_ ___ ____ __  ___ __
+;; / _` | || |  _/ _ (_-< '_ \/ -_) _|
+;; \__,_|\_,_|\__\___/__/ .__/\___\__|
+;;                      |_|
 
 (println "Experimental hand-aided autospec for IntegerBinOp ~~~> integer-bin-op")
 
