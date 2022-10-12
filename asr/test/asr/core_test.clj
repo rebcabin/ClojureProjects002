@@ -32,7 +32,6 @@
 ;; |___/\_, |_||_|_|\_/_/ \_\___/_|_\
 ;;      |__/
 
-
 (deftest kebab-test
   (testing "kebab-case from asr.utils"
     (is (= (asr.utils/nskw-kebab-from 'TranslationUnit)
@@ -101,8 +100,6 @@
             :ASDL-FORMS
             '({:ASDL-SYMCONST "Public"}
               {:ASDL-SYMCONST "Private"})}))))
-
-#_(->> big-list-of-stuff (filter #(re-matches #"ASDL-SYMCONST" (-> % :kind name))))
 
 
 (deftest all-terms-test
@@ -561,7 +558,6 @@
 ;; /__/\_, |_|_|_\__\___/_||_/__/\__|  \__\___|_| |_|_|_/__/
 ;;     |__/
 
-
 (deftest install-symconst-stuffss-by-term-test
   (testing "installing symconst stuffss by term"
     (is (= #{:asr.autospecs/deftype
@@ -583,11 +579,11 @@
                 set)))))
 
 
-;;  ___     _                    ___ _
-;; |_ _|_ _| |_ ___ __ _ ___ _ _| _ |_)_ _  ___ _ __
-;;  | || ' \  _/ -_) _` / -_) '_| _ \ | ' \/ _ \ '_ \
-;; |___|_||_\__\___\__, \___|_| |___/_|_||_\___/ .__/
-;;                 |___/                       |_|
+;;  ___     _                    ___ _      ___
+;; |_ _|_ _| |_ ___ __ _ ___ _ _| _ |_)_ _ / _ \ _ __
+;;  | || ' \  _/ -_) _` / -_) '_| _ \ | ' \ (_) | '_ \
+;; |___|_||_\__\___\__, \___|_| |___/_|_||_\___/| .__/
+;;                 |___/                        |_|
 
 (let [test-vector '(IntegerBinOp
                     (IntegerBinOp
@@ -638,6 +634,7 @@
       (is (= integer-bin-op-stuff
              (filter #(= (:head %) :asr.autospecs/IntegerBinOp)
                      big-list-of-stuff))))))
+
 
 ;;  _     _                      _   _
 ;; (_)_ _| |_ ___ __ _ ___ _ _  | |_| |_ _  _ _ __  ___
@@ -925,40 +922,48 @@
 ;;               |___/                         |_|
 
 (deftest integer-exceptions
-  (testing "small integer exceptions; Need different exceptions
-  for the various types"
-    (is "long overflow"
-        (try (long (dec Long/MIN_VALUE))
-             (catch ArithmeticException e
-               (-> e ex-message))))
-    (is "integer overflow"
-        (try (int (dec Integer/MIN_VALUE))
-             (catch ArithmeticException e
-               (-> e ex-message))))
-    (is "Value out of range for short: -32769"
-        (try (short (dec Short/MIN_VALUE))
-             (catch IllegalArgumentException e
-               (->> e ex-message))))
-    (is "Value of of range for byte: -129"
-        (try (byte (dec Byte/MIN_VALUE))
-             (catch IllegalArgumentException e
-               (-> e ex-message))))
-    (is "long overflow"
-        (try (long (inc Long/MAX_VALUE))
-             (catch ArithmeticException e
-               (-> e ex-message))))
-    (is "integer overflow"
-        (try (int (inc Integer/MAX_VALUE))
-             (catch ArithmeticException e
-               (-> e ex-message))))
-    (is "Value out of range for short: 32768"
-        (try (short (inc Short/MAX_VALUE))
-             (catch IllegalArgumentException e
-               (->> e ex-message))))
-    (is "Value of of range for byte: 128"
-        (try (byte (inc Byte/MAX_VALUE))
-             (catch IllegalArgumentException e
-               (-> e ex-message))))
+  (testing "small integer overflow exceptions, negative and
+  positive; Need different exceptions for the various types"
+    (testing "Long/MIN - 1"
+      (is "long overflow"
+          (try (long (dec Long/MIN_VALUE))
+               (catch ArithmeticException e
+                 (-> e ex-message)))))
+    (testing "Integer/MIN - 1"
+      (is "integer overflow"
+          (try (int (dec Integer/MIN_VALUE))
+               (catch ArithmeticException e
+                 (-> e ex-message)))))
+    (testing "Short/MIN - 1"
+      (is "Value out of range for short: -32769"
+          (try (short (dec Short/MIN_VALUE))
+               (catch IllegalArgumentException e
+                 (->> e ex-message)))))
+    (testing "Byte/MIN - 1"
+      (is "Value of of range for byte: -129"
+          (try (byte (dec Byte/MIN_VALUE))
+               (catch IllegalArgumentException e
+                 (-> e ex-message)))))
+    (testing "Long/MAX + 1"
+      (is "long overflow"
+          (try (long (inc Long/MAX_VALUE))
+               (catch ArithmeticException e
+                 (-> e ex-message)))))
+    (testing "Integer/MAX + 1"
+      (is "integer overflow"
+          (try (int (inc Integer/MAX_VALUE))
+               (catch ArithmeticException e
+                 (-> e ex-message)))))
+    (testing "Short/MAX + 1"
+      (is "Value out of range for short: 32768"
+          (try (short (inc Short/MAX_VALUE))
+               (catch IllegalArgumentException e
+                 (->> e ex-message)))))
+    (testing "Byte/MAX + 1"
+      (is "Value of of range for byte: 128"
+          (try (byte (inc Byte/MAX_VALUE))
+               (catch IllegalArgumentException e
+                 (-> e ex-message)))))
     (is (thrown?
          ArithmeticException
          (inc Long/MAX_VALUE)))))
@@ -1264,6 +1269,19 @@
                            (IntegerConstant 630 (Integer 4 []))
                            (Integer 4 [])
                            (IntegerConstant 0 (Integer 4 [])))))))))
+
+
+;;       _                     _    _       _ _______
+;;  _ __| |_  _ __ _ __ _ __ _| |__| |___  (_)__ /_  )
+;; | '_ \ | || / _` / _` / _` | '_ \ / -_) | ||_ \/ /
+;; | .__/_|\_,_\__, \__, \__,_|_.__/_\___| |_|___/___|
+;; |_|         |___/|___/
+;;           _ _   _              _   _
+;;  __ _ _ _(_) |_| |_  _ __  ___| |_(_)__
+;; / _` | '_| |  _| ' \| '  \/ -_)  _| / _|
+;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
+
+
 
 
 ;;                  _                    _            _ _______

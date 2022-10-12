@@ -546,19 +546,19 @@
    #{'BitAnd 'BitOr 'BitXor 'BitLShift, 'BitRShift}))
 
 
-;;       _                     _    _
-;;  _ __| |_  _ __ _ __ _ __ _| |__| |___
-;; | '_ \ | || / _` / _` / _` | '_ \ / -_)
-;; | .__/_|\_,_\__, \__, \__,_|_.__/_\___|
+;;       _                     _    _       _ _______
+;;  _ __| |_  _ __ _ __ _ __ _| |__| |___  (_)__ /_  )
+;; | '_ \ | || / _` / _` / _` | '_ \ / -_) | ||_ \/ /
+;; | .__/_|\_,_\__, \__, \__,_|_.__/_\___| |_|___/___|
 ;; |_|         |___/|___/
 ;;           _ _   _              _   _
 ;;  __ _ _ _(_) |_| |_  _ __  ___| |_(_)__
 ;; / _` | '_| |  _| ' \| '  \/ -_)  _| / _|
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
-(defn fast-int-exp-pluggable
+(defn fast-int-exp-maybe-pluggable
   "O(lg(n)) x^n, n pos or neg, pluggable primitives for base
-  operations.
+  operations. Produces #<Nothing> if (zero? x) and (neg? n).
 
   Partially evaluate this on its operations, for example:
   (partial fast-int-exp-pluggable
@@ -567,6 +567,32 @@
            unchecked-subtract-int,
            Integer/MIN_VALUE)"
   [mul, div, sub, underflow-val, x n]
+  )
+
+
+(defn fast-int-exp-pluggable
+  "O(lg(n)) x^n, n pos or neg, pluggable primitives for base
+  operations. Asserts if (zero? x) and (neg? n). Produces
+  `underflow-val` on underflow.
+
+  Partially evaluate this on its operations, for example:
+
+      (partial fast-int-exp-pluggable
+               unchecked-multiply-int,
+               unchecked-divide-int,
+               unchecked-subtract-int,
+               Integer/MIN_VALUE)
+
+  or
+
+      (partial fast-int-exp-pluggable
+               unchecked-multiply-int,
+               unchecked-divide-int,
+               unchecked-subtract-int,
+               0)
+  "
+  [mul, div, sub, underflow-val, x n]
+  (assert (not (and (zero? x) (neg? n))))
   (if (neg? n)
     (let [trial (fast-int-exp-pluggable
                  mul, div, sub, underflow-val,
@@ -587,13 +613,13 @@
 
 (def fast-unchecked-exp-int
   "Produces zero for 2^32, 2^33, ... . Underflows negative exponents
-  to Integer/MIN_VALUE. Spins unchecked multiplications. Spins
-  large (>= 32) powers of 2 on 0."
+  to 0 (Integer/MIN_VALUE?). Spins unchecked multiplications.
+  Spins large (>= 32) powers of 2 on 0."
   (partial fast-int-exp-pluggable
            unchecked-multiply-int,
            unchecked-divide-int,
            unchecked-subtract-int,
-           Integer/MIN_VALUE))
+           0 #_Integer/MIN_VALUE))
 
 
 ;; ----------------------------------------------------------------
