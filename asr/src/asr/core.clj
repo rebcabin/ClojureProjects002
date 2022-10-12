@@ -90,11 +90,14 @@
 ;;     [[6694 3] [[:bigint 6694] [:nat-int 3]]])
 
 
-;;  _ _   _     _                        _   _
-;; (_|_) (_)_ _| |_ ___ __ _ ___ _ _ ___| |_| |_ _  _ _ __  ___   ___ ___ _ __
-;;  _ _  | | ' \  _/ -_) _` / -_) '_|___|  _|  _| || | '_ \/ -_) (_-</ -_) '  \
-;; (_|_) |_|_||_\__\___\__, \___|_|      \__|\__|\_, | .__/\___| /__/\___|_|_|_|
-;;                     |___/                     |__/|_|
+;;  _ _   _     _                      _   _
+;; (_|_) (_)_ _| |_ ___ __ _ ___ _ _  | |_| |_ _  _ _ __  ___
+;;  _ _  | | ' \  _/ -_) _` / -_) '_| |  _|  _| || | '_ \/ -_)
+;; (_|_) |_|_||_\__\___\__, \___|_|    \__|\__|\_, | .__/\___|
+;;                     |___/                   |__/|_|
+;;  ___ ___ _ __  _ _  __ _ ____ _
+;; (_-</ -_) '  \| ' \/ _` (_-< '_|
+;; /__/\___|_|_|_|_||_\__,_/__/_|
 
 (s/def ::integer-ttype-semnasr
   (s/spec              ; means "nestable" not "spliceable" in other "regex" specs
@@ -287,10 +290,11 @@
 (assert (s/valid? ::i32nz (Integer/MAX_VALUE)))
 (assert (not (s/valid? ::i32nz 0)))
 
-;;  _     _                                       _            _
-;; (_)_ _| |_ ___ __ _ ___ _ _ ___ __ ___ _ _  __| |_ __ _ _ _| |_
-;; | | ' \  _/ -_) _` / -_) '_|___/ _/ _ \ ' \(_-<  _/ _` | ' \  _|
-;; |_|_||_\__\___\__, \___|_|     \__\___/_||_/__/\__\__,_|_||_\__|
+
+;;  _     _                                     _            _
+;; (_)_ _| |_ ___ __ _ ___ _ _   __ ___ _ _  __| |_ __ _ _ _| |_
+;; | | ' \  _/ -_) _` / -_) '_| / _/ _ \ ' \(_-<  _/ _` | ' \  _|
+;; |_|_||_\__\___\__, \___|_|   \__\___/_||_/__/\__\__,_|_||_\__|
 ;;               |___/
 
 (do
@@ -395,11 +399,14 @@
 ;;        :ttype {:head Integer, :kind 1, :dimensionss []}}]])
 
 
-;;  _     _                        _    _                    ___ ___ __  __
-;; (_)_ _| |_ ___ __ _ ___ _ _ ___| |__(_)_ _ ___ ___ _ __  / __| __|  \/  |
-;; | | ' \  _/ -_) _` / -_) '_|___| '_ \ | ' \___/ _ \ '_ \ \__ \ _|| |\/| |
-;; |_|_||_\__\___\__, \___|_|     |_.__/_|_||_|  \___/ .__/ |___/___|_|  |_|
-;;               |___/                               |_|
+;;  _     _                      _    _
+;; (_)_ _| |_ ___ __ _ ___ _ _  | |__(_)_ _    ___ _ __
+;; | | ' \  _/ -_) _` / -_) '_| | '_ \ | ' \  / _ \ '_ \
+;; |_|_||_\__\___\__, \___|_|   |_.__/_|_||_| \___/ .__/
+;;               |___/                            |_|
+;;  ___ ___ _ __  _ _  __ _ ____ _
+;; (_-</ -_) '  \| ' \/ _` (_-< '_|
+;; /__/\___|_|_|_|_||_\__,_/__/_|
 
 ;; This section tests some SemNASR, some semantically valid
 ;; nonsense ASR programs. There are multiple levels of semantics,
@@ -637,11 +644,10 @@
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 
 
-;;  _ _______   _    _
-;; (_)__ /_  ) | |__(_)_ _    ___ _ __   ___ ___ _ __  ___ ___ _ __
-;; | ||_ \/ /  | '_ \ | ' \  / _ \ '_ \ (_-</ -_) '  \(_-</ -_) '  \
-;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_/__/\___|_|_|_|
-;;                               |_|
+;;     _          _    _                              _   _
+;;  __| |___ _  _| |__| |___   ___ ___ _ __  __ _ _ _| |_(_)__ ___
+;; / _` / _ \ || | '_ \ / -_) (_-</ -_) '  \/ _` | ' \  _| / _(_-<
+;; \__,_\___/\_,_|_.__/_\___| /__/\___|_|_|_\__,_|_||_\__|_\__/__/
 
 ;; Sem-Sem means specs that are doubly semantically correct:
 ;;
@@ -662,7 +668,8 @@
 
 (defn i32-bin-op-leaf-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate i32
-  ASR IntegerBinOp leaf node."
+  ASR IntegerBinOp leaf node. It's the generator for
+  spec ::i32-bin-op-leaf-semsem"
   [ops-map]
   (tgen/let [left  (s/gen ::i32)
              binop (s/gen :asr.autospecs/binop)
@@ -677,6 +684,7 @@
           ic (fn [i] (list 'IntegerConstant i tt))]
       (list 'IntegerBinOp (ic left) binop (ic right)
             tt (ic value)))))
+
 
 (s/def ::i32-bin-op-leaf-semsem
   (s/with-gen
@@ -702,8 +710,6 @@
     (fn [] (i32-bin-op-leaf-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
 
-;;; ::i32-bin-op-leaf-semsem is checked in core_test.clj.
-
 (gen/generate (s/gen ::i32-bin-op-leaf-semsem))
 
 
@@ -713,10 +719,29 @@
 ;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_/__/\___|_|_|_|
 ;;                               |_|
 
-#_
+;;; forward reference (backpatch later)
+
+(s/def ::i32-bin-op-semsem
+  ::i32-bin-op-leaf-semsem)
+
+
+(defn maybe-value-i32-semsem
+  "Given an IntegerConstant or an IntegerBinOp, fetch the value, if
+  there is one. Return it in the maybe monad."
+  [icobo]
+  (cond
+    ,(s/valid? ::i32-bin-op-semsem icobo)
+    (let [[_, _, _, _, _, cv] icobo]
+      (let [[_, v, _] cv] (maybe/just v)))
+    ,(s/valid? ::i32-constant-semnasr icobo)
+    (let [[_, v, _] icobo] (maybe/just v))
+    ,:else
+    (maybe/nothing)))
+
+
 (defn i32-bin-op-semsem-gen
-  "Given an ops-map from ASR binops to implementations, generate i32
-  ASR IntegerBinOp node, recursively."
+  "Given an ops-map from ASR binops to implementations, generate an
+  i32 ASR IntegerBinOp node, recursively."
   [ops-map]
   (gen/one-of
    [(s/gen ::i32-bin-op-leaf-semsem)
@@ -725,28 +750,8 @@
 
 #_(gen/generate i32-bin-op-semsem-gen)
 
-;;; forward reference (backpatch later)
 
-(s/def ::i32-bin-op-semsem
-  ::i32-bin-op-leaf-semsem)
-
-(defn maybe-value-i32-semsem
-  "Given an IntegerConstant or an IntegerBinOp, fetch the value, if
-  there is one. Return it in the maybe monad."
-  [icobo]
-  (cond
-    ,(s/valid? ::i32-bin-op-leaf-semsem icobo)
-    (let [[_, _, _, _, _, cv] icobo]
-      (let [[_, v, _] cv] (maybe/just v)))
-    ,(s/valid? ::i32-constant-semnasr icobo)
-    (let [[_, v, _] icobo] (maybe/just v))
-    ,:else
-    (maybe/nothing)))
-
-(gen/generate (s/gen ::i32-bin-op-semsem))
-
-
-(s/def ::i32-bin-op-semsem
+#_(s/def ::i32-bin-op-semsem
   (s/with-gen
     (s/or ,:base
           ::i32-bin-op-leaf-semsem
@@ -761,6 +766,9 @@
                    :value (s/? or-leaf)))
           )
     (fn [] (gen/return 42))))
+
+#_(gen/generate (s/gen ::i32-bin-op-semsem))
+
 
 (s/valid? ::i32-bin-op-semsem
           '(IntegerBinOp
