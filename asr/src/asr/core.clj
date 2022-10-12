@@ -666,20 +666,27 @@
 ;; (_-</ -_) '  \(_-</ -_) '  \
 ;; /__/\___|_|_|_/__/\___|_|_|_|
 
-(defn i32-bin-op-leaf-gen-pluggable
+(defn i32-bin-op-rhs-gen
+  "Generate RHS valid for any plugged-in arithmetic. Avoid zero
+  divisors. "
+  [left, binop]
+  (case binop
+    Div (s/gen ::i32nz)  ; don't / 0
+    Pow (if (zero? left) ; don't 0^(negative int)
+          (tgen/fmap abs (s/gen ::i32))
+          (s/gen ::i32))
+    #_default (s/gen ::i32)))
+
+
+(defn i32-bin-op-leaf-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate i32
   ASR IntegerBinOp leaf node. It's the generator for
   spec ::i32-bin-op-leaf-semsem"
   [ops-map]
   (tgen/let [left  (s/gen ::i32)
              binop (s/gen :asr.autospecs/binop)
-             right (case binop
-                     Div (s/gen ::i32nz)  ; don't / 0
-                     Pow (if (zero? left) ; don't 0^(negative int)
-                           (tgen/fmap abs (s/gen ::i32))
-                           (s/gen ::i32))
-                     #_default (s/gen ::i32))
-             value (tgen/return  ((ops-map binop)  left right))]
+             right (i32-bin-op-rhs-gen left binop)
+             value (tgen/return ((ops-map binop) left right))]
     (let [tt '(Integer 4 [])
           ic (fn [i] (list 'IntegerConstant i tt))]
       (list 'IntegerBinOp (ic left) binop (ic right)
@@ -707,10 +714,16 @@
                      lv rv) vv))))
         (catch UnsupportedOperationException e
           #_"bad structure" false)))
-    (fn [] (i32-bin-op-leaf-gen-pluggable
+    (fn [] (i32-bin-op-leaf-semsem-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
 
 (gen/generate (s/gen ::i32-bin-op-leaf-semsem))
+;; => (IntegerBinOp
+;;     (IntegerConstant -3093 (Integer 4 []))
+;;     BitAnd
+;;     (IntegerConstant -100753 (Integer 4 []))
+;;     (Integer 4 [])
+;;     (IntegerConstant -101781 (Integer 4 [])))
 
 
 ;;  _ _______   _    _
@@ -739,16 +752,35 @@
     (maybe/nothing)))
 
 
-(defn i32-bin-op-semsem-gen
+(defn i32-bin-op-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate an
-  i32 ASR IntegerBinOp node, recursively."
+  i32 ASR IntegerBinOp node, recursively. TODO: put in the maybe
+  monad?"
   [ops-map]
   (gen/one-of
+   ;; base case
    [(s/gen ::i32-bin-op-leaf-semsem)
-
+    ;; recurse left
+    (tgen/let [left-bop (s/gen ::i32-bin-op-leaf-semsem)
+               binop_   (s/gen :asr.autospecs/binop)]
+      (pprint {"left-bop" left-bop})
+      (let [left  (deref (maybe-value-i32-semsem left-bop))
+            _     (assert left)       ; not nil! TODO: maybe monad
+            binop (ops-map binop_)]
+        (pprint {"left" left})
+        (tgen/let [right (i32-bin-op-rhs-gen left binop)]
+          (let [value (binop left right)
+                tt    '(Integer 4 [])
+                ic    (fn [i] (list 'IntegerConstant i tt))]
+            (list 'IntegerBinOp
+                  left-bop
+                  binop
+                  (ic right)
+                  tt (ic value))))))
     ]))
 
-#_(gen/generate i32-bin-op-semsem-gen)
+(gen/generate (i32-bin-op-semsem-gen-pluggable
+               asr-i32-unchecked-binop->clojure-op))
 
 
 #_(s/def ::i32-bin-op-semsem
