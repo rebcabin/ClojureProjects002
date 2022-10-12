@@ -1282,32 +1282,67 @@
 ;; / _` | '_| |  _| ' \| '  \/ -_)  _| / _|
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
-(deftest fast-unchecked-exp-int-test
+(deftest fast-unchecked-i32-exp-test
   (testing "fast unchecked exp i32 with 0 underflow"
-    (testing "uncheked spinning on random-ish values"
+    (testing "unchecked spinning on random-ish values"
       (is (= 1387939935
-             (fast-unchecked-i32-exp-pluggable -481 211)))
+             (fast-unchecked-i32-exp -481 211)))
       (is (= -1387939935
-             (fast-unchecked-i32-exp-pluggable 481 211))))
+             (fast-unchecked-i32-exp 481 211))))
     (testing "converging to 0 on pos or neg powers of 2"
       (is (zero?
-           (fast-unchecked-i32-exp-pluggable 32 499)))
+           (fast-unchecked-i32-exp 32 499)))
       (is (zero?
-           (fast-unchecked-i32-exp-pluggable -32 499)))
+           (fast-unchecked-i32-exp -32 499)))
       (is (zero?
-           (fast-unchecked-i32-exp-pluggable 32 -499)))
+           (fast-unchecked-i32-exp 32 -499)))
       (is (zero?
-           (fast-unchecked-i32-exp-pluggable -32 -499))))
+           (fast-unchecked-i32-exp -32 -499))))
     (testing "underflow"
       (is (zero?
-           (fast-unchecked-i32-exp-pluggable 1234 -2345))))
+           (fast-unchecked-i32-exp 1234 -2345))))
+    (testing "1 to negative powers = 1"
+      (is (= 1
+             (fast-unchecked-i32-exp 1 -499))))
     (testing "0^0 == 1"
       (is (= 1
-             (fast-unchecked-i32-exp-pluggable 0 0))))
+             (fast-unchecked-i32-exp 0 0))))
     (testing "exception on 0 to a negative power"
       (is (thrown?
            AssertionError
-           (fast-unchecked-i32-exp-pluggable 0 -1))))))
+           (fast-unchecked-i32-exp 0 -1))))))
+
+
+(deftest fast-unchecked-i32-exp-maybe-test
+  (testing "fast unchecked exp i32 with 0 underflow in the maybe monad"
+    (testing "unchecked spinning on random-ish values"
+      (is (= (maybe/just 1387939935)
+             (fast-unchecked-i32-exp-maybe -481 211)))
+      (is (= (maybe/just -1387939935)
+             (fast-unchecked-i32-exp-maybe 481 211))))
+    (testing "converging to 0 on pos or neg powers of 2"
+      (is (= (maybe/just 0)
+             (fast-unchecked-i32-exp-maybe 32 499)))
+      (is (= (maybe/just 0)
+             (fast-unchecked-i32-exp-maybe -32 499)))
+      (is (= (maybe/just 0)
+             (fast-unchecked-i32-exp-maybe 32 -1)))
+      (is (= (maybe/just 0)
+             (fast-unchecked-i32-exp-maybe 32 -499)))
+      (is (= (maybe/just 0)
+             (fast-unchecked-i32-exp-maybe -32 -499))))
+    (testing "underflow"
+      (is (= (maybe/just 0)
+             (fast-unchecked-i32-exp-maybe 1234 -2345))))
+    (testing "1 to negative powers = 1"
+      (is (= (maybe/just 1)
+             (fast-unchecked-i32-exp-maybe 1 -499))))
+    (testing "0^0 == 1"
+      (is (= (maybe/just 1)
+             (fast-unchecked-i32-exp-maybe 0 0))))
+    (testing "exception on 0 to a negative power"
+      (is (maybe/nothing?
+           (fast-unchecked-i32-exp-maybe 0 -1))))))
 
 
 ;;                  _                    _            _ _______

@@ -556,10 +556,18 @@
 ;; / _` | '_| |  _| ' \| '  \/ -_)  _| / _|
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
+;;    _        _                  __      _
+;;   (_)__    ( )__ _  ___ ___ __/ /  ___( )
+;;  / / _ \    V/  ' \/ _ `/ // / _ \/ -_)V
+;; /_/_//_/    /_/_/_/\_,_/\_, /_.__/\__/
+;;                        /___/
+
 (defn fast-int-exp-maybe-pluggable
   "O(lg(n)) x^n, x, n zero, pos, or neg, pluggable primitives for
-  base operations. Produces #<Nothing> if (zero? x) and (neg? n).
-  Produces `underflow-val` on underflow.
+  base operations in the maybe monad, more composable than
+  alternatives that check for zero to negative powers. Produces
+  #<Nothing> if (zero? x) and (neg? n). Produces
+  `(maybe/just underflow-val)` on underflow.
 
   Partially evaluate this on its operations, for example:
 
@@ -578,8 +586,49 @@
                0)
   "
   [mul, div, sub, underflow-val, x n]
-  )
+  (if (and (zero? x) (neg? n))
+    (maybe/nothing)
+    (if (neg? n)                        ; recurse
+      (let [trial (fast-int-exp-maybe-pluggable
+                   mul, div, sub, underflow-val,
+                   x (- n))]
+        (condp = trial                 ; "case" doesn't work, here
+          ;; In case x^(abs n) == 0
+          (maybe/just 0) (maybe/just underflow-val)
+          ;; Most often, (quot 1 trial) is zero, but sometimes it's
+          ;; 1/1 = 1. The following handles that case.
+          (maybe/just (quot 1 (deref trial)))
+          ;; The following appears to be bugged in the cats lib.
+          #_(maybe/map-maybe (fn [x] (maybe/just (quot 1 x)))
+                             [(deref trial)])
+          ))
+                                        ; (pos? n): loop
+      (loop [acc 1,  b x,  e n]
+        (if (zero? e)
+          (maybe/just acc)
+          (if (even? e)
+            (recur       acc   (mul b b) (div e 2))
+            (recur  (mul acc b)     b    (sub e 1))))))))
 
+
+(def fast-unchecked-i32-exp-maybe
+  "Produces `(maybe/just 0)` for 2^32, 2^33, ... . Underflows
+  negative exponents to `(maybe/just 0)` (or perhaps
+  to `(maybe/just Integer/MIN_VALUE)?). Spins unchecked
+  multiplications. Spins large (>= 32) powers of 2 on 0. See
+  core_test.clj"
+  (partial fast-int-exp-maybe-pluggable
+           unchecked-multiply-int,
+           unchecked-divide-int,
+           unchecked-subtract-int,
+           0 #_Integer/MIN_VALUE))
+
+
+;;          _ __  __         __           __    _
+;;  _    __(_) /_/ /    ____/ /  ___ ____/ /__ (_)__  ___ _
+;; | |/|/ / / __/ _ \  / __/ _ \/ -_) __/  '_// / _ \/ _ `/
+;; |__,__/_/\__/_//_/  \__/_//_/\__/\__/_/\_\/_/_//_/\_, /
+;;                                                  /___/
 
 (defn fast-int-exp-pluggable
   "O(lg(n)) x^n, x, n zero, pos or neg, pluggable primitives for
@@ -622,7 +671,7 @@
           (recur  (mul acc b)     b    (sub e 1)))))))
 
 
-(def fast-unchecked-i32-exp-pluggable
+(def fast-unchecked-i32-exp
   "Produces zero for 2^32, 2^33, ... . Underflows negative exponents
   to 0 (Integer/MIN_VALUE?). Spins unchecked multiplications.
   Spins large (>= 32) powers of 2 on 0. See core_test.clj"
@@ -636,13 +685,13 @@
 (def asr-i32-unchecked-binop->clojure-op
   "Substitute particular arithmetic ops for spec ops in Clojure.
   Our arithmetic is double-pluggable: the power operations is
-  pluggable (see `fast-unchecked-i32-exp-pluggable`, and the entire
+  pluggable (see `fast-unchecked-i32-exp`, and the entire
   collection of operations is pluggable, one level up."
   {'Add       unchecked-add-int,
    'Sub       unchecked-subtract-int,
    'Mul       unchecked-multiply-int,
    'Div       unchecked-divide-int,
-   'Pow       fast-unchecked-i32-exp-pluggable,
+   'Pow       fast-unchecked-i32-exp,
    'BitAnd    bit-and,
    'BitOr     bit-or,
    'BitXor    bit-xor,
