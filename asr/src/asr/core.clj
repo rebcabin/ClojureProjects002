@@ -13,7 +13,6 @@
             [clojure.test.check.generators :as    tgen          ]
             [clojure.math.numeric-tower    :refer [expt]        ] ;; bigint
             [clojure.inspector             :refer [inspect-tree]]
-            [clojure.math                  :refer [pow]         ] ;; int
             [clojure.set                   :as    set           ]
             [clojure.algo.monads           :as    cam           ]))
 
@@ -558,6 +557,14 @@
 ;; /_/_//_/    /_/_/_/\_,_/\_, /_.__/\__/
 ;;                        /___/
 
+(defn maybe-unchecked-divide-int
+  "Return nil on zero divide. Use in cam's maybe monad."
+  [x y]
+  (if (zero? y)
+    nil
+    (unchecked-divide-int x y)))
+
+
 (defn fast-int-exp-maybe-pluggable
   "O(lg(n)) x^n, x, n zero, pos, or neg, pluggable primitives for
   base operations. Produces `nil` if `(zero? x)` and `(neg? n)`.
@@ -604,7 +611,7 @@
             (recur  (mul acc b)     b    (sub e 1))))))))
 
 
-(def fast-unchecked-i32-exp-maybe
+(def maybe-fast-unchecked-i32-exp
   "Produces `(maybe/just 0)` for 2^32, 2^33, ... . Underflows
   negative exponents to `(maybe/just 0)` (or perhaps
   to `(maybe/just Integer/MIN_VALUE)?). Spins unchecked
@@ -612,67 +619,7 @@
   core_test.clj"
   (partial fast-int-exp-maybe-pluggable
            unchecked-multiply-int,
-           unchecked-divide-int,
-           unchecked-subtract-int,
-           0 #_Integer/MIN_VALUE))
-
-
-;;          _ __  __         __           __    _
-;;  _    __(_) /_/ /    ____/ /  ___ ____/ /__ (_)__  ___ _
-;; | |/|/ / / __/ _ \  / __/ _ \/ -_) __/  '_// / _ \/ _ `/
-;; |__,__/_/\__/_//_/  \__/_//_/\__/\__/_/\_\/_/_//_/\_, /
-;;                                                  /___/
-
-;;; TODO: deprecate
-
-(defn fast-int-exp-pluggable
-  "O(lg(n)) x^n, x, n zero, pos or neg, pluggable primitives for
-  base operations. Asserts if (zero? x) and (neg? n). Produces
-  `underflow-val` on underflow.
-
-  Partially evaluate this on its operations, for example:
-
-      (partial fast-int-exp-pluggable
-               unchecked-multiply-int,
-               unchecked-divide-int,
-               unchecked-subtract-int,
-               Integer/MIN_VALUE)
-
-  or
-
-      (partial fast-int-exp-pluggable
-               unchecked-multiply-int,
-               unchecked-divide-int,
-               unchecked-subtract-int,
-               0)
-  "
-  [mul, div, sub, underflow-val, x n]
-  (assert (not (and (zero? x) (neg? n))))
-  (if (neg? n)
-    (let [trial (fast-int-exp-pluggable
-                 mul, div, sub, underflow-val,
-                 x (- n))]
-      (case trial
-        ;; In case x^(abs n) == 0
-        0 underflow-val
-        ;; Most often, (quot 1 trial) is zero, but sometimes it's
-        ;; 1/1 = 1.
-        (quot 1 trial)))
-    (loop [acc 1,  b x,  e n]
-      (if (zero? e)
-        acc
-        (if (even? e)
-          (recur       acc   (mul b b) (div e 2))
-          (recur  (mul acc b)     b    (sub e 1)))))))
-
-
-(def fast-unchecked-i32-exp
-  "Produces zero for 2^32, 2^33, ... . Underflows negative exponents
-  to 0 (Integer/MIN_VALUE?). Spins unchecked multiplications.
-  Spins large (>= 32) powers of 2 on 0. See core_test.clj"
-  (partial fast-int-exp-pluggable
-           unchecked-multiply-int,
-           unchecked-divide-int,
+           maybe-unchecked-divide-int,
            unchecked-subtract-int,
            0 #_Integer/MIN_VALUE))
 
@@ -685,8 +632,8 @@
   {'Add       unchecked-add-int,
    'Sub       unchecked-subtract-int,
    'Mul       unchecked-multiply-int,
-   'Div       unchecked-divide-int,
-   'Pow       fast-unchecked-i32-exp,
+   'Div       maybe-unchecked-divide-int,
+   'Pow       maybe-fast-unchecked-i32-exp,
    'BitAnd    bit-and,
    'BitOr     bit-or,
    'BitXor    bit-xor,
@@ -838,7 +785,7 @@
                binop_   (s/gen :asr.autospecs/binop)]
       (pprint {"left-bop" left-bop})
       (let [left  (maybe-value-i32-semsem left-bop)
-            _     (assert left)
+            _     (assert left) ; non-nil
             binop (ops-map binop_)]
         (pprint {"left" left})
         (tgen/let [right (i32-bin-op-rhs-gen left binop)]
@@ -854,8 +801,8 @@
     (tgen/let [right-bop (s/gen ::i32-bin-op-leaf-semsem)
                binop_    (s/gen :asr.autospecs/binop)]
       (pprint {"right-bop" right-bop})
-      (let [right (maybe-value-i32-semsem right-bop) ; PRAY!
-            _     (assert right)
+      (let [right (maybe-value-i32-semsem right-bop)
+            _     (assert right) ; non-nil
             binop (ops-map binop_)]
         (pprint {"right" right})))
     ]))
