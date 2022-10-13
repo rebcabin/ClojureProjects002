@@ -14,12 +14,8 @@
             [clojure.math.numeric-tower    :refer [expt]        ] ;; bigint
             [clojure.inspector             :refer [inspect-tree]]
             [clojure.math                  :refer [pow]         ] ;; int
-            [clojure.set                   :as    set           ])
-
-  (:require [cats.core                     :as    m             ]
-            [cats.builtin                                       ]
-            [cats.monad.maybe              :as    maybe         ]
-            [cats.monad.either             :as    either        ]))
+            [clojure.set                   :as    set           ]
+            [clojure.algo.monads           :as    cam           ]))
 
 
 ;;  _    _      _     _  ___
@@ -562,12 +558,12 @@
 ;; /_/_//_/    /_/_/_/\_,_/\_, /_.__/\__/
 ;;                        /___/
 
-(defn fast-int-exp-maybe-pluggable
+(defn fast-int-exp-cam-maybe-pluggable
   "O(lg(n)) x^n, x, n zero, pos, or neg, pluggable primitives for
-  base operations in the maybe monad, more composable than
-  alternatives that check for zero to negative powers. Produces
-  #<Nothing> if (zero? x) and (neg? n). Produces
-  `(maybe/just underflow-val)` on underflow.
+  base operations in the maybe monad of clojure.algo.monads, more
+  composable than alternatives that check for zero to negative
+  powers. Produces `nil` if `(zero? x)` and `(neg? n)`. Produces
+  `underflow-val` on underflow.
 
   Partially evaluate this on its operations, for example:
 
@@ -587,37 +583,35 @@
   "
   [mul, div, sub, underflow-val, x n]
   (if (and (zero? x) (neg? n))
-    (maybe/nothing)
+    nil                                 ; cam-speak for "nothing"
     (if (neg? n)                        ; recurse
-      (let [trial (fast-int-exp-maybe-pluggable
-                   mul, div, sub, underflow-val,
-                   x (- n))]
-        (condp = trial                 ; "case" doesn't work, here
-          ;; In case x^(abs n) == 0
-          (maybe/just 0) (maybe/just underflow-val)
-          ;; Most often, (quot 1 trial) is zero, but sometimes it's
-          ;; 1/1 = 1. The following handles that case.
-          (maybe/just (quot 1 (deref trial)))
-          ;; The following appears to be bugged in the cats lib.
-          #_(maybe/map-maybe (fn [x] (maybe/just (quot 1 x)))
-                             [(deref trial)])
-          ))
-                                        ; (pos? n): loop
+      (cam/domonad                      ; propagates "nil"
+       cam/maybe-m
+       [trial (fast-int-exp-cam-maybe-pluggable
+               mul, div, sub, underflow-val,
+               x (- n))]
+       (case trial
+         ;; In case x^(abs n) == 0
+         0 underflow-val
+         ;; Most often, (quot 1 trial) is zero, but sometimes it's
+         ;; 1/1 = 1. The following handles that case.
+         (quot 1 trial)
+         ))                             ; (pos? n): loop
       (loop [acc 1,  b x,  e n]
         (if (zero? e)
-          (maybe/just acc)
+          acc
           (if (even? e)
             (recur       acc   (mul b b) (div e 2))
             (recur  (mul acc b)     b    (sub e 1))))))))
 
 
-(def fast-unchecked-i32-exp-maybe
+(def fast-unchecked-i32-exp-cam-maybe
   "Produces `(maybe/just 0)` for 2^32, 2^33, ... . Underflows
   negative exponents to `(maybe/just 0)` (or perhaps
   to `(maybe/just Integer/MIN_VALUE)?). Spins unchecked
   multiplications. Spins large (>= 32) powers of 2 on 0. See
   core_test.clj"
-  (partial fast-int-exp-maybe-pluggable
+  (partial fast-int-exp-cam-maybe-pluggable
            unchecked-multiply-int,
            unchecked-divide-int,
            unchecked-subtract-int,
@@ -823,11 +817,11 @@
   (cond
     ,(s/valid? ::i32-bin-op-semsem icobo)
     (let [[_, _, _, _, _, cv] icobo]
-      (let [[_, v, _] cv] (maybe/just v)))
+      (let [[_, v, _] cv] v))
     ,(s/valid? ::i32-constant-semnasr icobo)
-    (let [[_, v, _] icobo] (maybe/just v))
+    (let [[_, v, _] icobo] v)
     ,:else
-    (maybe/nothing)))
+    nil))
 
 
 (defn i32-bin-op-semsem-gen-pluggable
@@ -842,7 +836,7 @@
     (tgen/let [left-bop (s/gen ::i32-bin-op-leaf-semsem)
                binop_   (s/gen :asr.autospecs/binop)]
       (pprint {"left-bop" left-bop})
-      (let [left  (deref (maybe-value-i32-semsem left-bop))
+      (let [left  (maybe-value-i32-semsem left-bop)
             _     (assert left)       ; not nil! TODO: maybe monad
             binop (ops-map binop_)]
         (pprint {"left" left})
@@ -859,11 +853,10 @@
     (tgen/let [right-bop (s/gen ::i32-bin-op-leaf-semsem)
                binop_    (s/gen :asr.autospecs/binop)]
       (pprint {"right-bop" right-bop})
-      (let [right (deref (maybe-value-i32-semsem right-bop)) ; PRAY!
+      (let [right (maybe-value-i32-semsem right-bop) ; PRAY!
             _     (assert right)
             binop (ops-map binop_)]
-        (pprint {"right" right})
-))
+        (pprint {"right" right})))
     ]))
 
 (gen/generate (i32-bin-op-semsem-gen-pluggable

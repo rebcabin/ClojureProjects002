@@ -9,10 +9,9 @@
                  [org.clojure/core.logic         "1.0.1"]
                  [org.clojure/test.check         "1.1.1"]
                  [org.clojure/math.numeric-tower "0.0.5"]
-                 [try-let                        "1.3.1"]  ; experimental
-                 [funcool/cats                   "2.4.2"]  ; experimental
+                 [org.clojure/algo.monads        "0.1.6"]
                  [instaparse                     "1.4.12"]
-                 [swiss-arrows                   "0.6.0"]
+                 [swiss-arrows                   "0.6.0"] ; experimental
                  [camel-snake-kebab              "0.4.3"]]
   :main ^:skip-aot asr.core
   :target-path "target/%s"

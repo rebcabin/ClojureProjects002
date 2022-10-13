@@ -9,12 +9,8 @@
             [clojure.spec.alpha            :as    s      ]
             [clojure.spec.gen.alpha        :as    gen    ]
             [clojure.test.check.generators :as    tgen   ]
-            [clojure.test.check.properties :as    tprop  ])
-
-  (:require [cats.core                     :as    m      ]
-            [cats.builtin                                ]
-            [cats.monad.maybe              :as    maybe  ]
-            [cats.monad.either             :as    either ]))
+            [clojure.test.check.properties :as    tprop  ]
+            [clojure.algo.monads           :as    cam    ]))
 
 
 (def NTESTS           50) ;; Bigger for more stress, smaller for more speed
@@ -1313,36 +1309,28 @@
            (fast-unchecked-i32-exp 0 -1))))))
 
 
-(deftest fast-unchecked-i32-exp-maybe-test
-  (testing "fast unchecked exp i32 with 0 underflow in the maybe monad"
+(deftest fast-unchecked-i32-exp-cam-maybe-test
+  (testing "fast unchecked exp i32 with 0 underflow in the
+  cam/maybe monad (clojure.algo.monads)"
     (testing "unchecked spinning on random-ish values"
-      (is (= (maybe/just 1387939935)
-             (fast-unchecked-i32-exp-maybe -481 211)))
-      (is (= (maybe/just -1387939935)
-             (fast-unchecked-i32-exp-maybe 481 211))))
+      (is (= 1387939935
+             (fast-unchecked-i32-exp-cam-maybe -481 211)))
+      (is (= -1387939935
+             (fast-unchecked-i32-exp-cam-maybe 481 211))))
     (testing "converging to 0 on pos or neg powers of 2"
-      (is (= (maybe/just 0)
-             (fast-unchecked-i32-exp-maybe 32 499)))
-      (is (= (maybe/just 0)
-             (fast-unchecked-i32-exp-maybe -32 499)))
-      (is (= (maybe/just 0)
-             (fast-unchecked-i32-exp-maybe 32 -1)))
-      (is (= (maybe/just 0)
-             (fast-unchecked-i32-exp-maybe 32 -499)))
-      (is (= (maybe/just 0)
-             (fast-unchecked-i32-exp-maybe -32 -499))))
+      (is (zero? (fast-unchecked-i32-exp-cam-maybe   32   499)))
+      (is (zero? (fast-unchecked-i32-exp-cam-maybe  -32   499)))
+      (is (zero? (fast-unchecked-i32-exp-cam-maybe   32    -1)))
+      (is (zero? (fast-unchecked-i32-exp-cam-maybe   32  -499)))
+      (is (zero? (fast-unchecked-i32-exp-cam-maybe  -32  -499))))
     (testing "underflow"
-      (is (= (maybe/just 0)
-             (fast-unchecked-i32-exp-maybe 1234 -2345))))
+      (is (zero? (fast-unchecked-i32-exp-cam-maybe 1234 -2345))))
     (testing "1 to negative powers = 1"
-      (is (= (maybe/just 1)
-             (fast-unchecked-i32-exp-maybe 1 -499))))
+      (is (= 1   (fast-unchecked-i32-exp-cam-maybe    1  -499))))
     (testing "0^0 == 1"
-      (is (= (maybe/just 1)
-             (fast-unchecked-i32-exp-maybe 0 0))))
+      (is (= 1   (fast-unchecked-i32-exp-cam-maybe    0     0))))
     (testing "exception on 0 to a negative power"
-      (is (maybe/nothing?
-           (fast-unchecked-i32-exp-maybe 0 -1))))))
+      (is (nil?  (fast-unchecked-i32-exp-cam-maybe    0    -1))))))
 
 
 ;;                  _                    _            _ _______
@@ -1353,7 +1341,7 @@
 
 (deftest maybe-value-i32-semsem-test
   (testing "various returns in the maybe monad"
-    (is (= (maybe/just 0)
+    (is (zero?
            (maybe-value-i32-semsem
             '(IntegerBinOp
               (IntegerConstant -131974 (Integer 4 []))
@@ -1361,15 +1349,15 @@
               (IntegerConstant 630 (Integer 4 []))
               (Integer 4 [])
               (IntegerConstant 0 (Integer 4 []))))))
-    (is (= (maybe/just -131974)
+    (is (= -131974
            (maybe-value-i32-semsem
             '(IntegerConstant -131974 (Integer 4 [])))))
     (testing "wrong \"kind\""
-      (is (maybe/nothing?
+      (is (nil?
            (maybe-value-i32-semsem
             '(IntegerConstant -131974 (Integer 8 []))))))
     (testing "wrong value"
-      (is (maybe/nothing?
+      (is (nil?
            (maybe-value-i32-semsem
             '(IntegerBinOp
               (IntegerConstant -131974 (Integer 4 []))
