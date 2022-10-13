@@ -667,7 +667,7 @@
 ;; |_|___/___| \__\___/_||_/__/\__\__,_|_||_\__| /__/\___|_|_|_|_||_\__,_/__/_|
 
 (deftest i32-constant-semnasr-conformance
-  (testing "i32-constant-semnasr conformance"
+  (testing "i32-constant-semnasr conformance:"
     (testing "list"
       (is (s/valid? :asr.core/i32-constant-semnasr
                     '(IntegerConstant 5 (Integer 4 [])))))
@@ -677,7 +677,7 @@
 
 
 (deftest i32-constant-semnasr-non-conformance
-  (testing "i32-constant-semnasr NON-conformance"
+  (testing "i32-constant-semnasr NON-conformance:"
     (testing "wrong \"kind\", i.e., integer size"
       (is (not (s/valid? :asr.core/i32-constant-semnasr
                          '(IntegerConstant 5 (Integer 8 []))))))
@@ -919,7 +919,7 @@
 
 (deftest integer-exceptions
   (testing "small integer overflow exceptions, negative and
-  positive; Need different exceptions for the various types"
+  positive; Need different exceptions for the various types:"
     (testing "Long/MIN - 1"
       (is "long overflow"
           (try (long (dec Long/MIN_VALUE))
@@ -1229,7 +1229,7 @@
 
 
 (deftest i32-bin-op-leaf-semsem-non-conformance
-  (testing "non-conformance of :asr.core/i32-bin-op-leaf-semsem"
+  (testing "non-conformance of :asr.core/i32-bin-op-leaf-semsem:"
     (testing "wrong structure"
       (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
                          'foo))))
@@ -1279,7 +1279,7 @@
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
 (deftest fast-unchecked-i32-exp-test
-  (testing "fast unchecked exp i32 with 0 underflow"
+  (testing "fast unchecked exp i32 with 0 underflow:"
     (testing "unchecked spinning on random-ish values"
       (is (= 1387939935
              (fast-unchecked-i32-exp -481 211)))
@@ -1304,7 +1304,7 @@
 
 (deftest fast-unchecked-i32-exp-maybe-test
   (testing "fast unchecked exp i32 with 0 underflow in the
-  cam/maybe monad (clojure.algo.monads)"
+  cam/maybe monad (clojure.algo.monads):"
     (testing "unchecked spinning on random-ish values"
       (is (= 1387939935
              (fast-unchecked-i32-exp-maybe -481 211)))
@@ -1333,7 +1333,7 @@
 ;;             |__/
 
 (deftest maybe-value-i32-semsem-test
-  (testing "various returns in the maybe monad"
+  (testing "various returns in the maybe monad:"
     (is (zero?
            (maybe-value-i32-semsem
             '(IntegerBinOp

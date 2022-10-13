@@ -560,10 +560,10 @@
 
 (defn fast-int-exp-maybe-pluggable
   "O(lg(n)) x^n, x, n zero, pos, or neg, pluggable primitives for
-  base operations in the maybe monad of clojure.algo.monads, more
-  composable than alternatives that check for zero to negative
-  powers. Produces `nil` if `(zero? x)` and `(neg? n)`. Produces
-  `underflow-val` on underflow.
+  base operations. Produces `nil` if `(zero? x)` and `(neg? n)`.
+  Produces `underflow-val` on underflow. Use it in the maybe monad
+  of clojure.algo.monads, more composable than alternatives that
+  check for zero to negative powers.
 
   Partially evaluate this on its operations, for example:
 
@@ -585,8 +585,7 @@
   (if (and (zero? x) (neg? n))
     nil                                 ; cam-speak for "nothing"
     (if (neg? n)                        ; recurse
-      (cam/domonad                      ; propagates "nil"
-       cam/maybe-m
+      (let
        [trial (fast-int-exp-maybe-pluggable
                mul, div, sub, underflow-val,
                x (- n))]
@@ -623,6 +622,8 @@
 ;; | |/|/ / / __/ _ \  / __/ _ \/ -_) __/  '_// / _ \/ _ `/
 ;; |__,__/_/\__/_//_/  \__/_//_/\__/\__/_/\_\/_/_//_/\_, /
 ;;                                                  /___/
+
+;;; TODO: deprecate
 
 (defn fast-int-exp-pluggable
   "O(lg(n)) x^n, x, n zero, pos or neg, pluggable primitives for
