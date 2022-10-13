@@ -791,11 +791,11 @@
 
 (defn maybe-value-i32-semsem
   "Given an IntegerConstant or an IntegerBinOp (icobo), fetch the
-  value, if there is one. Return it in the maybe monad: get
-  #<Nothing> if there is anything invalid about the input. An
-  IntegerBinOp is semsem-valid if its two inputs, left and right,
-  are semsem-valid and its output value equals the operator
-  applied to the two inputs.
+  value, if there is one. Return it in cam's maybe monad: get nil
+  if there is anything invalid about the input. An IntegerBinOp is
+  semsem-valid if its two inputs, left and right, are semsem-valid
+  and its output value equals the operator applied to the two
+  inputs.
 
   There are two difficult cases: explicit Div by zero and zero to
   a negative Pow, an implicit div-by-0 (0^0 is defined as 1).
@@ -826,8 +826,8 @@
 
 (defn i32-bin-op-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate an
-  i32 ASR IntegerBinOp node, recursively. TODO: put in the maybe
-  monad?"
+  i32 ASR IntegerBinOp node, recursively. TODO: put in cam's maybe
+  monad."
   [ops-map]
   (gen/one-of
    ;; base case
