@@ -1331,4 +1331,40 @@
               Pow
               (IntegerConstant 630 (Integer 4 []))
               (Integer 4 [])
-              (IntegerConstant 434343 (Integer 4 [])))))))))
+              (IntegerConstant 434343 (Integer 4 [])))))))
+    (testing "bad operator"
+      (is (nil?
+           (maybe-value-i32-semsem
+            '(IntegerBinOp
+              (IntegerConstant -131974 (Integer 4 []))
+              FOOBAR
+              (IntegerConstant 630 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 434343 (Integer 4 [])))))))
+    (testing "zero to a negative power"
+      (is (nil?
+           (maybe-value-i32-semsem
+            '(IntegerBinOp
+              (IntegerConstant 0 (Integer 4 []))
+              Pow
+              (IntegerConstant -1 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))))))
+    (testing "divide by zero"
+      (is (nil?
+           (maybe-value-i32-semsem
+            '(IntegerBinOp
+              (IntegerConstant -131974 (Integer 4 []))
+              Div
+              (IntegerConstant 0 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))))))
+    (testing "underflow"
+      (is (nil?
+           (maybe-value-i32-semsem
+            '(IntegerBinOp
+              (IntegerConstant -131974 (Integer 4 []))
+              Pow
+              (IntegerConstant -630 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))))))))

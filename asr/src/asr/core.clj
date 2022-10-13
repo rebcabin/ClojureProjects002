@@ -597,13 +597,6 @@
                maybe-unchecked-multiply-int,
                maybe-unchecked-divide-int,
                maybe-unchecked-subtract-int)
-
-  or
-
-      (partial fast-int-exp-maybe-pluggable
-               maybe-unchecked-multiply-int,
-               maybe-unchecked-divide-int,
-               maybe-unchecked-subtract-int)
   "
   [maybe-mul, maybe-div, maybe-sub, x n]
   (cam/domonad
@@ -685,15 +678,19 @@
                value (tgen/return ((ops-map binop) left right))]
       (let [tt '(Integer 4 [])
             ic (fn [i] (list 'IntegerConstant i tt))]
-        (list 'IntegerBinOp (ic left) binop (ic right)
-              tt (ic value))))))
+        (list 'IntegerBinOp
+              (ic left)
+              binop
+              (ic right)
+              tt
+              (ic value))))))
 
 
 (s/def ::i32-bin-op-leaf-semsem
   (s/with-gen
-    (fn [x]
+    (fn [i32bop]
       (try
-        (let [[head left op right ttype value]  x]
+        (let [[head left op right ttype value]  i32bop]
           (let [,[lhead lv lttype] left
                 ,[rhead rv rttype] right
                 ,[vhead vv vttype] value
@@ -709,10 +706,14 @@
                  (= ((op asr-i32-unchecked-binop->clojure-op)
                      lv rv) vv))))
         (catch UnsupportedOperationException e
-          #_"bad structure" false)))
+          #_"bad structure" false)
+        (catch IllegalArgumentException e
+          #_"bad operator" false)
+        (catch NullPointerException e
+          #_"something else bad" false)))
+
     (fn [] (i32-bin-op-leaf-semsem-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
-
 
 ;;; here are a couple of generated cases showing propagated
 ;;; failures.
@@ -753,74 +754,62 @@
   inputs.
 
   Propagates any nils in the inputs.
-
-  There are two difficult cases: explicit Div by zero and zero to
-  a negative Pow, an implicit div-by-0 (0^0 is defined as 1).
-  Because they both reduce to div-by-0, they are instances of the
-  same difficult case.
-
-  Alternative 1 (structural) is to exclude these cases, i.e.,
-  never generate instances of div-by0.
-
-  Alternative 2 (arithmetic) is to include these cases with an
-  overflow sigil like Integer/MAX_VALUE in the value slot. Because
-  the purpose of this entire project is to generate test strings
-  for ASR back ends, and because instances might trip bugs in the
-  back ends, this alternative is viable.
-
-  Because the arithmetic is pluggable, both alternatives are easy
-  to implement. "
+  "
   [icobo]
   (cond
     ,(s/valid? ::i32-bin-op-semsem icobo)
     (let [[_, _, _, _, _, cv] icobo]
       (let [[_, v, _] cv] v)) ; could be nil
     ,(s/valid? ::i32-constant-semnasr icobo)
-    (let [[_, v, _] icobo] v)
+    (let [[_, v, _] icobo] v) ; count be nil
     ,:else
     nil))
 
 
-(defn i32-bin-op-semsem-gen-pluggable
+#_(defn i32-bin-op-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate an
   i32 ASR IntegerBinOp node, recursively. TODO: put in cam's maybe
   monad."
   [ops-map]
-  (gen/one-of
-   ;; base case
-   [(s/gen ::i32-bin-op-leaf-semsem)
-    ;; recurse left
-    (tgen/let [left-bop (s/gen ::i32-bin-op-leaf-semsem)
-               binop_   (s/gen :asr.autospecs/binop)]
-      (pprint {"left-bop" left-bop})
-      (let [left  (maybe-value-i32-semsem left-bop)
-            binop (ops-map binop_)]
-        (pprint {"left" left})
-        (tgen/let [right (s/gen ::i32)]
-          (let [value (binop left right)
-                tt    '(Integer 4 [])
-                ic    (fn [i] (list 'IntegerConstant i tt))]
-            (list 'IntegerBinOp
-                  left-bop
-                  binop
-                  (ic right)
-                  tt (ic value))))))
-    ;; recurse right
-    (tgen/let [right-bop (s/gen ::i32-bin-op-leaf-semsem)
-               binop_    (s/gen :asr.autospecs/binop)]
-      (pprint {"right-bop" right-bop})
-      (let [right (maybe-value-i32-semsem right-bop)
-            binop (ops-map binop_)]
-        (pprint {"right" right})
-        (tgen/let [left (s/gen ::i32)]
-          (let [value (binop left right)
-                tt    '(Integer 4 [])
-                ic    (fn [i] (list ))
-                ]))
-        ))
-    ]))
+  (cam/with-monad cam/maybe-m
+    (gen/one-of
+     ;; base case
+     [(s/gen ::i32-bin-op-leaf-semsem)
+      ;; recurse left
+      (tgen/let [left-bop (s/gen ::i32-bin-op-leaf-semsem)
+                 binop_   (s/gen :asr.autospecs/binop)]
+        (pprint {"left-bop" left-bop})
+        (let [left  (cam/m-lift 1 (maybe-value-i32-semsem) left-bop)
+              binop (ops-map binop_)]
+          (pprint {"left" left})
+          (tgen/let [right (s/gen ::i32)]
+            (let [value (binop left right)
+                  tt    '(Integer 4 [])
+                  ic    (fn [i] (list 'IntegerConstant i tt))]
+              (let [output (list 'IntegerBinOp
+                                 left-bop
+                                 binop
+                                 (ic right)
+                                 tt (ic value))]
+                (pprint {:left-recurse output})
+                output
+                )))))
+      ;; recurse right
+      (tgen/let [right-bop (s/gen ::i32-bin-op-leaf-semsem)
+                 binop_    (s/gen :asr.autospecs/binop)]
+        (pprint {"right-bop" right-bop})
+        (let [right (cam/m-lift 1 (maybe-value-i32-semsem) right-bop)
+              binop (ops-map binop_)]
+          (pprint {"right" right})
+          (tgen/let [left (s/gen ::i32)]
+            (let [value (binop left right)
+                  tt    '(Integer 4 [])
+                  ic    (fn [i] (list 'IntegerConstant i tt))]
+              (let [output (list 'IntegerBinOp)])))
+          ))
+      ])))
 
-(gen/generate (i32-bin-op-semsem-gen-pluggable
+#_(gen/generate (i32-bin-op-semsem-gen-pluggable
                asr-i32-unchecked-binop->clojure-op))
 
 
@@ -852,34 +841,6 @@
             (IntegerConstant 283 (Integer 4 []))))
 
 (s/describe ::i32-bin-op-semsem)
-
-#_
-(eval-i32-bin-op-semsem
- '(IntegerBinOp
-   (IntegerConstant -131974 (Integer 4 []))
-   Pow
-   (IntegerConstant 630 (Integer 4 []))
-   (Integer 4 [])
-   (IntegerConstant 43 (Integer 4 []))))
-
-
-#_(s/def ::i32-bin-op-semsem
-    (s/or
-     ;; The base case is necessary. Try commenting it out and
-     ;; running "lein test" at a terminal. On second thought, don't.
-     :base
-     (s/cat :i32-bin-op-leaf-semsem)
-
-     :recurse
-     (let [or-leaf (s/or :leaf   ::i32-bin-op-leaf-semsem
-                         :const  ::i32-constant-semnasr
-                         :branch ::i32-bin-op-semsem)]
-       (s/cat :head  #{'IntegerBinOp}
-              :left  or-leaf
-              :op    :asr.autospecs/binop
-              :right or-leaf
-              :ttype ::i32-scalar-ttype-semnasr
-              :value (s/? or-leaf))) ))
 
 
 ;;  ___         _        __   ___             _         _   _
