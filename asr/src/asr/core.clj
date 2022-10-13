@@ -680,7 +680,7 @@
   [ops-map]
   (cam/with-monad cam/maybe-m
     (tgen/let [left  (s/gen ::i32)
-               binop (s/gen #{'Div 'Pow} #_:asr.autospecs/binop)
+               binop (s/gen #_#{'Div 'Pow} :asr.autospecs/binop)
                right (s/gen ::i32)
                value (tgen/return ((ops-map binop) left right))]
       (let [tt '(Integer 4 [])
