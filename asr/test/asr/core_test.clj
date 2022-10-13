@@ -1308,21 +1308,36 @@
 
 (deftest maybe-value-i32-semsem-test
   (testing "various returns in the maybe monad:"
-    (is (zero?
+    (testing "good value i32bop"
+      (is (zero?
            (maybe-value-i32-semsem
             '(IntegerBinOp
               (IntegerConstant -131974 (Integer 4 []))
               Pow
               (IntegerConstant 630 (Integer 4 []))
               (Integer 4 [])
-              (IntegerConstant 0 (Integer 4 []))))))
-    (is (= -131974
-           (maybe-value-i32-semsem
-            '(IntegerConstant -131974 (Integer 4 [])))))
+              (IntegerConstant 0 (Integer 4 [])))))))
+    (testing "good value i32con"
+      (is (= -131974
+             (maybe-value-i32-semsem
+              '(IntegerConstant -131974 (Integer 4 []))))))
     (testing "wrong \"kind\""
       (is (nil?
            (maybe-value-i32-semsem
             '(IntegerConstant -131974 (Integer 8 []))))))
+    (testing "seriously bad structure"
+      (is (nil?
+           (maybe-value-i32-semsem
+            nil))))
+    (testing "slightly bad structure"
+      (is (nil?
+           (maybe-value-i32-semsem
+            '(IntegerBinOp
+              (IntegerFOOBAR  -131974 (Integer 4 []))
+              Pow
+              (IntegerConstant 630 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 434343 (Integer 4 [])))))))
     (testing "wrong value"
       (is (nil?
            (maybe-value-i32-semsem
@@ -1359,6 +1374,14 @@
               (IntegerConstant 0 (Integer 4 []))
               (Integer 4 [])
               (IntegerConstant 0 (Integer 4 [])))))))
+    (testing "missing output clause"
+      (is (nil?
+           (maybe-value-i32-semsem
+            '(IntegerBinOp
+              (IntegerConstant -131974 (Integer 4 []))
+              Pow
+              (IntegerConstant -630 (Integer 4 []))
+              (Integer 4 []))))))
     (testing "underflow"
       (is (nil?
            (maybe-value-i32-semsem
