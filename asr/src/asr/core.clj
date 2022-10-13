@@ -665,18 +665,6 @@
 ;; (_-</ -_) '  \(_-</ -_) '  \
 ;; /__/\___|_|_|_/__/\___|_|_|_|
 
-(defn i32-bin-op-rhs-gen
-  "Generate RHS valid for any plugged-in arithmetic. Avoid zero
-  divisors. "
-  [left, binop]
-  (case binop
-    Div (s/gen ::i32nz)  ; don't / 0
-    Pow (if (zero? left) ; don't 0^(negative int)
-          (tgen/fmap abs (s/gen ::i32))
-          (s/gen ::i32))
-    #_default (s/gen ::i32)))
-
-
 (defn i32-bin-op-leaf-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate i32
   ASR IntegerBinOp leaf node. It's the generator for
@@ -684,7 +672,7 @@
   [ops-map]
   (tgen/let [left  (s/gen ::i32)
              binop (s/gen :asr.autospecs/binop)
-             right (i32-bin-op-rhs-gen left binop)
+             right (s/gen ::i32)
              value (tgen/return ((ops-map binop) left right))]
     (let [tt '(Integer 4 [])
           ic (fn [i] (list 'IntegerConstant i tt))]
@@ -785,10 +773,9 @@
                binop_   (s/gen :asr.autospecs/binop)]
       (pprint {"left-bop" left-bop})
       (let [left  (maybe-value-i32-semsem left-bop)
-            _     (assert left) ; non-nil
             binop (ops-map binop_)]
         (pprint {"left" left})
-        (tgen/let [right (i32-bin-op-rhs-gen left binop)]
+        (tgen/let [right (s/gen ::i32)]
           (let [value (binop left right)
                 tt    '(Integer 4 [])
                 ic    (fn [i] (list 'IntegerConstant i tt))]
@@ -802,7 +789,6 @@
                binop_    (s/gen :asr.autospecs/binop)]
       (pprint {"right-bop" right-bop})
       (let [right (maybe-value-i32-semsem right-bop)
-            _     (assert right) ; non-nil
             binop (ops-map binop_)]
         (pprint {"right" right})))
     ]))
