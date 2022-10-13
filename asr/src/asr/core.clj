@@ -557,71 +557,78 @@
 ;; /_/_//_/    /_/_/_/\_,_/\_, /_.__/\__/
 ;;                        /___/
 
+;;; Any computation steps in the maybe monad that produce nil
+;;; cause the entire computation to produce nil. This is a great
+;;; way to compose computations that have individual, independent
+;;; failure modes like divide-by-zero, raising zero to a negative
+;;; power, structural defects, and so on. If anything at all goes
+;;; wrong, the whole thing produces nil. You don't need in-line
+;;; nil checks littering your code.
+
 (defn maybe-unchecked-divide-int
-  "Return nil on zero divide. Use in cam's maybe monad."
+  "Return nil on zero divide in cam's maybe monad."
   [x y]
-  (if (zero? y)
-    nil
-    (unchecked-divide-int x y)))
+  (cam/domonad
+   cam/maybe-m
+   [a x, b y ; TODO: why not (m-result x), (m-result y)?
+    :when (not (zero? b))]
+   (unchecked-divide-int a b)))
+
+
+(cam/with-monad cam/maybe-m
+  (def maybe-quot  (cam/m-lift 2 quot))
+  (def maybe-abs   (cam/m-lift 1 abs))
+  (def maybe-zero? (cam/m-lift 1 zero?))
+  (def maybe-even? (cam/m-lift 1 even?))
+  (def maybe-neg?  (cam/m-lift 1 neg?))
+  (def maybe-pos?  (cam/m-lift 1 pos?)))
 
 
 (defn fast-int-exp-maybe-pluggable
   "O(lg(n)) x^n, x, n zero, pos, or neg, pluggable primitives for
-  base operations. Produces `nil` if `(zero? x)` and `(neg? n)`.
-  Produces `underflow-val` on underflow. Use it in the maybe monad
-  of clojure.algo.monads, more composable than alternatives that
+  base operations. Produces `nil` if `(zero? x)` and `(neg? n)` or
+  underflow with negative exponent. Use it in the maybe monad of
+  clojure.algo.monads, more composable than alternatives that
   check for zero to negative powers.
 
   Partially evaluate this on its operations, for example:
 
-      (partial fast-int-exp-pluggable
-               unchecked-multiply-int,
-               unchecked-divide-int,
-               unchecked-subtract-int,
-               Integer/MIN_VALUE)
+      (partial fast-int-exp-maybe-pluggable
+               maybe-unchecked-multiply-int,
+               maybe-unchecked-divide-int,
+               maybe-unchecked-subtract-int)
 
   or
 
-      (partial fast-int-exp-pluggable
-               unchecked-multiply-int,
-               unchecked-divide-int,
-               unchecked-subtract-int,
-               0)
+      (partial fast-int-exp-maybe-pluggable
+               maybe-unchecked-multiply-int,
+               maybe-unchecked-divide-int,
+               maybe-unchecked-subtract-int)
   "
-  [mul, div, sub, underflow-val, x n]
-  (if (and (zero? x) (neg? n))
-    nil                                 ; cam-speak for "nothing"
-    (if (neg? n)                        ; recurse
-      (let
-       [trial (fast-int-exp-maybe-pluggable
-               mul, div, sub, underflow-val,
-               x (- n))]
-       (case trial
-         ;; In case x^(abs n) == 0
-         0 underflow-val
-         ;; Most often, (quot 1 trial) is zero, but sometimes it's
-         ;; 1/1 = 1. The following handles that case.
-         (quot 1 trial)
-         ))                             ; (pos? n): loop
-      (loop [acc 1,  b x,  e n]
-        (if (zero? e)
+  [maybe-mul, maybe-div, maybe-sub, x n]
+  (cam/domonad
+   cam/maybe-m
+   [v (loop [acc (m-result 1),  b (m-result x),  e (maybe-abs n)]
+        (if (maybe-zero? e)
           acc
-          (if (even? e)
-            (recur       acc   (mul b b) (div e 2))
-            (recur  (mul acc b)     b    (sub e 1))))))))
+          (if (maybe-even? e)
+            (recur        acc        (maybe-mul b b) (maybe-div e 2))
+            (recur  (maybe-mul acc b)       b        (maybe-sub e 1)))))]
+   (if (neg? n)
+     (maybe-div 1 v)
+     v)))
 
 
 (def maybe-fast-unchecked-i32-exp
   "Produces `(maybe/just 0)` for 2^32, 2^33, ... . Underflows
-  negative exponents to `(maybe/just 0)` (or perhaps
-  to `(maybe/just Integer/MIN_VALUE)?). Spins unchecked
-  multiplications. Spins large (>= 32) powers of 2 on 0. See
-  core_test.clj"
-  (partial fast-int-exp-maybe-pluggable
-           unchecked-multiply-int,
-           maybe-unchecked-divide-int,
-           unchecked-subtract-int,
-           0 #_Integer/MIN_VALUE))
+  negative exponents to nil. Div by zero or 0 to a negative power
+  produce nil. Spins unchecked multiplications. Spins large (>=
+  32) powers of 2 on 0. See core_test.clj"
+  (cam/with-monad cam/maybe-m
+    (partial fast-int-exp-maybe-pluggable
+             (cam/m-lift 2 unchecked-multiply-int),
+             maybe-unchecked-divide-int,
+             (cam/m-lift 2 unchecked-subtract-int))))
 
 
 (def asr-i32-unchecked-binop->clojure-op
@@ -629,16 +636,17 @@
   Our arithmetic is double-pluggable: the power operations is
   pluggable (see `fast-unchecked-i32-exp`, and the entire
   collection of operations is pluggable, one level up."
-  {'Add       unchecked-add-int,
-   'Sub       unchecked-subtract-int,
-   'Mul       unchecked-multiply-int,
-   'Div       maybe-unchecked-divide-int,
-   'Pow       maybe-fast-unchecked-i32-exp,
-   'BitAnd    #(.intValue (bit-and         %1 %2)),
-   'BitOr     #(.intValue (bit-or          %1 %2)),
-   'BitXor    #(.intValue (bit-xor         %1 %2)),
-   'BitLShift #(.intValue (bit-shift-left  %1 %2)),
-   'BitRShift #(.intValue (bit-shift-right %1 %2))})
+  (cam/with-monad cam/maybe-m
+    {'Add       (cam/m-lift 2 unchecked-add-int),
+     'Sub       (cam/m-lift 2 unchecked-subtract-int),
+     'Mul       (cam/m-lift 2 unchecked-multiply-int),
+     'Div       maybe-unchecked-divide-int,
+     'Pow       maybe-fast-unchecked-i32-exp,
+     'BitAnd    (cam/m-lift 2 #(.intValue (bit-and         %1 %2))),
+     'BitOr     (cam/m-lift 2 #(.intValue (bit-or          %1 %2))),
+     'BitXor    (cam/m-lift 2 #(.intValue (bit-xor         %1 %2))),
+     'BitLShift (cam/m-lift 2 #(.intValue (bit-shift-left  %1 %2))),
+     'BitRShift (cam/m-lift 2 #(.intValue (bit-shift-right %1 %2)))}))
 
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 
@@ -668,16 +676,17 @@
 (defn i32-bin-op-leaf-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate i32
   ASR IntegerBinOp leaf node. It's the generator for
-  spec ::i32-bin-op-leaf-semsem"
+  spec ::i32-bin-op-leaf-semsem. It exits the maybe monad."
   [ops-map]
-  (tgen/let [left  (s/gen ::i32)
-             binop (s/gen :asr.autospecs/binop)
-             right (s/gen ::i32)
-             value (tgen/return ((ops-map binop) left right))]
-    (let [tt '(Integer 4 [])
-          ic (fn [i] (list 'IntegerConstant i tt))]
-      (list 'IntegerBinOp (ic left) binop (ic right)
-            tt (ic value)))))
+  (cam/with-monad cam/maybe-m
+    (tgen/let [left  (s/gen ::i32)
+               binop (s/gen #{'Div 'Pow} #_:asr.autospecs/binop)
+               right (s/gen ::i32)
+               value (tgen/return ((ops-map binop) left right))]
+      (let [tt '(Integer 4 [])
+            ic (fn [i] (list 'IntegerConstant i tt))]
+        (list 'IntegerBinOp (ic left) binop (ic right)
+              tt (ic value))))))
 
 
 (s/def ::i32-bin-op-leaf-semsem
@@ -705,7 +714,22 @@
             asr-i32-unchecked-binop->clojure-op))))
 
 
-#_(s/exercise ::i32-bin-op-leaf-semsem)
+;;; here are a couple of generated cases showing propagated
+;;; failures.
+
+#_(map second (s/exercise ::i32-bin-op-leaf-semsem 40))
+;;     (IntegerBinOp
+;;      (IntegerConstant -303 (Integer 4 []))
+;;      Div
+;;      (IntegerConstant 0 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant nil (Integer 4 [])))
+;;     (IntegerBinOp
+;;      (IntegerConstant 0 (Integer 4 []))
+;;      Pow
+;;      (IntegerConstant -32 (Integer 4 []))
+;;      (Integer 4 [])
+;;      (IntegerConstant nil (Integer 4 [])))
 
 
 ;;  _ _______   _    _
@@ -728,6 +752,8 @@
   and its output value equals the operator applied to the two
   inputs.
 
+  Propagates any nils in the inputs.
+
   There are two difficult cases: explicit Div by zero and zero to
   a negative Pow, an implicit div-by-0 (0^0 is defined as 1).
   Because they both reduce to div-by-0, they are instances of the
@@ -748,7 +774,7 @@
   (cond
     ,(s/valid? ::i32-bin-op-semsem icobo)
     (let [[_, _, _, _, _, cv] icobo]
-      (let [[_, v, _] cv] v))
+      (let [[_, v, _] cv] v)) ; could be nil
     ,(s/valid? ::i32-constant-semnasr icobo)
     (let [[_, v, _] icobo] v)
     ,:else
@@ -785,7 +811,13 @@
       (pprint {"right-bop" right-bop})
       (let [right (maybe-value-i32-semsem right-bop)
             binop (ops-map binop_)]
-        (pprint {"right" right})))
+        (pprint {"right" right})
+        (tgen/let [left (s/gen ::i32)]
+          (let [value (binop left right)
+                tt    '(Integer 4 [])
+                ic    (fn [i] (list ))
+                ]))
+        ))
     ]))
 
 (gen/generate (i32-bin-op-semsem-gen-pluggable

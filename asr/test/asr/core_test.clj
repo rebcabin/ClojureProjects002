@@ -1224,8 +1224,7 @@
                     Pow
                     (IntegerConstant -266578627 (Integer 4 []))
                     (Integer 4 [])
-                    ;; Changed underflow from Integer/MIN_VALUE to 0
-                    (IntegerConstant 0 #_-2147483648 (Integer 4 [])))))))
+                    (IntegerConstant nil (Integer 4 [])))))))
 
 
 (deftest i32-bin-op-leaf-semsem-non-conformance
@@ -1279,27 +1278,26 @@
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
 (deftest maybe-fast-unchecked-i32-exp-test
-  (testing "fast unchecked exp i32 with 0 underflow in the
-  cam/maybe monad (clojure.algo.monads):"
+  (testing "fast unchecked exp i32 in the cam/maybe monad:"
     (testing "unchecked spinning on random-ish values"
       (is (= 1387939935
              (maybe-fast-unchecked-i32-exp -481 211)))
       (is (= -1387939935
              (maybe-fast-unchecked-i32-exp 481 211))))
     (testing "converging to 0 on pos or neg powers of 2"
-      (is (zero? (maybe-fast-unchecked-i32-exp   32   499)))
-      (is (zero? (maybe-fast-unchecked-i32-exp  -32   499)))
-      (is (zero? (maybe-fast-unchecked-i32-exp   32    -1)))
-      (is (zero? (maybe-fast-unchecked-i32-exp   32  -499)))
-      (is (zero? (maybe-fast-unchecked-i32-exp  -32  -499))))
-    (testing "underflow"
-      (is (zero? (maybe-fast-unchecked-i32-exp 1234 -2345))))
+      (is (maybe-zero? (maybe-fast-unchecked-i32-exp   32   499)))
+      (is (maybe-zero? (maybe-fast-unchecked-i32-exp  -32   499)))
+      (is (maybe-zero? (maybe-fast-unchecked-i32-exp   32    -1))))
+    (testing "underflow to nil"
+      (is (nil?        (maybe-fast-unchecked-i32-exp   32  -499)))
+      (is (nil?        (maybe-fast-unchecked-i32-exp  -32  -499)))
+      (is (nil?        (maybe-fast-unchecked-i32-exp 1234 -2345))))
     (testing "1 to negative powers = 1"
-      (is (= 1   (maybe-fast-unchecked-i32-exp    1  -499))))
+      (is (= 1         (maybe-fast-unchecked-i32-exp    1  -499))))
     (testing "0^0 == 1"
-      (is (= 1   (maybe-fast-unchecked-i32-exp    0     0))))
+      (is (= 1         (maybe-fast-unchecked-i32-exp    0     0))))
     (testing "exception on 0 to a negative power"
-      (is (nil?  (maybe-fast-unchecked-i32-exp    0    -1))))))
+      (is (nil?        (maybe-fast-unchecked-i32-exp    0    -1))))))
 
 
 ;;                  _                    _            _ _______
