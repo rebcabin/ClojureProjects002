@@ -1286,23 +1286,16 @@
       (is (= -1387939935
              (fast-unchecked-i32-exp 481 211))))
     (testing "converging to 0 on pos or neg powers of 2"
-      (is (zero?
-           (fast-unchecked-i32-exp 32 499)))
-      (is (zero?
-           (fast-unchecked-i32-exp -32 499)))
-      (is (zero?
-           (fast-unchecked-i32-exp 32 -499)))
-      (is (zero?
-           (fast-unchecked-i32-exp -32 -499))))
+      (is (zero? (fast-unchecked-i32-exp 32 499)))
+      (is (zero? (fast-unchecked-i32-exp -32 499)))
+      (is (zero? (fast-unchecked-i32-exp 32 -499)))
+      (is (zero? (fast-unchecked-i32-exp -32 -499))))
     (testing "underflow"
-      (is (zero?
-           (fast-unchecked-i32-exp 1234 -2345))))
+      (is (zero? (fast-unchecked-i32-exp 1234 -2345))))
     (testing "1 to negative powers = 1"
-      (is (= 1
-             (fast-unchecked-i32-exp 1 -499))))
+      (is (= 1   (fast-unchecked-i32-exp 1 -499))))
     (testing "0^0 == 1"
-      (is (= 1
-             (fast-unchecked-i32-exp 0 0))))
+      (is (= 1   (fast-unchecked-i32-exp 0 0))))
     (testing "exception on 0 to a negative power"
       (is (thrown?
            AssertionError
