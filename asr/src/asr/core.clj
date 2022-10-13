@@ -634,11 +634,11 @@
    'Mul       unchecked-multiply-int,
    'Div       maybe-unchecked-divide-int,
    'Pow       maybe-fast-unchecked-i32-exp,
-   'BitAnd    bit-and,
-   'BitOr     bit-or,
-   'BitXor    bit-xor,
-   'BitLShift bit-shift-left,
-   'BitRShift bit-shift-right})
+   'BitAnd    #(.intValue (bit-and         %1 %2)),
+   'BitOr     #(.intValue (bit-or          %1 %2)),
+   'BitXor    #(.intValue (bit-xor         %1 %2)),
+   'BitLShift #(.intValue (bit-shift-left  %1 %2)),
+   'BitRShift #(.intValue (bit-shift-right %1 %2))})
 
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
 
@@ -704,13 +704,8 @@
     (fn [] (i32-bin-op-leaf-semsem-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
 
-#_(gen/generate (s/gen ::i32-bin-op-leaf-semsem))
-;; => (IntegerBinOp
-;;     (IntegerConstant -3093 (Integer 4 []))
-;;     BitAnd
-;;     (IntegerConstant -100753 (Integer 4 []))
-;;     (Integer 4 [])
-;;     (IntegerConstant -101781 (Integer 4 [])))
+
+#_(s/exercise ::i32-bin-op-leaf-semsem)
 
 
 ;;  _ _______   _    _
