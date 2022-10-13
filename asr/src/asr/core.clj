@@ -558,7 +558,7 @@
 ;; /_/_//_/    /_/_/_/\_,_/\_, /_.__/\__/
 ;;                        /___/
 
-(defn fast-int-exp-cam-maybe-pluggable
+(defn fast-int-exp-maybe-pluggable
   "O(lg(n)) x^n, x, n zero, pos, or neg, pluggable primitives for
   base operations in the maybe monad of clojure.algo.monads, more
   composable than alternatives that check for zero to negative
@@ -587,7 +587,7 @@
     (if (neg? n)                        ; recurse
       (cam/domonad                      ; propagates "nil"
        cam/maybe-m
-       [trial (fast-int-exp-cam-maybe-pluggable
+       [trial (fast-int-exp-maybe-pluggable
                mul, div, sub, underflow-val,
                x (- n))]
        (case trial
@@ -605,13 +605,13 @@
             (recur  (mul acc b)     b    (sub e 1))))))))
 
 
-(def fast-unchecked-i32-exp-cam-maybe
+(def fast-unchecked-i32-exp-maybe
   "Produces `(maybe/just 0)` for 2^32, 2^33, ... . Underflows
   negative exponents to `(maybe/just 0)` (or perhaps
   to `(maybe/just Integer/MIN_VALUE)?). Spins unchecked
   multiplications. Spins large (>= 32) powers of 2 on 0. See
   core_test.clj"
-  (partial fast-int-exp-cam-maybe-pluggable
+  (partial fast-int-exp-maybe-pluggable
            unchecked-multiply-int,
            unchecked-divide-int,
            unchecked-subtract-int,
@@ -768,7 +768,7 @@
     (fn [] (i32-bin-op-leaf-semsem-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
 
-(gen/generate (s/gen ::i32-bin-op-leaf-semsem))
+#_(gen/generate (s/gen ::i32-bin-op-leaf-semsem))
 ;; => (IntegerBinOp
 ;;     (IntegerConstant -3093 (Integer 4 []))
 ;;     BitAnd
@@ -837,7 +837,7 @@
                binop_   (s/gen :asr.autospecs/binop)]
       (pprint {"left-bop" left-bop})
       (let [left  (maybe-value-i32-semsem left-bop)
-            _     (assert left)       ; not nil! TODO: maybe monad
+            _     (assert left)
             binop (ops-map binop_)]
         (pprint {"left" left})
         (tgen/let [right (i32-bin-op-rhs-gen left binop)]
