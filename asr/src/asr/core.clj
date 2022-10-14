@@ -715,23 +715,7 @@
     (fn [] (i32-bin-op-leaf-semsem-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
 
-;;; here are a couple of generated cases showing propagated
-;;; failures.
-
-#_(map second (s/exercise ::i32-bin-op-leaf-semsem 40))
-;;     (IntegerBinOp
-;;      (IntegerConstant -303 (Integer 4 []))
-;;      Div
-;;      (IntegerConstant 0 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant nil (Integer 4 [])))
-;;     (IntegerBinOp
-;;      (IntegerConstant 0 (Integer 4 []))
-;;      Pow
-;;      (IntegerConstant -32 (Integer 4 []))
-;;      (Integer 4 [])
-;;      (IntegerConstant nil (Integer 4 [])))
-
+;;; See core_test.clj for examples showing propagated failures.
 
 ;;  _ _______   _    _
 ;; (_)__ /_  ) | |__(_)_ _    ___ _ __   ___ ___ _ __  ___ ___ _ __
@@ -742,7 +726,8 @@
 ;;; forward reference (backpatch later)
 
 (s/def ::i32-bin-op-semsem
-  ::i32-bin-op-leaf-semsem)
+  (s/or :i32bop ::i32-bin-op-leaf-semsem
+        :i32con ::i32-constant-semnasr))
 
 
 (defn maybe-value-i32-semsem
@@ -756,80 +741,64 @@
   Propagates any nils in the inputs.
   "
   [icobo]
-  (cond
+  (cond ;; order matters
+    ,(s/valid? ::i32-constant-semnasr icobo)
+    (let [[_, v, _] icobo] v)           ; count be nil
     ,(s/valid? ::i32-bin-op-semsem icobo)
     (let [[_, _, _, _, _, cv] icobo]
-      (let [[_, v, _] cv] v)) ; could be nil
-    ,(s/valid? ::i32-constant-semnasr icobo)
-    (let [[_, v, _] icobo] v) ; count be nil
+      (let [[_, v, _] cv] v))           ; could be nil
     ,:else
     nil))
 
 
-#_(defn i32-bin-op-semsem-gen-pluggable
+(defn i32-bin-op-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate an
   i32 ASR IntegerBinOp node, recursively. TODO: put in cam's maybe
   monad."
   [ops-map]
   (cam/with-monad cam/maybe-m
-    (gen/one-of
-     ;; base case
-     [(s/gen ::i32-bin-op-leaf-semsem)
-      ;; recurse left
-      (tgen/let [left-bop (s/gen ::i32-bin-op-leaf-semsem)
-                 binop_   (s/gen :asr.autospecs/binop)]
-        (pprint {"left-bop" left-bop})
-        (let [left  (cam/m-lift 1 (maybe-value-i32-semsem) left-bop)
-              binop (ops-map binop_)]
-          (pprint {"left" left})
-          (tgen/let [right (s/gen ::i32)]
-            (let [value (binop left right)
-                  tt    '(Integer 4 [])
-                  ic    (fn [i] (list 'IntegerConstant i tt))]
-              (let [output (list 'IntegerBinOp
-                                 left-bop
-                                 binop
-                                 (ic right)
-                                 tt (ic value))]
-                (pprint {:left-recurse output})
-                output
-                )))))
-      ;; recurse right
-      (tgen/let [right-bop (s/gen ::i32-bin-op-leaf-semsem)
-                 binop_    (s/gen :asr.autospecs/binop)]
-        (pprint {"right-bop" right-bop})
-        (let [right (cam/m-lift 1 (maybe-value-i32-semsem) right-bop)
-              binop (ops-map binop_)]
-          (pprint {"right" right})
-          (tgen/let [left (s/gen ::i32)]
-            (let [value (binop left right)
-                  tt    '(Integer 4 [])
-                  ic    (fn [i] (list 'IntegerConstant i tt))]
-              (let [output (list 'IntegerBinOp)])))
-          ))
-      ])))
+    (let [tt   '(Integer 4 [])
+          ic    (fn [i] (list 'IntegerConstant i tt))
+          res   (fn [l b r v] (list 'IntegerBinOp l b r tt v))
+          meval (cam/m-lift 1 maybe-value-i32-semsem)]
+      (gen/one-of
+       [ ;; base case
+        (s/gen ::i32-bin-op-leaf-semsem)
+        ;; recurse
+        (tgen/let [lbop   (s/gen ::i32-bin-op-semsem)
+                   rbop   (s/gen ::i32-bin-op-semsem)
+                   binop_ (s/gen :asr.autospecs/binop)]
+          (cam/domonad
+           cam/maybe-m
+           [left  (meval lbop)
+            right (meval rbop)
+            value ((ops-map binop_) left right)]
+           (res lbop binop_ rbop (ic value))))]))))
 
-#_(gen/generate (i32-bin-op-semsem-gen-pluggable
-               asr-i32-unchecked-binop->clojure-op))
+(gen/sample (i32-bin-op-semsem-gen-pluggable
+             asr-i32-unchecked-binop->clojure-op) 5)
 
 
-#_(s/def ::i32-bin-op-semsem
-  (s/with-gen
-    (s/or ,:base
-          ::i32-bin-op-leaf-semsem
-          ,:lrecurse
-          (let [or-leaf (s/or :cleaf   ::i32-constant-semnasr
-                              :branch ::i32-bin-op-semsem)]
-            (s/cat :head  #{'IntegerBinOp}
-                   :left  or-leaf
-                   :op    :asr.autospecs/binop
-                   :right or-leaf
-                   :ttype ::i32-scalar-ttype-semnasr
-                   :value (s/? or-leaf)))
-          )
-    (fn [] (gen/return 42))))
+(let [the-gen (i32-bin-op-semsem-gen-pluggable
+               asr-i32-unchecked-binop->clojure-op)]
+  (s/def ::i32-bin-op-semsem
+    (s/with-gen
+      (s/or
+       ,:base
+       ::i32-bin-op-leaf-semsem
+       ,:recurse
+       (let [or-leaf (s/or :leaf   ::i32-bin-op-leaf-semsem
+                           :branch ::i32-bin-op-semsem)]
+         (s/cat :head  #{'IntegerBinOp}
+                :left  or-leaf
+                :op    :asr.autospecs/binop
+                :right or-leaf
+                :ttype ::i32-scalar-ttype-semnasr
+                :value ::i32-constant-semnasr)))
+      (fn [] the-gen))))
 
-#_(gen/generate (s/gen ::i32-bin-op-semsem))
+(binding [s/*recursion-limit* 4]
+  (gen/sample (s/gen ::i32-bin-op-semsem) 1))
 
 
 (s/valid? ::i32-bin-op-semsem
