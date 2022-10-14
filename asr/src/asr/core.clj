@@ -550,20 +550,6 @@
 ;; / _` | '_| |  _| ' \| '  \/ -_)  _| / _|
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
-;;    _        _                  __      _
-;;   (_)__    ( )__ _  ___ ___ __/ /  ___( )
-;;  / / _ \    V/  ' \/ _ `/ // / _ \/ -_)V
-;; /_/_//_/    /_/_/_/\_,_/\_, /_.__/\__/
-;;                        /___/
-
-;;; Any computation steps in the maybe monad that produce nil
-;;; cause the entire computation to produce nil. This is a great
-;;; way to compose computations that have individual, independent
-;;; failure modes like divide-by-zero, raising zero to a negative
-;;; power, structural defects, and so on. If anything at all goes
-;;; wrong, the whole thing produces nil. You don't need in-line
-;;; nil checks littering your code.
-
 (defn maybe-unchecked-divide-int
   "Return nil on zero divide."
   [x y]
@@ -593,16 +579,14 @@
 (defn fast-int-exp-maybe-pluggable
   "O(lg(n)) x^n, x, n zero, pos, or neg, pluggable primitives for
   base operations. Produces `nil` if `(zero? x)` and `(neg? n)` or
-  underflow with negative exponent. Use it in the maybe monad of
-  clojure.algo.monads, more composable than alternatives that
-  check for zero to negative powers.
+  underflow with negative exponent.
 
   Partially evaluate this on its operations, for example:
 
       (partial fast-int-exp-maybe-pluggable
-               maybe-unchecked-multiply-int,
+               unchecked-multiply-int,
                maybe-unchecked-divide-int,
-               maybe-unchecked-subtract-int)
+               unchecked-subtract-int)
   "
   [mul, div, sub, x n]
   (let [v (loop [acc 1, b x, e (abs n)]
@@ -617,10 +601,10 @@
 
 
 (def maybe-fast-unchecked-i32-exp
-  "Produces `(maybe/just 0)` for 2^32, 2^33, ... . Underflows
-  negative exponents to nil. Div by zero or 0 to a negative power
-  produce nil. Spins unchecked multiplications. Spins large (>=
-  32) powers of 2 on 0. See core_test.clj"
+  "Produces `0` for `2^32, 2^33, ...` . Underflows negative
+  exponents to nil. Div by zero or `0` to a negative power produce
+  nil. Spins unchecked multiplications. Spins large (>= 32) powers
+  of 2 on 0. See core_test.clj"
   (partial fast-int-exp-maybe-pluggable
            unchecked-multiply-int,
            maybe-unchecked-divide-int,
@@ -688,6 +672,44 @@
                 (ic value)))))))
 
 
+(->> (gen/sample
+      (tgen/let [left  (s/gen ::i32)
+                 binop (s/gen #{'Div 'Pow} #_:asr.autospecs/binop)
+                 right (s/gen ::i32)]
+        (let [value ((asr-i32-unchecked-binop->clojure-op
+                      binop) left right)]
+          (if (nil? value)  nil
+              (list left, binop, right, value))))
+      100)
+     (filter nil?))
+
+
+(let [NTESTS 10000
+      ibops (gen/sample
+             (tgen/let [left  (s/gen ::i32)
+                        binop (s/gen #_#{'Div 'Pow} :asr.autospecs/binop)
+                        right (s/gen ::i32)]
+               (let [value ((asr-i32-unchecked-binop->clojure-op
+                             binop) left right)]
+                 (if (nil? value)  nil
+                     (list left, binop, right, value))))
+             NTESTS)
+      nils (filter nil? ibops)
+      non-nils (filter (comp not nil?) ibops)
+      cnils (count nils)
+      cnnils (count non-nils)]
+  (assert (= NTESTS (+ cnils cnnils)))
+  {:cnils cnils, :cnnils cnnils,
+   :ratio (some->> cnils
+                   (maybe-div cnnils)
+                   float),
+   :pct-nils (some->> cnils
+                      (maybe-div NTESTS)
+                      (maybe-div 1.0)
+                      (* 100.0)
+                      )})
+
+
 (s/def ::i32-bin-op-leaf-semsem
   (s/with-gen
     (fn [i32bop]
@@ -718,18 +740,25 @@
             asr-i32-unchecked-binop->clojure-op))))
 
 
-#_
 (let [NTESTS 10000
       ibops (gen/sample
-             (s/gen :asr.core/i32-bin-op-leaf-semsem)
+             (i32-bin-op-leaf-semsem-gen-pluggable
+              asr-i32-unchecked-binop->clojure-op)
              NTESTS)
       nils (filter nil? ibops)
       non-nils (filter (comp not nil?) ibops)
       cnils (count nils)
       cnnils (count non-nils)]
   (assert (= NTESTS (+ cnils cnnils)))
-  (pprint {:cnils cnils, :cnnils cnnils,
-           :ratio (maybe-float (maybe-div cnnils cnils))}))
+  {:cnils cnils, :cnnils cnnils,
+   :ratio (some->> cnils
+                   (maybe-div cnnils)
+                   float),
+   :pct-nils (some->> cnils
+                      (maybe-div NTESTS)
+                      (maybe-div 1.0)
+                      (* 100.0)
+                      )})
 
 
 ;;; See core_test.clj for examples showing propagated failures.
