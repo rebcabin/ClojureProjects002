@@ -13,8 +13,10 @@
             [clojure.algo.monads           :as    cam    ]))
 
 
-(def NTESTS           50) ;; Bigger for more stress, smaller for more speed
+(def ONETEST           1)
+(def NTESTS           50) ;; Smaller for routine touch-checks
 (def RECURSION-LIMIT   4) ;; ditto
+(def LONGTESTS      1000) ;; Bigger for inline stresses
 
 
 ;;  _____       _     ___                   _               _        _
@@ -1218,13 +1220,15 @@
                     (IntegerConstant 630 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 0 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
-                  '(IntegerBinOp
-                    (IntegerConstant -41056462 (Integer 4 []))
-                    Pow
-                    (IntegerConstant -266578627 (Integer 4 []))
-                    (Integer 4 [])
-                    (IntegerConstant nil (Integer 4 [])))))))
+    (testing "TODO: a nil value conforms, but we want to eliminate
+                   nils in the generator"
+      (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+                   '(IntegerBinOp
+                     (IntegerConstant -41056462 (Integer 4 []))
+                     Pow
+                     (IntegerConstant -266578627 (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant nil (Integer 4 []))))))))
 
 
 (deftest i32-bin-op-leaf-semsem-non-conformance
@@ -1265,6 +1269,16 @@
                            (IntegerConstant 630 (Integer 4 []))
                            (Integer 4 [])
                            (IntegerConstant 0 (Integer 4 [])))))))))
+
+
+(deftest i32-bin-op-leaf-semsem-gen-pluggable-test
+  (testing "all non-nils are valid"
+    (is (every?
+         (partial s/valid? :asr.core/i32-bin-op-leaf-semsem)
+         (filter (comp not nil?)
+                 (gen/sample
+                  (s/gen :asr.core/i32-bin-op-leaf-semsem)
+                  NTESTS))))))
 
 
 ;;       _                     _    _       _ _______

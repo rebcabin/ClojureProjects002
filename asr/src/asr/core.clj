@@ -669,21 +669,27 @@
 (defn i32-bin-op-leaf-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate i32
   ASR IntegerBinOp leaf node. It's the generator for
-  spec ::i32-bin-op-leaf-semsem. It exits the maybe monad."
+  spec ::i32-bin-op-leaf-semsem."
   [ops-map]
-  (cam/with-monad cam/maybe-m
+  (let [tt '(Integer 4 [])
+        ic (fn [i] (list 'IntegerConstant i tt))]
     (tgen/let [left  (s/gen ::i32)
                binop (s/gen #_#{'Div 'Pow} :asr.autospecs/binop)
-               right (s/gen ::i32)
-               value (tgen/return ((ops-map binop) left right))]
-      (let [tt '(Integer 4 [])
-            ic (fn [i] (list 'IntegerConstant i tt))]
-        (list 'IntegerBinOp
-              (ic left)
-              binop
-              (ic right)
-              tt
-              (ic value))))))
+               right (s/gen ::i32)]
+      (let [value ((ops-map binop) left right)]
+        (if (nil? value)
+          nil
+          (list 'IntegerBinOp
+                (ic left)
+                binop
+                (ic right)
+                tt
+                (ic value)))))))
+
+
+(defn i32-bin-op-value-slot
+  [i32bop]
+  (second (nth i32bop 5)))
 
 
 (s/def ::i32-bin-op-leaf-semsem
