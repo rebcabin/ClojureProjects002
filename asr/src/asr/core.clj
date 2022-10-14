@@ -575,8 +575,17 @@
    (unchecked-divide-int a b)))
 
 
+(defn maybe-quot
+  "Return nil on zero divide in cam's maybe monad."
+  [x y]
+  (cam/domonad
+   cam/maybe-m
+   [a x, b y ; TODO: why not (m-result x), (m-result y)?
+    :when (not (zero? b))]
+   (quot a b)))
+
+
 (cam/with-monad cam/maybe-m
-  (def maybe-quot  (cam/m-lift 2 quot))
   (def maybe-abs   (cam/m-lift 1 abs))
   (def maybe-zero? (cam/m-lift 1 zero?))
   (def maybe-even? (cam/m-lift 1 even?))
@@ -677,8 +686,7 @@
                binop (s/gen #_#{'Div 'Pow} :asr.autospecs/binop)
                right (s/gen ::i32)]
       (let [value ((ops-map binop) left right)]
-        (if (nil? value)
-          nil
+        (if (nil? value)  nil
           (list 'IntegerBinOp
                 (ic left)
                 binop
