@@ -566,7 +566,7 @@
 ;;; nil checks littering your code.
 
 (defn maybe-unchecked-divide-int
-  "Return nil on zero divide in cam's maybe monad."
+  "Return nil on zero divide."
   [x y]
   (cam/domonad
    cam/maybe-m
@@ -576,13 +576,25 @@
 
 
 (defn maybe-quot
-  "Return nil on zero divide in cam's maybe monad."
+  "Return nil on zero divide."
   [x y]
   (cam/domonad
    cam/maybe-m
    [a x, b y ; TODO: why not (m-result x), (m-result y)?
     :when (not (zero? b))]
    (quot a b)))
+
+
+(defn maybe-div
+  [x y]
+  (if (zero? y) nil
+      (/ x y)))
+
+
+(defn maybe-float
+  [x]
+  (if (nil? x) nil
+      (float x)))
 
 
 (cam/with-monad cam/maybe-m
@@ -695,11 +707,6 @@
                 (ic value)))))))
 
 
-(defn i32-bin-op-value-slot
-  [i32bop]
-  (second (nth i32bop 5)))
-
-
 (s/def ::i32-bin-op-leaf-semsem
   (s/with-gen
     (fn [i32bop]
@@ -728,6 +735,21 @@
 
     (fn [] (i32-bin-op-leaf-semsem-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
+
+
+#_
+(let [NTESTS 10000
+      ibops (gen/sample
+             (s/gen :asr.core/i32-bin-op-leaf-semsem)
+             NTESTS)
+      nils (filter nil? ibops)
+      non-nils (filter (comp not nil?) ibops)
+      cnils (count nils)
+      cnnils (count non-nils)]
+  (assert (= NTESTS (+ cnils cnnils)))
+  (pprint {:cnils cnils, :cnnils cnnils,
+           :ratio (maybe-float (maybe-div cnnils cnils))}))
+
 
 ;;; See core_test.clj for examples showing propagated failures.
 
