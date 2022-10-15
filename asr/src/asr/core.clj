@@ -551,10 +551,15 @@
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
 (defn maybe-unchecked-divide-int
-  "Return nil on zero divide."
+  "Return nil on zero divide or overflow."
   [x y]
   (if (zero? y) nil
-      (unchecked-divide-int x y)))
+      (try
+       (unchecked-divide-int x y)
+       (catch ArithmeticException e
+         #_(pprint {:ArithEx e, :x x, :y y}) ; returns nil
+         nil
+         ))))
 
 
 (defn maybe-quot
@@ -578,8 +583,9 @@
 
 (defn fast-int-exp-maybe-pluggable
   "O(lg(n)) x^n, x, n zero, pos, or neg, pluggable primitives for
-  base operations. Produces `nil` if `(zero? x)` and `(neg? n)` or
-  underflow with negative exponent.
+  base operations. Can produce `nil` if `(zero? x)` and `(neg? n)`
+  and `div` propagates nil. Produces `nil` if either `x` or `n`
+  is nil.
 
   Partially evaluate this on its operations, for example:
 
@@ -589,15 +595,18 @@
                unchecked-subtract-int)
   "
   [mul, div, sub, x n]
-  (let [v (loop [acc 1, b x, e (abs n)]
-            (if (zero? e)
-              acc
-              (if (even? e)
-                (recur       acc    (mul b b) (div e 2))
-                (recur  (mul acc b)      b    (sub e 1)))))]
-    (if (neg? n)
-      (div 1 v)
-      v)))
+  (try (let [v (loop [acc 1, b x, e (abs n)]
+                 (if (zero? e)
+                   acc
+                   (if (even? e)
+                     (recur       acc    (mul b b) (div e 2))
+                     (recur  (mul acc b)      b    (sub e 1)))))]
+         (if (neg? n)
+           (div 1 v)                    ; Can produce nil.
+           v))
+       (catch NullPointerException ex
+         #_(pprint {:NPE ex, :x x, :n n})
+         nil)))
 
 
 (def maybe-fast-unchecked-i32-exp
@@ -652,63 +661,95 @@
 ;; (_-</ -_) '  \(_-</ -_) '  \
 ;; /__/\___|_|_|_/__/\___|_|_|_|
 
+;; see https://clojurians.slack.com/archives/C1B1BB2Q3/p1665776362948879
+;;
+;; OBSERVATION: I noticed a handy feature: specs created via
+;; s/with-gen can automatically filter out nil. Is it generally
+;; true that such specs never produce nil when the spec-part of
+;; s/with-gen forbids nil? I guess, stated that way, it’s obvious
+;; that it should be generally true.
+;;
+;; This is a nice feature for me because my project generators
+;; create trees with level-crossing semantical constraints that
+;; can go wrong in combinatorial ways. Any time anything goes
+;; wrong (e.g., 0 to a negative power somewhere in the tree), I
+;; just barf out nil as if in a maybe monad (it’s about 2% of the
+;; time, so it’s fine). It’s nice that I get automatic filtering
+;; of the generated values at the spec level. Actually, it’s
+;; brilliant! It let me strip out the maybe monad from my
+;; code (simplifying it greatly) and just rely on nil punning and
+;; some-> and some->> operations.
+;;
+;; (s/def ::nil-producing-spec
+;;   (s/or :nil nil? :int integer?))
+;;
+;; (def nil-producing-generator
+;;   (s/gen ::nil-producing-spec))
+;;
+;; (gen/sample nil-producing-generator)
+;; ;; => (nil nil -1 -2 nil 6 3 nil nil nil)
+;;
+;; (s/def ::nil-rejecting-spec
+;;   (s/with-gen
+;;     integer?
+;;     (fn [] nil-producing-generator)))
+;;
+;; (gen/sample (s/gen ::nil-rejecting-spec))
+;; ;; => (0 -4 -2 -5 0 -64 0 -4 6 0)
+
+(def call-count (atom 0))
+
 (defn i32-bin-op-leaf-semsem-gen-pluggable
-  "Given an ops-map from ASR binops to implementations, generate i32
-  ASR IntegerBinOp leaf node. It's the generator for
-  spec ::i32-bin-op-leaf-semsem."
+  "Given an ops-map from ASR binops to implementations, return a
+  generator for i32 ASR IntegerBinOp leaf nodes. It's the
+  generator for spec ::i32-bin-op-leaf-semsem."
   [ops-map]
-  (let [tt '(Integer 4 [])
-        ic (fn [i] (list 'IntegerConstant i tt))]
-    (tgen/let [left  (s/gen ::i32)
+  (let [tt  '(Integer 4 [])
+        ic   (fn [i] (list 'IntegerConstant i tt))
+        res  (fn [l b r v]
+               (list 'IntegerBinOp (ic l) b (ic r) tt (ic v)))]
+    (tgen/let [left  (s/gen ::i32) ;; Div, Pow are the tough cases
                binop (s/gen #_#{'Div 'Pow} :asr.autospecs/binop)
                right (s/gen ::i32)]
-      (let [value ((ops-map binop) left right)]
-        (if (nil? value)  nil
-          (list 'IntegerBinOp
-                (ic left)
-                binop
-                (ic right)
-                tt
-                (ic value)))))))
+      (let [value  ((ops-map binop) left right)
+            result (if (nil? value)  nil
+                       (res left binop right value))
+            _      (swap! call-count inc)]
+        #_(if (nil? result)
+          (pprint {:c @call-count :t "LEAF"
+                   :l left :o binop :r right
+                   :v value :res result}))
+        result))))
 
 
-(->> (gen/sample
-      (tgen/let [left  (s/gen ::i32)
-                 binop (s/gen #{'Div 'Pow} #_:asr.autospecs/binop)
-                 right (s/gen ::i32)]
-        (let [value ((asr-i32-unchecked-binop->clojure-op
-                      binop) left right)]
-          (if (nil? value)  nil
-              (list left, binop, right, value))))
-      100)
-     (filter nil?))
+;;; produces nil 2.6 percent of the time, always in div-by-0 or 0
+;;; to negative power.
 
-
+#_
 (let [NTESTS 10000
+      _ (reset! call-count 0)
       ibops (gen/sample
-             (tgen/let [left  (s/gen ::i32)
-                        binop (s/gen #_#{'Div 'Pow} :asr.autospecs/binop)
-                        right (s/gen ::i32)]
-               (let [value ((asr-i32-unchecked-binop->clojure-op
-                             binop) left right)]
-                 (if (nil? value)  nil
-                     (list left, binop, right, value))))
+             (i32-bin-op-leaf-semsem-gen-pluggable
+              asr-i32-unchecked-binop->clojure-op)
              NTESTS)
-      nils (filter nil? ibops)
+      nils     (filter nil? ibops)
       non-nils (filter (comp not nil?) ibops)
-      cnils (count nils)
-      cnnils (count non-nils)]
+      cnils    (count nils)
+      cnnils   (count non-nils)]
   (assert (= NTESTS (+ cnils cnnils)))
   {:cnils cnils, :cnnils cnnils,
-   :ratio (some->> cnils
-                   (maybe-div cnnils)
-                   float),
-   :pct-nils (some->> cnils
-                      (maybe-div NTESTS)
-                      (maybe-div 1.0)
-                      (* 100.0)
-                      )})
+   :ratio (some->> cnils (maybe-div cnnils) float),
+   :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))
+   :call-count @call-count})
+;; => {:cnils 267,
+;;     :cnnils 9733,
+;;     :ratio 36.453182,
+;;     :pct-nils 2.67,
+;;     :call-count 10000}
 
+
+;; When I put that generator in the spec, I get automatic nil-
+;; rejection! Nice!
 
 (s/def ::i32-bin-op-leaf-semsem
   (s/with-gen
@@ -727,8 +768,8 @@
                  (= ttcheck lttype)
                  (= ttcheck rttype)
                  (= ttcheck vttype)
-                 (= ((op asr-i32-unchecked-binop->clojure-op)
-                     lv rv) vv))))
+                 (= vv
+                    ((op  asr-i32-unchecked-binop->clojure-op)  lv rv)))))
         (catch UnsupportedOperationException e
           #_"bad structure" false)
         (catch IllegalArgumentException e
@@ -740,25 +781,30 @@
             asr-i32-unchecked-binop->clojure-op))))
 
 
-(let [NTESTS 10000
+;; The difference to the example above is that cnils will be zero
+;; but the call-count will be a little higher than NTESTS.
+
+#_
+(let [NTESTS 10000, _ (reset! call-count 0)
       ibops (gen/sample
-             (i32-bin-op-leaf-semsem-gen-pluggable
-              asr-i32-unchecked-binop->clojure-op)
+             #_(i32-bin-op-leaf-semsem-gen-pluggable
+                asr-i32-unchecked-binop->clojure-op)
+             (s/gen ::i32-bin-op-leaf-semsem)
              NTESTS)
-      nils (filter nil? ibops)
+      nils     (filter nil? ibops)
       non-nils (filter (comp not nil?) ibops)
-      cnils (count nils)
-      cnnils (count non-nils)]
+      cnils    (count nils)
+      cnnils   (count non-nils)]
   (assert (= NTESTS (+ cnils cnnils)))
   {:cnils cnils, :cnnils cnnils,
-   :ratio (some->> cnils
-                   (maybe-div cnnils)
-                   float),
-   :pct-nils (some->> cnils
-                      (maybe-div NTESTS)
-                      (maybe-div 1.0)
-                      (* 100.0)
-                      )})
+   :ratio (some->> cnils (maybe-div cnnils) float),
+   :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))
+   :call-count @call-count})
+;; => {:cnils 0,
+;;     :cnnils 10000,
+;;     :ratio nil,
+;;     :pct-nils nil,
+;;     :call-count 10232}
 
 
 ;;; See core_test.clj for examples showing propagated failures.
@@ -769,7 +815,7 @@
 ;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_/__/\___|_|_|_|
 ;;                               |_|
 
-;;; forward reference (backpatch later)
+;;; defective version for a forward reference (backpatch later)
 
 (s/def ::i32-bin-op-semsem
   (s/or :i32bop ::i32-bin-op-leaf-semsem
@@ -778,18 +824,17 @@
 
 (defn maybe-value-i32-semsem
   "Given an IntegerConstant or an IntegerBinOp (icobo), fetch the
-  value, if there is one. Return it in cam's maybe monad: get nil
-  if there is anything invalid about the input. An IntegerBinOp is
-  semsem-valid if its two inputs, left and right, are semsem-valid
-  and its output value equals the operator applied to the two
-  inputs.
+  value, if there is one. Return nil if there is anything invalid
+  about the input. An IntegerBinOp is semsem-valid if its two
+  inputs, left and right, are semsem-valid and its output value
+  equals the operator applied to the two inputs.
 
-  Propagates any nils in the inputs.
+  Propagates nils.
   "
   [icobo]
   (cond ;; order matters
     ,(s/valid? ::i32-constant-semnasr icobo)
-    (let [[_, v, _] icobo] v)           ; count be nil
+    (let [[_, v, _] icobo] v)           ; could be nil
     ,(s/valid? ::i32-bin-op-semsem icobo)
     (let [[_, _, _, _, _, cv] icobo]
       (let [[_, v, _] cv] v))           ; could be nil
@@ -797,29 +842,59 @@
     nil))
 
 
+;; As above, this generator rejects nils.
+
 (defn i32-bin-op-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate an
-  i32 ASR IntegerBinOp node, recursively. TODO: put in cam's maybe
+  i32 ASR IntegerBinOp node, recursively.
   monad."
   [ops-map]
   (let [tt   '(Integer 4 [])
         ic    (fn [i] (list 'IntegerConstant i tt))
-        res   (fn [l b r v] (list 'IntegerBinOp l b r tt v))
+        res   (fn [l b r v] (list 'IntegerBinOp l b r tt (ic v)))
         meval maybe-value-i32-semsem]
     (gen/one-of
      [ ;; base case
       (s/gen ::i32-bin-op-leaf-semsem)
       ;; recurse
-      (tgen/let [lbop   (s/gen ::i32-bin-op-semsem)
-                 rbop   (s/gen ::i32-bin-op-semsem)
-                 binop_ (s/gen :asr.autospecs/binop)]
+      (tgen/let [lbop  (s/gen ::i32-bin-op-semsem)
+                 rbop  (s/gen ::i32-bin-op-semsem)
+                 binop (s/gen :asr.autospecs/binop)]
         (let [left  (meval lbop)
               right (meval rbop)
-              value ((ops-map binop_) left right)]
-          (res lbop binop_ rbop (ic value))))])))
+              value ((ops-map binop) left right)
+              result (if (nil? value)  nil
+                         (res lbop binop rbop value))
+              _      (swap! call-count inc)]
+          #_(if (nil? result)
+            (pprint {:c @call-count :t "RECURSE"
+                     :l left :o binop :r right
+                     :v value :res result}))
+          result))])))
 
-(gen/sample (i32-bin-op-semsem-gen-pluggable
-             asr-i32-unchecked-binop->clojure-op) 5)
+
+;; The number of nils rejected is (- call-count NTESTS).
+
+(let [NTESTS 10000
+      _ (reset! call-count 0)
+      ibops (gen/sample ;; not LEAF in the next line.
+             (i32-bin-op-semsem-gen-pluggable
+              asr-i32-unchecked-binop->clojure-op)
+             NTESTS)
+      nils     (filter nil? ibops)
+      non-nils (filter (comp not nil?) ibops)
+      cnils    (count nils)
+      cnnils   (count non-nils)]
+  (assert (= NTESTS (+ cnils cnnils)))
+  {:cnils cnils, :cnnils cnnils,
+   :ratio (some->> cnils (maybe-div cnnils) float),
+   :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))
+   :call-count @call-count})
+;; => {:cnils 0,
+;;     :cnnils 1000,
+;;     :ratio nil,
+;;     :pct-nils nil,
+;;     :call-count 1042}
 
 
 (let [the-gen (i32-bin-op-semsem-gen-pluggable
@@ -840,6 +915,28 @@
                 :value ::i32-constant-semnasr)))
       (fn [] the-gen))))
 
+
+(let [NTESTS 1000
+      _ (reset! call-count 0)
+      ibops (gen/sample ;; not LEAF in the next line.
+             (s/gen ::i32-bin-op-semsem)
+             NTESTS)
+      nils     (filter nil? ibops)
+      non-nils (filter (comp not nil?) ibops)
+      cnils    (count nils)
+      cnnils   (count non-nils)]
+  (assert (= NTESTS (+ cnils cnnils)))
+  {:cnils cnils, :cnnils cnnils,
+   :ratio (some->> cnils (maybe-div cnnils) float),
+   :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))
+   :call-count @call-count})
+;; => {:cnils 0,
+;;     :cnnils 1000,
+;;     :ratio nil,
+;;     :pct-nils nil,
+;;     :call-count 3337}
+
+
 (binding [s/*recursion-limit* 4]
   (gen/sample (s/gen ::i32-bin-op-semsem) 1))
 
@@ -851,8 +948,6 @@
             (IntegerConstant 284 (Integer 4 []))
             (Integer 4 [])
             (IntegerConstant 283 (Integer 4 []))))
-
-(s/describe ::i32-bin-op-semsem)
 
 
 ;;  ___         _        __   ___             _         _   _
