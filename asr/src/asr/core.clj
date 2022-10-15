@@ -891,6 +891,11 @@
   inputs, left and right, are semsem-valid and its output value
   equals the operator applied to the two inputs.
 
+  Notice this co-cursively calls ::i32-bin-op-semsem, which will
+  call maybe-value-i32-semsem via the generator
+  i32-bin-op-semsem-gen-pluggable after ::i32-bin-op-semsem is
+  backpatched below.
+
   Propagates nils.
   "
   [icobo]
@@ -914,7 +919,7 @@
   (let [tt   '(Integer 4 [])
         ic    (fn [i] (list 'IntegerConstant i tt))
         res   (fn [l b r v] (list 'IntegerBinOp l b r tt (ic v)))
-        meval maybe-value-i32-semsem]
+        meval maybe-value-i32-semsem #_shorthand ]
     (gen/one-of
      [ ;; base case
       (s/gen ::i32-bin-op-leaf-semsem)
@@ -980,8 +985,10 @@
        ,:base
        ::i32-bin-op-leaf-semsem
        ,:recurse
-       (let [or-leaf (s/or :leaf   ::i32-bin-op-leaf-semsem
-                           :branch ::i32-bin-op-semsem)]
+       (let [or-leaf (s/or ,:leaf
+                           #_::i32-constant-semnasr ;; fails tests
+                           ::i32-bin-op-leaf-semsem
+                           ,:branch ::i32-bin-op-semsem)]
          (s/cat :head  #{'IntegerBinOp}
                 :left  or-leaf
                 :op    :asr.autospecs/binop
@@ -1006,17 +1013,34 @@
     :ratio (some->> cnils (maybe-div cnnils) float),
     :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))}
    (instrumentation-dict)))
-;; => {:pow-neg-count 663,
+;; => {:pow-neg-count 359,
 ;;     :pct-nils nil,
 ;;     :something-else-count 0,
 ;;     :cnils 0,
-;;     :div-0-count 122,
+;;     :div-0-count 53,
 ;;     :ratio nil,
 ;;     :other-nil-count 0,
-;;     :bad-structure-count 31035,
+;;     :bad-structure-count 5138,
 ;;     :cnnils 10000,
-;;     :call-count 53465,
+;;     :call-count 26335,
 ;;     :bad-operator-count 0}
+
+
+(defn -i32-bin-op-semsem-leaf-count
+  [lc, i32bop]
+  (let [[h l o r t v] i32bop]
+    (let [[lh & lresid] l]
+      (case lh
+        IntegerConstant (let [[rh & rresid] r]
+                          (case rh
+                            IntegerConstant (+ 2 lc)
+                            (-i32-bin-op-semsem-leaf-count
+                             (+ 1 lc) r)))
+        (+ (-i32-bin-op-semsem-leaf-count lc l)
+           (-i32-bin-op-semsem-leaf-count lc r))))))
+
+(def i32-bin-op-semsem-leaf-count
+  (partial -i32-bin-op-semsem-leaf-count 0))
 
 
 ;;  ___         _        __   ___             _         _   _
