@@ -697,7 +697,12 @@
 ;; (gen/sample (s/gen ::nil-rejecting-spec))
 ;; ;; => (0 -4 -2 -5 0 -64 0 -4 6 0)
 
-(def call-count (atom 0))
+;; The code below is instrumented for debugging.
+
+(def call-count      (atom 0))
+(def div-0-count     (atom 0))
+(def pow-neg-count   (atom 0))
+(def other-nil-count (atom 0))
 
 (defn i32-bin-op-leaf-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, return a
@@ -712,21 +717,26 @@
                binop (s/gen #_#{'Div 'Pow} :asr.autospecs/binop)
                right (s/gen ::i32)]
       (let [value  ((ops-map binop) left right)
-            result (if (nil? value)  nil
-                       (res left binop right value))
+            result (if (nil? value)
+                     nil
+                     (res left binop right value))
             _      (swap! call-count inc)]
-        #_(if (nil? result)
-          (pprint {:c @call-count :t "LEAF"
-                   :l left :o binop :r right
-                   :v value :res result}))
+        (if (nil? result)
+          (do (case binop
+                Div       (swap! div-0-count inc)
+                Pow       (swap! pow-neg-count inc)
+                #_default (swap! other-nil-count inc))
+              #_(pprint {:c @call-count :t "LEAF"
+                       :l left :o binop :r right
+                       :v value :res result})))
         result))))
 
 
 ;;; produces nil 2.6 percent of the time, always in div-by-0 or 0
 ;;; to negative power.
 
-#_
-(let [NTESTS 10000
+
+#_(let [NTESTS 10000
       _ (reset! call-count 0)
       ibops (gen/sample
              (i32-bin-op-leaf-semsem-gen-pluggable
@@ -740,22 +750,35 @@
   {:cnils cnils, :cnnils cnnils,
    :ratio (some->> cnils (maybe-div cnnils) float),
    :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))
-   :call-count @call-count})
-;; => {:cnils 267,
-;;     :cnnils 9733,
-;;     :ratio 36.453182,
-;;     :pct-nils 2.67,
-;;     :call-count 10000}
+   :call-count @call-count
+   :div-0-count @div-0-count
+   :pow-neg-count @pow-neg-count
+   :other-nil-count @other-nil-count})
+;; => {:cnils 251,
+;;     :cnnils 9749,
+;;     :ratio 38.840637,
+;;     :pct-nils 2.51,
+;;     :call-count 10000,
+;;     :div-0-count 234,
+;;     :pow-neg-count 1486,
+;;     :other-nil-count 0}
 
 
 ;; When I put that generator in the spec, I get automatic nil-
 ;; rejection! Nice!
 
+(def bad-structure-count  (atom 0))
+(def bad-operator-count   (atom 0))
+(def something-else-count (atom 0))
+
 (s/def ::i32-bin-op-leaf-semsem
   (s/with-gen
+    ;; pred
     (fn [i32bop]
       (try
         (let [[head left op right ttype value]  i32bop]
+          #_(pprint {:rsn "LEAF" :h head, :l left, :o op,
+                   :t ttype, :v value})
           (let [,[lhead lv lttype] left
                 ,[rhead rv rttype] right
                 ,[vhead vv vttype] value
@@ -771,21 +794,49 @@
                  (= vv
                     ((op  asr-i32-unchecked-binop->clojure-op)  lv rv)))))
         (catch UnsupportedOperationException e
+          (swap! bad-structure-count inc)
+          ;; Because a generator produced a IntegerConstant
+          ;; in a case that bottoms out recursion, e.g.,
+          ;;
+          ;;     {:rsn "LEAF", :h IntegerConstant,
+          ;;      :l -1,       :o (Integer 4 []),
+          ;;      :t nil,      :v nil}
+          ;;
           #_"bad structure" false)
         (catch IllegalArgumentException e
+          (swap! bad-operator-count inc)
           #_"bad operator" false)
         (catch NullPointerException e
+          (swap! something-else-count inc)
           #_"something else bad" false)))
-
+    ;; gen
     (fn [] (i32-bin-op-leaf-semsem-gen-pluggable
             asr-i32-unchecked-binop->clojure-op))))
 
 
+(defn reset-instrumentation []
+  (reset! call-count           0)
+  (reset! div-0-count          0)
+  (reset! pow-neg-count        0)
+  (reset! other-nil-count      0)
+  (reset! bad-structure-count  0)
+  (reset! bad-operator-count   0)
+  (reset! something-else-count 0))
+
+(defn instrumentation-dict []
+  {:call-count           @call-count
+   :div-0-count          @div-0-count
+   :pow-neg-count        @pow-neg-count
+   :other-nil-count      @other-nil-count
+   :bad-structure-count  @bad-structure-count
+   :bad-operator-count   @bad-operator-count
+   :something-else-count @something-else-count
+   })
+
 ;; The difference to the example above is that cnils will be zero
 ;; but the call-count will be a little higher than NTESTS.
 
-#_
-(let [NTESTS 10000, _ (reset! call-count 0)
+#_(let [NTESTS 10000, _ (reset-instrumentation)
       ibops (gen/sample
              #_(i32-bin-op-leaf-semsem-gen-pluggable
                 asr-i32-unchecked-binop->clojure-op)
@@ -796,15 +847,22 @@
       cnils    (count nils)
       cnnils   (count non-nils)]
   (assert (= NTESTS (+ cnils cnnils)))
-  {:cnils cnils, :cnnils cnnils,
-   :ratio (some->> cnils (maybe-div cnnils) float),
-   :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))
-   :call-count @call-count})
-;; => {:cnils 0,
-;;     :cnnils 10000,
-;;     :ratio nil,
+  (merge
+   {:cnils cnils, :cnnils cnnils,
+    :ratio (some->> cnils (maybe-div cnnils) float),
+    :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))}
+   (instrumentation-dict)))
+;; => {:pow-neg-count 229,
 ;;     :pct-nils nil,
-;;     :call-count 10232}
+;;     :something-else-count 0,
+;;     :cnils 0,
+;;     :div-0-count 31,
+;;     :ratio nil,
+;;     :other-nil-count 0,
+;;     :bad-structure-count 0,
+;;     :cnnils 10000,
+;;     :call-count 10260,
+;;     :bad-operator-count 0}
 
 
 ;;; See core_test.clj for examples showing propagated failures.
@@ -815,7 +873,11 @@
 ;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_/__/\___|_|_|_|
 ;;                               |_|
 
-;;; defective version for a forward reference (backpatch later)
+;;; defective version for a forward reference (backpatch later).
+;;; Now, we let the generator produce constants to bottom out
+;;; recursion, and the spec pred for ::i32-bin-op-leaf-semsem
+;;; can produce "bad structure." It does so about half the time.
+;;; Will we fix this?
 
 (s/def ::i32-bin-op-semsem
   (s/or :i32bop ::i32-bin-op-leaf-semsem
@@ -842,7 +904,7 @@
     nil))
 
 
-;; As above, this generator rejects nils.
+;; As above, this generator propagates nils.
 
 (defn i32-bin-op-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate an
@@ -875,8 +937,8 @@
 
 ;; The number of nils rejected is (- call-count NTESTS).
 
-(let [NTESTS 10000
-      _ (reset! call-count 0)
+#_
+(let [NTESTS 10000, _ (reset-instrumentation)
       ibops (gen/sample ;; not LEAF in the next line.
              (i32-bin-op-semsem-gen-pluggable
               asr-i32-unchecked-binop->clojure-op)
@@ -886,16 +948,29 @@
       cnils    (count nils)
       cnnils   (count non-nils)]
   (assert (= NTESTS (+ cnils cnnils)))
-  {:cnils cnils, :cnnils cnnils,
-   :ratio (some->> cnils (maybe-div cnnils) float),
-   :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))
-   :call-count @call-count})
-;; => {:cnils 0,
-;;     :cnnils 1000,
-;;     :ratio nil,
-;;     :pct-nils nil,
-;;     :call-count 1042}
+  (merge
+   {:cnils cnils, :cnnils cnnils,
+    :ratio (some->> cnils (maybe-div cnnils) float),
+    :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))}
+   (instrumentation-dict)))
+;; => {:pow-neg-count 236,
+;;     :pct-nils 1.78,
+;;     :something-else-count 0,
+;;     :cnils 178,
+;;     :div-0-count 30,
+;;     :ratio 55.179775,
+;;     :other-nil-count 0,
+;;     :bad-structure-count 5008,
+;;     :cnnils 9822,
+;;     :call-count 15286,
+;;     :bad-operator-count 0}
 
+
+;;    __            __              __      __
+;;   / /  ___ _____/ /__ ___  ___ _/ /_____/ /
+;;  / _ \/ _ `/ __/  '_// _ \/ _ `/ __/ __/ _ \
+;; /_.__/\_,_/\__/_/\_\/ .__/\_,_/\__/\__/_//_/
+;;                    /_/
 
 (let [the-gen (i32-bin-op-semsem-gen-pluggable
                asr-i32-unchecked-binop->clojure-op)]
@@ -916,8 +991,8 @@
       (fn [] the-gen))))
 
 
-(let [NTESTS 1000
-      _ (reset! call-count 0)
+#_
+(let [NTESTS 10000, _ (reset-instrumentation)
       ibops (gen/sample ;; not LEAF in the next line.
              (s/gen ::i32-bin-op-semsem)
              NTESTS)
@@ -926,28 +1001,22 @@
       cnils    (count nils)
       cnnils   (count non-nils)]
   (assert (= NTESTS (+ cnils cnnils)))
-  {:cnils cnils, :cnnils cnnils,
-   :ratio (some->> cnils (maybe-div cnnils) float),
-   :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))
-   :call-count @call-count})
-;; => {:cnils 0,
-;;     :cnnils 1000,
-;;     :ratio nil,
+  (merge
+   {:cnils cnils, :cnnils cnnils,
+    :ratio (some->> cnils (maybe-div cnnils) float),
+    :pct-nils (some->> cnils (maybe-div NTESTS) (maybe-div 1.0) (* 100.0))}
+   (instrumentation-dict)))
+;; => {:pow-neg-count 663,
 ;;     :pct-nils nil,
-;;     :call-count 3337}
-
-
-(binding [s/*recursion-limit* 4]
-  (gen/sample (s/gen ::i32-bin-op-semsem) 1))
-
-
-(s/valid? ::i32-bin-op-semsem
-          '(IntegerBinOp
-            (IntegerConstant -1 (Integer 4 []))
-            Add
-            (IntegerConstant 284 (Integer 4 []))
-            (Integer 4 [])
-            (IntegerConstant 283 (Integer 4 []))))
+;;     :something-else-count 0,
+;;     :cnils 0,
+;;     :div-0-count 122,
+;;     :ratio nil,
+;;     :other-nil-count 0,
+;;     :bad-structure-count 31035,
+;;     :cnnils 10000,
+;;     :call-count 53465,
+;;     :bad-operator-count 0}
 
 
 ;;  ___         _        __   ___             _         _   _
