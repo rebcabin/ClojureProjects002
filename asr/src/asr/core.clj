@@ -977,25 +977,40 @@
 ;; /_.__/\_,_/\__/_/\_\/ .__/\_,_/\__/\__/_//_/
 ;;                    /_/
 
-(let [the-gen (i32-bin-op-semsem-gen-pluggable
-               asr-i32-unchecked-binop->clojure-op)]
-  (s/def ::i32-bin-op-semsem
-    (s/with-gen
-      (s/or
-       ,:base
-       ::i32-bin-op-leaf-semsem
-       ,:recurse
-       (let [or-leaf (s/or ,:leaf
-                           #_::i32-constant-semnasr ;; fails tests
-                           ::i32-bin-op-leaf-semsem
-                           ,:branch ::i32-bin-op-semsem)]
-         (s/cat :head  #{'IntegerBinOp}
-                :left  or-leaf
-                :op    :asr.autospecs/binop
-                :right or-leaf
-                :ttype ::i32-scalar-ttype-semnasr
-                :value ::i32-constant-semnasr)))
-      (fn [] the-gen))))
+;;; Must define the new spec twice so that the old spec gets
+;;; recursively backpatched.
+
+(def RELATIVE_RECURSION_FREQUENCY 95)
+(def RELATIVE_BASE_FREQUENCY      05)
+
+(dotimes [_ 2]
+  (let [the-gen (i32-bin-op-semsem-gen-pluggable
+                 asr-i32-unchecked-binop->clojure-op)]
+    (s/def ::i32-bin-op-semsem
+      (s/with-gen
+        (s/or
+         ,:base
+         ::i32-bin-op-leaf-semsem
+         ,:recurse
+         (let [or-leaf
+               (s/with-gen
+                 (s/or ,:leaf
+                        #_::i32-constant-semnasr ;; fails tests
+                        ::i32-bin-op-leaf-semsem
+                        ,:branch ::i32-bin-op-semsem)
+                 (fn [] (gen/frequency
+                         [[,RELATIVE_RECURSION_FREQUENCY
+                           ;; THE OLD SPEC first time
+                           ::i32-bin-op-semsem]
+                          [,RELATIVE_BASE_FREQUENCY
+                           ::i32-bin-op-leaf-semsem]])))]
+           (s/cat :head  #{'IntegerBinOp}
+                  :left  or-leaf
+                  :op    :asr.autospecs/binop
+                  :right or-leaf
+                  :ttype ::i32-scalar-ttype-semnasr
+                  :value ::i32-constant-semnasr)))
+        (fn [] the-gen)))))
 
 
 #_
