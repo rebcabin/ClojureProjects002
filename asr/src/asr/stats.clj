@@ -1,22 +1,10 @@
 (ns asr.stats
-  (:use [asr.core]
-        [asr.utils]
-        [asr.data]
-        [asr.parsed]
-        [asr.autospecs])
+  (:use [asr.core])
 
   (:require [clojure.math                  :as    math   ]
-            [clojure.test                  :refer :all   ]
             [clojure.string                :as    string ]
             [clojure.spec.alpha            :as    s      ]
-            [clojure.spec.gen.alpha        :as    gen    ]
-            [clojure.test.check.generators :as    tgen   ]
-            [clojure.test.check.properties :as    tprop  ]))
-
-(def ONETEST           1)
-(def NTESTS           50) ;; Smaller for routine touch-checks
-(def RECURSION-LIMIT   4) ;; ditto
-(def LONGTESTS      1000) ;; Bigger for inline stresses
+            [clojure.spec.gen.alpha        :as    gen    ]))
 
 
 (def sample [[140 190 1 8]
@@ -74,7 +62,7 @@
     @cume))
 
 
-(chart-out challenge)
+;;(chart-out challenge)
 ;; => ["10  .  .  .  .  ."
 ;;     " 9  .  .  .  .  ."
 ;;     " 8  .  .  .  .  ."
@@ -94,17 +82,16 @@
 
 
 (defn sample-size-distribution [SAMPLE-SIZE]
-  (binding [s/*recursion-limit* RECURSION-LIMIT]
-    (let [foo (->> (-> (s/gen :asr.core/i32-bin-op-semsem)
-                       (gen/sample SAMPLE-SIZE))
-                   (map i32-bin-op-semsem-leaf-count)
-                   (frequencies)
-                   (sort-by first))
-          food (apply hash-map (mapcat identity foo))
-          n (first (first foo))
-          x (first (last  foo))]
-      (for [q (range n (inc x) 2)]
-        [q (or (food q) 0)]))))
+  (let [foo (->> (-> (s/gen :asr.core/i32-bin-op-semsem)
+                     (gen/sample SAMPLE-SIZE))
+                 (map i32-bin-op-semsem-leaf-count)
+                 (frequencies)
+                 (sort-by first))
+        food (apply hash-map (mapcat identity foo))
+        n (first (first foo))
+        x (first (last  foo))]
+    (for [q (range n (inc x) 2)]
+      [q (or (food q) 0)])))
 
 
 (defn lo-cliff [x n]
@@ -136,19 +123,43 @@
     (partition 3 (interleave os, ps, qs))))
 
 
-(let [data (->  (sample-size-distribution 1000)          #_echo)
-      lx   (->> data (map first)  (apply min)            #_echo)
-      hx   (->> data (map first)  (apply max)            #_echo)
-      ly   (->> data (map second) (apply min) log10+1    #_echo)
-      hy   (->> data (map second) (apply max) log10+1    #_echo)
-      ilx  (->  lx (lo-cliff  DX)                        #_echo)
-      ihx  (->  hx (hi-cliff  DX)                        #_echo)
-      ily  (->  0                                        #_echo)
-      ihy  (->  (* DY hy) (hi-cliff  DY)                 #_echo)
-      axs  (->  (range ilx (inc ihx) DX)                 #_echo)
-      gs   (->> data (group-by #(lo-cliff (first %) DX)) echo)
-      hs   (->> gs (map scale-log-sum-row)               #_echo)
-      is   (->  hs re-pair-x                             #_echo)
-      cht  (->> is (concat (list [ilx ihx, ily ihy]
-                                 (count gs)))            #_echo)]
-  (chart-out cht))
+#_
+(binding [s/*recursion-limit* 4]
+  (let [data (->  (sample-size-distribution 100)          #_echo)
+        lx   (->> data (map first)  (apply min)            #_echo)
+        hx   (->> data (map first)  (apply max)            #_echo)
+        ly   (->> data (map second) (apply min) log10+1    #_echo)
+        hy   (->> data (map second) (apply max) log10+1    #_echo)
+        ilx  (->  lx (lo-cliff  DX)                        #_echo)
+        ihx  (->  hx (hi-cliff  DX)                        #_echo)
+        ily  (->  0                                        #_echo)
+        ihy  (->  (* DY hy) (hi-cliff  DY)                 #_echo)
+        axs  (->  (range ilx (inc ihx) DX)                 #_echo)
+        gs   (->> data (group-by #(lo-cliff (first %) DX)) echo)
+        hs   (->> gs (map scale-log-sum-row)               #_echo)
+        is   (->  hs re-pair-x                             #_echo)
+        cht  (->> is (concat (list [ilx ihx, ily ihy]
+                                   (count gs)))            #_echo)]
+    (chart-out cht)))
+;; => ["20   .   .   .   .   .   .   .   .   .   .   .   ."
+;;     "19   @   .   .   .   .   .   .   .   .   .   .   ."
+;;     "18   @   .   .   .   .   .   .   .   .   .   .   ."
+;;     "17   @   .   .   .   .   .   .   .   .   .   .   ."
+;;     "16   @   .   .   .   .   .   .   .   .   .   .   ."
+;;     "15   @   .   .   .   .   .   .   .   .   .   .   ."
+;;     "14   @   .   .   .   .   .   .   .   .   .   .   ."
+;;     "13   @   .   .   .   .   .   .   .   .   .   .   ."
+;;     "12   @   .   .   .   .   .   .   .   .   .   .   ."
+;;     "11   @   @   .   .   .   .   .   .   .   .   .   ."
+;;     "10   @   @   .   .   .   .   .   .   .   .   .   ."
+;;     " 9   @   @   .   .   .   .   .   .   .   .   .   ."
+;;     " 8   @   @   .   .   .   .   .   .   .   .   .   ."
+;;     " 7   @   @   .   .   .   .   .   .   .   .   .   ."
+;;     " 6   @   @   @   .   .   .   .   .   .   .   .   ."
+;;     " 5   @   @   @   .   .   .   .   .   .   .   .   ."
+;;     " 4   @   @   @   .   .   .   .   .   .   .   .   ."
+;;     " 3   @   @   @   @   .   @   .   .   .   .   .   @"
+;;     " 2   @   @   @   @   .   @   .   .   .   .   .   @"
+;;     " 1   @   @   @   @   .   @   .   .   .   .   .   @"
+;;     " 0   @   @   @   @   @   @   @   @   @   @   @   @"
+;;     "    0  10  20  30  40  50  60  70  80  90 100 110 120"]

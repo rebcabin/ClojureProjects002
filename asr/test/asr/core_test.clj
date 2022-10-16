@@ -1472,3 +1472,2237 @@
                   (IntegerConstant 0 (Integer 4 [])))
                  (Integer 4 [])
                  (IntegerConstant 0 (Integer 4 []))))))))
+
+
+;;                      _       _  __   __
+;;  ___ __ _ _ __  _ __| |___  / |/  \ /  \
+;; (_-</ _` | '  \| '_ \ / -_) | | () | () |
+;; /__/\__,_|_|_|_| .__/_\___| |_|\__/ \__/
+;;                |_|
+
+;;; result of (-> (s/gen :asr.core/i32-bin-op-semsem)
+;;;               (gen/sample 100))
+
+(def foo '((IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -1 (Integer 4 []))
+              BitRShift
+              (IntegerConstant -1 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             Mul
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant 0 (Integer 4 []))
+                Mul
+                (IntegerConstant -1 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 0 (Integer 4 [])))
+               BitOr
+               (IntegerBinOp
+                (IntegerConstant 0 (Integer 4 []))
+                BitAnd
+                (IntegerConstant -1 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 0 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              Mul
+              (IntegerBinOp
+               (IntegerConstant -1 (Integer 4 []))
+               BitXor
+               (IntegerConstant 0 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 0 (Integer 4 []))
+             BitRShift
+             (IntegerConstant 0 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 0 (Integer 4 []))
+              Mul
+              (IntegerConstant 0 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             Sub
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -1 (Integer 4 []))
+               Div
+               (IntegerConstant -1 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1 (Integer 4 [])))
+              Sub
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant 0 (Integer 4 []))
+                 Div
+                 (IntegerConstant 6 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))
+                Mul
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant -1 (Integer 4 []))
+                  BitXor
+                  (IntegerConstant -1 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 0 (Integer 4 [])))
+                 BitXor
+                 (IntegerBinOp
+                  (IntegerConstant 0 (Integer 4 []))
+                  Div
+                  (IntegerConstant -1 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 0 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 0 (Integer 4 [])))
+               BitRShift
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant -1 (Integer 4 []))
+                 BitRShift
+                 (IntegerConstant 0 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant -1 (Integer 4 [])))
+                Sub
+                (IntegerBinOp
+                 (IntegerConstant -1 (Integer 4 []))
+                 BitOr
+                 (IntegerConstant -2 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant -1 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 0 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -1 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 0 (Integer 4 []))
+               Mul
+               (IntegerConstant 0 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              BitXor
+              (IntegerBinOp
+               (IntegerConstant -1 (Integer 4 []))
+               BitAnd
+               (IntegerConstant -1 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             BitXor
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -4 (Integer 4 []))
+                Sub
+                (IntegerConstant 3 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -7 (Integer 4 [])))
+               Mul
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant 2 (Integer 4 []))
+                 Pow
+                 (IntegerConstant -3 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))
+                Mul
+                (IntegerBinOp
+                 (IntegerConstant -1 (Integer 4 []))
+                 BitLShift
+                 (IntegerConstant -1 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 0 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              BitOr
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -1 (Integer 4 []))
+                BitRShift
+                (IntegerConstant -7 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -1 (Integer 4 [])))
+               BitLShift
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant -4 (Integer 4 []))
+                 BitAnd
+                 (IntegerConstant 4 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 4 (Integer 4 [])))
+                Sub
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerBinOp
+                   (IntegerConstant -2 (Integer 4 []))
+                   BitRShift
+                   (IntegerConstant -1 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant -1 (Integer 4 [])))
+                  Pow
+                  (IntegerBinOp
+                   (IntegerBinOp
+                    (IntegerConstant -3 (Integer 4 []))
+                    BitOr
+                    (IntegerConstant -1 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -1 (Integer 4 [])))
+                   Sub
+                   (IntegerBinOp
+                    (IntegerConstant 1 (Integer 4 []))
+                    Add
+                    (IntegerConstant -2 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -1 (Integer 4 [])))
+                   (Integer 4 [])
+                   (IntegerConstant 0 (Integer 4 [])))
+                  (Integer 4 [])
+                  (IntegerConstant 1 (Integer 4 [])))
+                 Div
+                 (IntegerBinOp
+                  (IntegerConstant 2 (Integer 4 []))
+                  BitLShift
+                  (IntegerConstant 0 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 2 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 4 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant -16 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -16 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 15 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 3 (Integer 4 []))
+             BitOr
+             (IntegerConstant 1 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 3 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 1 (Integer 4 []))
+              Sub
+              (IntegerConstant -1 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 2 (Integer 4 [])))
+             Add
+             (IntegerBinOp
+              (IntegerConstant -1 (Integer 4 []))
+              BitLShift
+              (IntegerConstant -1 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 2 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1 (Integer 4 []))
+             BitAnd
+             (IntegerConstant -6 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -1 (Integer 4 []))
+              Mul
+              (IntegerConstant -1 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 1 (Integer 4 [])))
+             Div
+             (IntegerBinOp
+              (IntegerConstant 3 (Integer 4 []))
+              Add
+              (IntegerConstant -14 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -11 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -4 (Integer 4 []))
+              Mul
+              (IntegerConstant -1 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 4 (Integer 4 [])))
+             Div
+             (IntegerBinOp
+              (IntegerConstant -2 (Integer 4 []))
+              BitRShift
+              (IntegerConstant -1 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -4 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -60 (Integer 4 []))
+             Pow
+             (IntegerConstant 2 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 3600 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 0 (Integer 4 []))
+               BitLShift
+               (IntegerConstant -182 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              Div
+              (IntegerBinOp
+               (IntegerConstant 64 (Integer 4 []))
+               BitRShift
+               (IntegerConstant 2 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 16 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             BitOr
+             (IntegerBinOp
+              (IntegerConstant -1 (Integer 4 []))
+              BitAnd
+              (IntegerConstant -7 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -7 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -7 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 936 (Integer 4 []))
+             BitOr
+             (IntegerConstant -1 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -1 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 161 (Integer 4 []))
+              Sub
+              (IntegerConstant 12 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 149 (Integer 4 [])))
+             BitRShift
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -1 (Integer 4 []))
+               BitRShift
+               (IntegerConstant 10 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1 (Integer 4 [])))
+              Add
+              (IntegerBinOp
+               (IntegerConstant -90 (Integer 4 []))
+               Mul
+               (IntegerConstant -15 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1350 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1349 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 4 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 2565 (Integer 4 []))
+             BitOr
+             (IntegerConstant 31 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 2591 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 4 (Integer 4 []))
+             Mul
+             (IntegerConstant 2 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 8 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -24 (Integer 4 []))
+             BitRShift
+             (IntegerConstant 0 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -24 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -2 (Integer 4 []))
+              Div
+              (IntegerConstant 9427 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             Mul
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -4 (Integer 4 []))
+                BitRShift
+                (IntegerConstant 0 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -4 (Integer 4 [])))
+               Sub
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant -50 (Integer 4 []))
+                 BitOr
+                 (IntegerConstant 83 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant -33 (Integer 4 [])))
+                BitXor
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerBinOp
+                   (IntegerConstant -16 (Integer 4 []))
+                   BitLShift
+                   (IntegerConstant -59 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant -512 (Integer 4 [])))
+                  Pow
+                  (IntegerBinOp
+                   (IntegerBinOp
+                    (IntegerConstant -168 (Integer 4 []))
+                    BitXor
+                    (IntegerConstant -2 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 166 (Integer 4 [])))
+                   BitXor
+                   (IntegerBinOp
+                    (IntegerConstant 964 (Integer 4 []))
+                    Mul
+                    (IntegerConstant 7321 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 7057444 (Integer 4 [])))
+                   (Integer 4 [])
+                   (IntegerConstant 7057538 (Integer 4 [])))
+                  (Integer 4 [])
+                  (IntegerConstant 0 (Integer 4 [])))
+                 Pow
+                 (IntegerBinOp
+                  (IntegerBinOp
+                   (IntegerConstant -941 (Integer 4 []))
+                   Sub
+                   (IntegerConstant 0 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant -941 (Integer 4 [])))
+                  Mul
+                  (IntegerBinOp
+                   (IntegerBinOp
+                    (IntegerConstant -31 (Integer 4 []))
+                    BitAnd
+                    (IntegerConstant 1341 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 1313 (Integer 4 [])))
+                   BitXor
+                   (IntegerBinOp
+                    (IntegerBinOp
+                     (IntegerConstant 4179 (Integer 4 []))
+                     BitOr
+                     (IntegerConstant -2 (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant -1 (Integer 4 [])))
+                    BitXor
+                    (IntegerBinOp
+                     (IntegerConstant 2 (Integer 4 []))
+                     BitRShift
+                     (IntegerConstant 1648 (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant 0 (Integer 4 [])))
+                    (Integer 4 [])
+                    (IntegerConstant -1 (Integer 4 [])))
+                   (Integer 4 [])
+                   (IntegerConstant -1314 (Integer 4 [])))
+                  (Integer 4 [])
+                  (IntegerConstant 1236474 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant -33 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 29 (Integer 4 [])))
+              BitAnd
+              (IntegerBinOp
+               (IntegerConstant 195 (Integer 4 []))
+               BitLShift
+               (IntegerConstant 0 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 195 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 524 (Integer 4 []))
+              BitLShift
+              (IntegerConstant 11 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 1073152 (Integer 4 [])))
+             BitAnd
+             (IntegerBinOp
+              (IntegerConstant 10 (Integer 4 []))
+              BitAnd
+              (IntegerConstant 47452 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 8 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -726 (Integer 4 []))
+             Mul
+             (IntegerConstant 24 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -17424 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 123291 (Integer 4 []))
+             BitLShift
+             (IntegerConstant 86 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1723858944 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -1 (Integer 4 []))
+              BitRShift
+              (IntegerConstant 0 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             Div
+             (IntegerBinOp
+              (IntegerConstant 1 (Integer 4 []))
+              BitOr
+              (IntegerConstant 120959 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 120959 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 61 (Integer 4 []))
+              BitOr
+              (IntegerConstant -42 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             Pow
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -16 (Integer 4 []))
+               Div
+               (IntegerConstant 18981 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              BitRShift
+              (IntegerBinOp
+               (IntegerConstant 1527 (Integer 4 []))
+               BitRShift
+               (IntegerConstant 68920 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 1 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 222886 (Integer 4 []))
+               Sub
+               (IntegerConstant 349 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 222537 (Integer 4 [])))
+              BitLShift
+              (IntegerBinOp
+               (IntegerConstant -1053 (Integer 4 []))
+               BitXor
+               (IntegerConstant -2337 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 3388 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             Pow
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -28132 (Integer 4 []))
+                BitXor
+                (IntegerConstant -16786 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 11378 (Integer 4 [])))
+               BitRShift
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant -4 (Integer 4 []))
+                  BitAnd
+                  (IntegerConstant -11420 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant -11420 (Integer 4 [])))
+                 BitXor
+                 (IntegerBinOp
+                  (IntegerConstant -1 (Integer 4 []))
+                  BitLShift
+                  (IntegerConstant -3 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 0 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant -11420 (Integer 4 [])))
+                Div
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant -71214 (Integer 4 []))
+                  Mul
+                  (IntegerConstant 0 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 0 (Integer 4 [])))
+                 BitOr
+                 (IntegerBinOp
+                  (IntegerBinOp
+                   (IntegerConstant 4468 (Integer 4 []))
+                   Sub
+                   (IntegerConstant -3 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant 4471 (Integer 4 [])))
+                  Sub
+                  (IntegerBinOp
+                   (IntegerBinOp
+                    (IntegerConstant -45 (Integer 4 []))
+                    Mul
+                    (IntegerConstant 1576 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -70920 (Integer 4 [])))
+                   BitXor
+                   (IntegerBinOp
+                    (IntegerBinOp
+                     (IntegerConstant -3 (Integer 4 []))
+                     BitOr
+                     (IntegerConstant 0 (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant -3 (Integer 4 [])))
+                    BitAnd
+                    (IntegerBinOp
+                     (IntegerConstant -61 (Integer 4 []))
+                     Add
+                     (IntegerConstant 0 (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant -61 (Integer 4 [])))
+                    (Integer 4 [])
+                    (IntegerConstant -63 (Integer 4 [])))
+                   (Integer 4 [])
+                   (IntegerConstant 70969 (Integer 4 [])))
+                  (Integer 4 [])
+                  (IntegerConstant -66498 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant -66498 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 0 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 11378 (Integer 4 [])))
+              BitXor
+              (IntegerBinOp
+               (IntegerConstant -268 (Integer 4 []))
+               Div
+               (IntegerConstant -5 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 53 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 11335 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -5117 (Integer 4 []))
+              BitRShift
+              (IntegerConstant -129238 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             Sub
+             (IntegerBinOp
+              (IntegerConstant 14 (Integer 4 []))
+              Pow
+              (IntegerConstant 381 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -1 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 0 (Integer 4 []))
+             BitOr
+             (IntegerConstant 941 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 941 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 134 (Integer 4 []))
+             BitXor
+             (IntegerConstant 1025248 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1025126 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 868297 (Integer 4 []))
+             Add
+             (IntegerConstant -3 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 868294 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -71 (Integer 4 []))
+              Add
+              (IntegerConstant 11508546 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 11508475 (Integer 4 [])))
+             BitLShift
+             (IntegerBinOp
+              (IntegerConstant 797 (Integer 4 []))
+              BitOr
+              (IntegerConstant 317411 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 317439 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -94 (Integer 4 []))
+             Add
+             (IntegerConstant -2846607 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -2846701 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 48609562 (Integer 4 []))
+              BitOr
+              (IntegerConstant 41937487 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 50330463 (Integer 4 [])))
+             Sub
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 537771 (Integer 4 []))
+               BitRShift
+               (IntegerConstant 194149710 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 32 (Integer 4 [])))
+              Add
+              (IntegerBinOp
+               (IntegerConstant -268205325 (Integer 4 []))
+               Mul
+               (IntegerConstant -4 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1072821300 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1072821332 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -1022490869 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 2585 (Integer 4 []))
+             BitAnd
+             (IntegerConstant 102 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -3117 (Integer 4 []))
+               BitAnd
+               (IntegerConstant -9 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -3117 (Integer 4 [])))
+              Add
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -3 (Integer 4 []))
+                Div
+                (IntegerConstant -21160378 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 0 (Integer 4 [])))
+               BitAnd
+               (IntegerBinOp
+                (IntegerConstant 144342 (Integer 4 []))
+                BitLShift
+                (IntegerConstant 1222 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 9237888 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -3117 (Integer 4 [])))
+             Pow
+             (IntegerBinOp
+              (IntegerConstant -972344 (Integer 4 []))
+              BitAnd
+              (IntegerConstant -188996 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -980600 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 407013 (Integer 4 []))
+              Div
+              (IntegerConstant 6075767 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             BitAnd
+             (IntegerBinOp
+              (IntegerConstant 694733403 (Integer 4 []))
+              Sub
+              (IntegerConstant 543 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 694732860 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 8530587 (Integer 4 []))
+             Sub
+             (IntegerConstant 203102368 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -194571781 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 86778942 (Integer 4 []))
+             Pow
+             (IntegerConstant 39923 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 7 (Integer 4 []))
+               Mul
+               (IntegerConstant 1181174602 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -321712378 (Integer 4 [])))
+              Add
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant 39525 (Integer 4 []))
+                 BitOr
+                 (IntegerConstant -1015174625 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant -1015170433 (Integer 4 [])))
+                BitRShift
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant -117 (Integer 4 []))
+                  Mul
+                  (IntegerConstant 283672 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant -33189624 (Integer 4 [])))
+                 BitOr
+                 (IntegerBinOp
+                  (IntegerBinOp
+                   (IntegerBinOp
+                    (IntegerConstant -64550 (Integer 4 []))
+                    BitAnd
+                    (IntegerConstant -150585 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -195646 (Integer 4 [])))
+                   Add
+                   (IntegerBinOp
+                    (IntegerBinOp
+                     (IntegerConstant -1 (Integer 4 []))
+                     BitAnd
+                     (IntegerConstant -523 (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant -523 (Integer 4 [])))
+                    Sub
+                    (IntegerBinOp
+                     (IntegerConstant -375549776 (Integer 4 []))
+                     Mul
+                     (IntegerConstant 64143703 (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant -285156400 (Integer 4 [])))
+                    (Integer 4 [])
+                    (IntegerConstant 285155877 (Integer 4 [])))
+                   (Integer 4 [])
+                   (IntegerConstant 284960231 (Integer 4 [])))
+                  Pow
+                  (IntegerBinOp
+                   (IntegerConstant 6848092 (Integer 4 []))
+                   Sub
+                   (IntegerConstant -660275 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant 7508367 (Integer 4 [])))
+                  (Integer 4 [])
+                  (IntegerConstant 1171000919 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant -3301537 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant -1 (Integer 4 [])))
+               Mul
+               (IntegerBinOp
+                (IntegerConstant 0 (Integer 4 []))
+                Sub
+                (IntegerConstant -61469 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 61469 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant -61469 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -321773847 (Integer 4 [])))
+             Sub
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -1328508642 (Integer 4 []))
+               BitLShift
+               (IntegerConstant -549 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -268435456 (Integer 4 [])))
+              BitAnd
+              (IntegerBinOp
+               (IntegerConstant 259 (Integer 4 []))
+               BitLShift
+               (IntegerConstant -3 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -321773847 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1369 (Integer 4 []))
+             Mul
+             (IntegerConstant 9397 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 12864493 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 475770 (Integer 4 []))
+               BitOr
+               (IntegerConstant 7 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 475775 (Integer 4 [])))
+              BitXor
+              (IntegerBinOp
+               (IntegerConstant -7334 (Integer 4 []))
+               BitAnd
+               (IntegerConstant -3275 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -7408 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -482961 (Integer 4 [])))
+             Div
+             (IntegerBinOp
+              (IntegerConstant 893865 (Integer 4 []))
+              BitAnd
+              (IntegerConstant 118987 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 98441 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -4 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -23 (Integer 4 []))
+             BitOr
+             (IntegerConstant 3 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -21 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -1511226560 (Integer 4 []))
+             Pow
+             (IntegerConstant 15 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1765537 (Integer 4 []))
+             BitRShift
+             (IntegerConstant 92021886 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -348863 (Integer 4 []))
+             Pow
+             (IntegerConstant -1 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -63 (Integer 4 []))
+              BitRShift
+              (IntegerConstant 16 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             Sub
+             (IntegerBinOp
+              (IntegerConstant -1897713420 (Integer 4 []))
+              Add
+              (IntegerConstant -1178921985 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 1218331891 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -1218331892 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -2464 (Integer 4 []))
+               BitRShift
+               (IntegerConstant 2051634386 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1 (Integer 4 [])))
+              BitLShift
+              (IntegerBinOp
+               (IntegerConstant 11 (Integer 4 []))
+               Mul
+               (IntegerConstant -222 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -2442 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             BitAnd
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -2355 (Integer 4 []))
+                BitAnd
+                (IntegerConstant 1548281831 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 1548281541 (Integer 4 [])))
+               BitLShift
+               (IntegerBinOp
+                (IntegerConstant -1399 (Integer 4 []))
+                BitOr
+                (IntegerConstant -297217172 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -1043 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              Mul
+              (IntegerBinOp
+               (IntegerConstant 1684384503 (Integer 4 []))
+               BitRShift
+               (IntegerConstant 1932090 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -917319909 (Integer 4 []))
+             BitAnd
+             (IntegerConstant -9428 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -917320952 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 20125 (Integer 4 []))
+             BitRShift
+             (IntegerConstant -1980215081 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1315691093 (Integer 4 []))
+             Sub
+             (IntegerConstant -800572 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1316491665 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1175478516 (Integer 4 []))
+             Add
+             (IntegerConstant -1336597199 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -161118683 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -1708570193 (Integer 4 []))
+             Pow
+             (IntegerConstant 0 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -9052268 (Integer 4 []))
+              BitRShift
+              (IntegerConstant -28 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             BitRShift
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 26433030 (Integer 4 []))
+               BitOr
+               (IntegerConstant -102 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -98 (Integer 4 [])))
+              Add
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant 1 (Integer 4 []))
+                Pow
+                (IntegerConstant 885 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 1 (Integer 4 [])))
+               BitOr
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant 1705820023 (Integer 4 []))
+                 Mul
+                 (IntegerConstant 1154532663 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant -198986351 (Integer 4 [])))
+                BitOr
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant -119807161 (Integer 4 []))
+                  Pow
+                  (IntegerConstant 7 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant -1055423561 (Integer 4 [])))
+                 Sub
+                 (IntegerBinOp
+                  (IntegerConstant -2556739 (Integer 4 []))
+                  Mul
+                  (IntegerConstant 1090036273 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 1603271213 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant 1636272522 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant -173556325 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant -173556325 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -173556423 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -1 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -960277 (Integer 4 []))
+              Pow
+              (IntegerConstant -327799 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             BitOr
+             (IntegerBinOp
+              (IntegerConstant -15 (Integer 4 []))
+              Div
+              (IntegerConstant 894982665 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -31594 (Integer 4 []))
+             BitAnd
+             (IntegerConstant -1466288854 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -1466301438 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 634 (Integer 4 []))
+             BitRShift
+             (IntegerConstant -66037 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 22861 (Integer 4 []))
+               BitXor
+               (IntegerConstant 1488112562 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1488098047 (Integer 4 [])))
+              BitRShift
+              (IntegerBinOp
+               (IntegerConstant 1010168 (Integer 4 []))
+               Mul
+               (IntegerConstant 1 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1010168 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             Pow
+             (IntegerBinOp
+              (IntegerConstant 2901 (Integer 4 []))
+              Sub
+              (IntegerConstant -498472241 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 498475142 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 1339148436 (Integer 4 []))
+              BitAnd
+              (IntegerConstant 1503154 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 1099920 (Integer 4 [])))
+             BitXor
+             (IntegerBinOp
+              (IntegerConstant 0 (Integer 4 []))
+              Add
+              (IntegerConstant 2103982159 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 2103982159 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 2105077983 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -1941587 (Integer 4 []))
+             BitXor
+             (IntegerConstant -256 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1941677 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -1 (Integer 4 []))
+              BitAnd
+              (IntegerConstant -1157060237 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -1157060237 (Integer 4 [])))
+             BitLShift
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant 1812082097 (Integer 4 []))
+                BitLShift
+                (IntegerConstant -1082700969 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -662700032 (Integer 4 [])))
+               Mul
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant 1328 (Integer 4 []))
+                  Div
+                  (IntegerConstant -4 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant -332 (Integer 4 [])))
+                 Mul
+                 (IntegerBinOp
+                  (IntegerConstant 26461463 (Integer 4 []))
+                  BitLShift
+                  (IntegerConstant -1345192584 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 0 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))
+                Add
+                (IntegerBinOp
+                 (IntegerConstant 1464 (Integer 4 []))
+                 Add
+                 (IntegerConstant 2091767528 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 2091768992 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 2091768992 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 1342177280 (Integer 4 [])))
+              BitXor
+              (IntegerBinOp
+               (IntegerConstant -1853121548 (Integer 4 []))
+               BitXor
+               (IntegerConstant -1518733221 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 888300463 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1693606831 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 45 (Integer 4 []))
+              Pow
+              (IntegerConstant -2865 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             BitXor
+             (IntegerBinOp
+              (IntegerConstant 1479862343 (Integer 4 []))
+              Pow
+              (IntegerConstant 3 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -324358633 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -324358633 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -2 (Integer 4 []))
+              Div
+              (IntegerConstant 1349767838 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             BitOr
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 67604 (Integer 4 []))
+               BitXor
+               (IntegerConstant -7516 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -70992 (Integer 4 [])))
+              BitXor
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant -1436655394 (Integer 4 []))
+                 Div
+                 (IntegerConstant -1893721661 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))
+                Add
+                (IntegerBinOp
+                 (IntegerConstant -1771217527 (Integer 4 []))
+                 BitAnd
+                 (IntegerConstant -1979775451 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant -2140339199 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant -2140339199 (Integer 4 [])))
+               BitOr
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant -1263321463 (Integer 4 []))
+                 Pow
+                 (IntegerConstant -1660956018 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))
+                Add
+                (IntegerBinOp
+                 (IntegerConstant 1627457443 (Integer 4 []))
+                 BitLShift
+                 (IntegerConstant 1163734342 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 1078061248 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 1078061248 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant -1066537791 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1066600049 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 1066600049 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1549808298 (Integer 4 []))
+             Div
+             (IntegerConstant 2037271740 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -1391551772 (Integer 4 []))
+             Div
+             (IntegerConstant 2177 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -639206 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 12 (Integer 4 []))
+              BitAnd
+              (IntegerConstant -1561740 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 4 (Integer 4 [])))
+             BitAnd
+             (IntegerBinOp
+              (IntegerConstant -105400863 (Integer 4 []))
+              BitXor
+              (IntegerConstant -120096 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 105488129 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 28 (Integer 4 []))
+               BitAnd
+               (IntegerConstant -1144815517 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              Sub
+              (IntegerBinOp
+               (IntegerConstant -1216753504 (Integer 4 []))
+               Add
+               (IntegerConstant 975540881 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -241212623 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 241212623 (Integer 4 [])))
+             BitRShift
+             (IntegerBinOp
+              (IntegerConstant -175978 (Integer 4 []))
+              Div
+              (IntegerConstant 1486577020 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 241212623 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -11926 (Integer 4 []))
+             BitOr
+             (IntegerConstant -1833890007 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -8341 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1661993186 (Integer 4 []))
+             BitAnd
+             (IntegerConstant 1687755554 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1611661346 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1345151947 (Integer 4 []))
+             BitAnd
+             (IntegerConstant 1665532194 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1074004226 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -1867831060 (Integer 4 []))
+               BitAnd
+               (IntegerConstant 15394941 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 11151468 (Integer 4 [])))
+              Mul
+              (IntegerBinOp
+               (IntegerConstant 32708 (Integer 4 []))
+               Mul
+               (IntegerConstant 256929606 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1597445224 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -1400691680 (Integer 4 [])))
+             Div
+             (IntegerBinOp
+              (IntegerConstant 3751 (Integer 4 []))
+              BitOr
+              (IntegerConstant 1961223015 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 1961226215 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -111 (Integer 4 []))
+              Pow
+              (IntegerConstant 20249 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 1175851281 (Integer 4 [])))
+             BitRShift
+             (IntegerBinOp
+              (IntegerConstant -651620583 (Integer 4 []))
+              Sub
+              (IntegerConstant 20 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -651620603 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 36745352 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 2087255540 (Integer 4 []))
+              BitRShift
+              (IntegerConstant 1481702442 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             Mul
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -48435066 (Integer 4 []))
+               BitOr
+               (IntegerConstant -463 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -329 (Integer 4 [])))
+              BitOr
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant 415177 (Integer 4 []))
+                BitRShift
+                (IntegerConstant -1 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 0 (Integer 4 [])))
+               BitAnd
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant -15830259 (Integer 4 []))
+                 Add
+                 (IntegerConstant 1434819963 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 1418989704 (Integer 4 [])))
+                Sub
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant -1895448581 (Integer 4 []))
+                  BitAnd
+                  (IntegerConstant -2023181388 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant -2029997136 (Integer 4 [])))
+                 Add
+                 (IntegerBinOp
+                  (IntegerBinOp
+                   (IntegerConstant -501 (Integer 4 []))
+                   Sub
+                   (IntegerConstant -1323869491 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant 1323868990 (Integer 4 [])))
+                  Sub
+                  (IntegerBinOp
+                   (IntegerBinOp
+                    (IntegerConstant -1152365138 (Integer 4 []))
+                    BitOr
+                    (IntegerConstant -1768315642 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -1076236882 (Integer 4 [])))
+                   BitOr
+                   (IntegerBinOp
+                    (IntegerConstant 32819887 (Integer 4 []))
+                    Mul
+                    (IntegerConstant 24246540 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 1457305396 (Integer 4 [])))
+                   (Integer 4 [])
+                   (IntegerConstant -2228290 (Integer 4 [])))
+                  (Integer 4 [])
+                  (IntegerConstant 1326097280 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant -703899856 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 2122889560 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -329 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 1660758163 (Integer 4 []))
+              BitRShift
+              (IntegerConstant 1246648350 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 1 (Integer 4 [])))
+             Add
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -106234109 (Integer 4 []))
+               Mul
+               (IntegerConstant -1825931366 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1797397298 (Integer 4 [])))
+              BitXor
+              (IntegerBinOp
+               (IntegerConstant -308937 (Integer 4 []))
+               Mul
+               (IntegerConstant -2122144920 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -492715176 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1987848086 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 1987848087 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 1440300581 (Integer 4 []))
+              Sub
+              (IntegerConstant 1975277196 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -534976615 (Integer 4 [])))
+             Pow
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant 91232052 (Integer 4 []))
+                Sub
+                (IntegerConstant -126425 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 91358477 (Integer 4 [])))
+               Add
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant -3507 (Integer 4 []))
+                  BitRShift
+                  (IntegerConstant -1668352580 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant -1 (Integer 4 [])))
+                 BitOr
+                 (IntegerBinOp
+                  (IntegerBinOp
+                   (IntegerBinOp
+                    (IntegerConstant -1417228438 (Integer 4 []))
+                    Sub
+                    (IntegerConstant 6 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant -1417228444 (Integer 4 [])))
+                   Div
+                   (IntegerBinOp
+                    (IntegerConstant -1362296541 (Integer 4 []))
+                    Add
+                    (IntegerConstant 1814115714 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 451819173 (Integer 4 [])))
+                   (Integer 4 [])
+                   (IntegerConstant -3 (Integer 4 [])))
+                  BitAnd
+                  (IntegerBinOp
+                   (IntegerConstant -37 (Integer 4 []))
+                   Add
+                   (IntegerConstant -1508376319 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant -1508376356 (Integer 4 [])))
+                  (Integer 4 [])
+                  (IntegerConstant -1508376356 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant -1 (Integer 4 [])))
+                BitLShift
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant -1797755228 (Integer 4 []))
+                  Mul
+                  (IntegerConstant -7804 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant -1976356720 (Integer 4 [])))
+                 Mul
+                 (IntegerBinOp
+                  (IntegerConstant -188858692 (Integer 4 []))
+                  Mul
+                  (IntegerConstant 1 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant -188858692 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant 775588288 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant -1 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 91358476 (Integer 4 [])))
+              BitXor
+              (IntegerBinOp
+               (IntegerConstant -1741990973 (Integer 4 []))
+               BitAnd
+               (IntegerConstant -1 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1741990973 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -1655089457 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 1623782135 (Integer 4 []))
+              BitAnd
+              (IntegerConstant -892 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 1623781508 (Integer 4 [])))
+             BitLShift
+             (IntegerBinOp
+              (IntegerConstant 540878 (Integer 4 []))
+              Pow
+              (IntegerConstant 1968862947 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 1623781508 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 1171965 (Integer 4 []))
+               BitXor
+               (IntegerConstant -969065 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -2042006 (Integer 4 [])))
+              BitAnd
+              (IntegerBinOp
+               (IntegerConstant 15712 (Integer 4 []))
+               Pow
+               (IntegerConstant -5 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             BitXor
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -1 (Integer 4 []))
+               Mul
+               (IntegerConstant -3198 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 3198 (Integer 4 [])))
+              Pow
+              (IntegerBinOp
+               (IntegerConstant 1084842353 (Integer 4 []))
+               BitXor
+               (IntegerConstant 307 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1084842050 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -215418633 (Integer 4 []))
+             BitXor
+             (IntegerConstant -1142137960 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1220846447 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -95 (Integer 4 []))
+              BitOr
+              (IntegerConstant 1 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -95 (Integer 4 [])))
+             BitOr
+             (IntegerBinOp
+              (IntegerConstant -774070 (Integer 4 []))
+              Add
+              (IntegerConstant -16408 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -790478 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -77 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 1746489379 (Integer 4 []))
+              Pow
+              (IntegerConstant 731527 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 863927403 (Integer 4 [])))
+             Mul
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 93 (Integer 4 []))
+               BitAnd
+               (IntegerConstant -1080094198 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 8 (Integer 4 [])))
+              Mul
+              (IntegerBinOp
+               (IntegerConstant -2122727044 (Integer 4 []))
+               BitLShift
+               (IntegerConstant 1400143037 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 1404800247 (Integer 4 []))
+               BitOr
+               (IntegerConstant -2038262184 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -675569921 (Integer 4 [])))
+              BitLShift
+              (IntegerBinOp
+               (IntegerConstant 13616493 (Integer 4 []))
+               Mul
+               (IntegerConstant 1198950712 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1722252072 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -16777216 (Integer 4 [])))
+             Sub
+             (IntegerBinOp
+              (IntegerConstant 1314667220 (Integer 4 []))
+              BitLShift
+              (IntegerConstant 2347 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -16777216 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1167040020 (Integer 4 []))
+             Sub
+             (IntegerConstant -140 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1167040160 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 1118482127 (Integer 4 []))
+              BitAnd
+              (IntegerConstant 199 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 199 (Integer 4 [])))
+             BitLShift
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 1560513782 (Integer 4 []))
+               BitRShift
+               (IntegerConstant -1841519222 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1523939 (Integer 4 [])))
+              BitOr
+              (IntegerBinOp
+               (IntegerConstant -1242146893 (Integer 4 []))
+               Mul
+               (IntegerConstant -22 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1557427870 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1557624575 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1641314468 (Integer 4 []))
+             Sub
+             (IntegerConstant -3626 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1641318094 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 2 (Integer 4 []))
+             BitLShift
+             (IntegerConstant 543927969 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -1262086145 (Integer 4 []))
+              BitOr
+              (IntegerConstant -1748089221 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -1211213825 (Integer 4 [])))
+             BitXor
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -1379407705 (Integer 4 []))
+               BitAnd
+               (IntegerConstant 58401442 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 21176482 (Integer 4 [])))
+              Sub
+              (IntegerBinOp
+               (IntegerConstant -40065 (Integer 4 []))
+               Add
+               (IntegerConstant 1562286473 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1562246408 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -1541069926 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 334197861 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 10 (Integer 4 []))
+               BitOr
+               (IntegerConstant -1453648092 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1453648082 (Integer 4 [])))
+              Div
+              (IntegerBinOp
+               (IntegerConstant -1226705815 (Integer 4 []))
+               BitAnd
+               (IntegerConstant 1701955466 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 610386952 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -2 (Integer 4 [])))
+             Pow
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 2058341435 (Integer 4 []))
+               Sub
+               (IntegerConstant 793985074 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1264356361 (Integer 4 [])))
+              Sub
+              (IntegerBinOp
+               (IntegerConstant 0 (Integer 4 []))
+               BitXor
+               (IntegerConstant 1949 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1949 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1264354412 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 7 (Integer 4 []))
+               BitAnd
+               (IntegerConstant 1119878050 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 2 (Integer 4 [])))
+              BitLShift
+              (IntegerBinOp
+               (IntegerConstant 1918609211 (Integer 4 []))
+               BitAnd
+               (IntegerConstant 1471913660 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1377535544 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             BitAnd
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -2012896083 (Integer 4 []))
+               BitXor
+               (IntegerConstant 329074952 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1684476507 (Integer 4 [])))
+              BitOr
+              (IntegerBinOp
+               (IntegerConstant 2443030 (Integer 4 []))
+               BitLShift
+               (IntegerConstant 15253 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -490733568 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -69669467 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -1519260986 (Integer 4 []))
+             Sub
+             (IntegerConstant -1797869041 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 278608055 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -1295707354 (Integer 4 []))
+             Mul
+             (IntegerConstant -257353895 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 525472310 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1260560111 (Integer 4 []))
+             Sub
+             (IntegerConstant 2200 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1260557911 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -1238319807 (Integer 4 []))
+              Mul
+              (IntegerConstant -454 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -443523398 (Integer 4 [])))
+             Div
+             (IntegerBinOp
+              (IntegerConstant 1803056036 (Integer 4 []))
+              BitLShift
+              (IntegerConstant 1198516238 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 485031936 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -89619 (Integer 4 []))
+             BitOr
+             (IntegerConstant -26159505 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -67601 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 1471734236 (Integer 4 []))
+             BitOr
+             (IntegerConstant -1888349444 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -537201668 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -1791192700 (Integer 4 []))
+              Mul
+              (IntegerConstant -849 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 304179516 (Integer 4 [])))
+             Mul
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -2045985789 (Integer 4 []))
+               Sub
+               (IntegerConstant 0 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -2045985789 (Integer 4 [])))
+              Add
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -66317911 (Integer 4 []))
+                Mul
+                (IntegerConstant -16 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant 1061086576 (Integer 4 [])))
+               Mul
+               (IntegerBinOp
+                (IntegerConstant -100210880 (Integer 4 []))
+                Sub
+                (IntegerConstant 1744456937 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -1844667817 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant -173713136 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 2075268371 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 366263156 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -1360194116 (Integer 4 []))
+              Mul
+              (IntegerConstant 1897827120 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 256452416 (Integer 4 [])))
+             Sub
+             (IntegerBinOp
+              (IntegerConstant -60280056 (Integer 4 []))
+              BitRShift
+              (IntegerConstant 7 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -470938 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 256923354 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant 1958564935 (Integer 4 []))
+              Pow
+              (IntegerConstant -1280395811 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             Div
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -17861024 (Integer 4 []))
+               BitRShift
+               (IntegerConstant 2115300944 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -273 (Integer 4 [])))
+              Mul
+              (IntegerBinOp
+               (IntegerConstant 163831 (Integer 4 []))
+               BitAnd
+               (IntegerConstant 11121 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 11121 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -3036033 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -1155471318 (Integer 4 []))
+             Add
+             (IntegerConstant -1640830131 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1498665847 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant 130073 (Integer 4 []))
+             BitOr
+             (IntegerConstant -15 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant -7 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -402 (Integer 4 []))
+              Add
+              (IntegerConstant 1413085516 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 1413085114 (Integer 4 [])))
+             Sub
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -4 (Integer 4 []))
+                BitRShift
+                (IntegerConstant 1314379300 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -1 (Integer 4 [])))
+               BitRShift
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant -1251 (Integer 4 []))
+                  BitAnd
+                  (IntegerConstant -1230670063 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant -1230671087 (Integer 4 [])))
+                 BitRShift
+                 (IntegerBinOp
+                  (IntegerConstant 1938921160 (Integer 4 []))
+                  BitXor
+                  (IntegerConstant 15 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 1938921159 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant -9614618 (Integer 4 [])))
+                Pow
+                (IntegerBinOp
+                 (IntegerConstant -1281284811 (Integer 4 []))
+                 BitLShift
+                 (IntegerConstant -2008462079 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 1732397674 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 0 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant -1 (Integer 4 [])))
+              BitRShift
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -1744007319 (Integer 4 []))
+                BitRShift
+                (IntegerConstant 1824749914 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -26 (Integer 4 [])))
+               Add
+               (IntegerBinOp
+                (IntegerConstant -1796663213 (Integer 4 []))
+                BitOr
+                (IntegerConstant -81598 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -9901 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant -9927 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 1413085115 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerConstant -2088358006 (Integer 4 []))
+             BitLShift
+             (IntegerConstant 1777312987 (Integer 4 []))
+             (Integer 4 [])
+             (IntegerConstant 1342177280 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -13630 (Integer 4 []))
+              BitOr
+              (IntegerConstant 1116 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant -12578 (Integer 4 [])))
+             Div
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant -1005546915 (Integer 4 []))
+                BitOr
+                (IntegerConstant -3412 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -3331 (Integer 4 [])))
+               Div
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant -535 (Integer 4 []))
+                 BitAnd
+                 (IntegerConstant -1821882865 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant -1821883383 (Integer 4 [])))
+                Div
+                (IntegerBinOp
+                 (IntegerConstant 1255958494 (Integer 4 []))
+                 Add
+                 (IntegerConstant -233 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 1255958261 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant -1 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant 3331 (Integer 4 [])))
+              Sub
+              (IntegerBinOp
+               (IntegerConstant 1 (Integer 4 []))
+               Mul
+               (IntegerConstant 1673535203 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1673535203 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -1673531872 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerConstant -274848697 (Integer 4 []))
+              Pow
+              (IntegerConstant -2147069198 (Integer 4 []))
+              (Integer 4 [])
+              (IntegerConstant 0 (Integer 4 [])))
+             Div
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -60388204 (Integer 4 []))
+               BitXor
+               (IntegerConstant 1193783339 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1153352513 (Integer 4 [])))
+              BitOr
+              (IntegerBinOp
+               (IntegerBinOp
+                (IntegerConstant 15003526 (Integer 4 []))
+                Mul
+                (IntegerConstant -1363638881 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant -1158585798 (Integer 4 [])))
+               Div
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerConstant 1556751086 (Integer 4 []))
+                  BitLShift
+                  (IntegerConstant 1650912130 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 1932037048 (Integer 4 [])))
+                 Sub
+                 (IntegerBinOp
+                  (IntegerConstant 1627827830 (Integer 4 []))
+                  Sub
+                  (IntegerConstant -1 (Integer 4 []))
+                  (Integer 4 [])
+                  (IntegerConstant 1627827831 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant 304209217 (Integer 4 [])))
+                Add
+                (IntegerBinOp
+                 (IntegerConstant -251803 (Integer 4 []))
+                 BitAnd
+                 (IntegerConstant 50 (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant 32 (Integer 4 [])))
+                (Integer 4 [])
+                (IntegerConstant 304209249 (Integer 4 [])))
+               (Integer 4 [])
+               (IntegerConstant -3 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant 0 (Integer 4 [])))
+            (IntegerBinOp
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant -52 (Integer 4 []))
+               BitRShift
+               (IntegerConstant 2065784890 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1 (Integer 4 [])))
+              BitAnd
+              (IntegerBinOp
+               (IntegerConstant -13 (Integer 4 []))
+               BitOr
+               (IntegerConstant 1478364542 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant -1 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant -1 (Integer 4 [])))
+             Pow
+             (IntegerBinOp
+              (IntegerBinOp
+               (IntegerConstant 24562262 (Integer 4 []))
+               BitLShift
+               (IntegerConstant -1253270 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 0 (Integer 4 [])))
+              BitOr
+              (IntegerBinOp
+               (IntegerConstant 1901688711 (Integer 4 []))
+               BitOr
+               (IntegerConstant 1 (Integer 4 []))
+               (Integer 4 [])
+               (IntegerConstant 1901688711 (Integer 4 [])))
+              (Integer 4 [])
+              (IntegerConstant 1901688711 (Integer 4 [])))
+             (Integer 4 [])
+             (IntegerConstant -1 (Integer 4 [])))))
+
+
+(deftest sample-100-test
+  (testing "sample of 100 i32 bin ops:"
+    (testing "leaf counts"
+      (is (every? #(>= % 2)
+                  (map i32-bin-op-semsem-leaf-count foo))))
+    (testing "validity"
+      (is (every? identity
+                  (map #(s/valid? :asr.core/i32-bin-op-semsem %) foo))))
+    (testing "value"
+      (is (not-any? nil?
+                    (map maybe-value-i32-semsem foo))))))
