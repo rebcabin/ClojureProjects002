@@ -105,24 +105,15 @@
 ;; => (Integer
 ;;     1
 ;;     []
-;;     []
 ;;     [352256673885445370349486716111 1624332]
 ;;     [2]
-;;     []
 ;;     [86580034 64261]
 ;;     [8 458885090506053219617214830343524119916]
 ;;     [27173 1610173734]
 ;;     [48685 24306766029009794]
 ;;     [1150789934200849078335609340599 6]
-;;     [2 403103245552]
-;;     [3]
-;;     [253202094266565303897073]
-;;     [38482940056007176601892386 290444503362439372561]
-;;     [2720]
-;;     [44]
 ;;     [8627550682561420745323677756919725945686847947214688 1361957]
 ;;     [12683960 712272279223862022492880049742732644816473428]
-;;     [883899]
 ;;     [4060631819931453961107624898943598271095916602396458]
 ;;     [4 0]
 ;;     [25370]
@@ -215,7 +206,6 @@
 ;; |_|_||_\__\___\__, \___|_|    \_/\__,_|_|\_,_\___/__/
 ;;               |___/
 
-
 ;; Mid-level specs for fixed-width integers.
 
 (letfn [(b [e] (expt 2 (- e 1)))        ; ::i8, ::i16, ::i32, ::i64
@@ -246,6 +236,7 @@
 
 (assert (s/valid? ::i32 (Integer/MAX_VALUE)))
 (assert (s/valid? ::i32 0))
+
 
 ;;  ____              ___      _        _   _
 ;; |_  /___ _ _ ___  | _ \___ (_)___ __| |_(_)___ _ _
@@ -316,6 +307,7 @@
             :value ::i64
             :ttype ::i64-scalar-ttype-semnasr))))
 
+
 (s/def ::integer-constant-semnasr
   (s/or :i8  ::i8-constant-semnasr
         :i16 ::i16-constant-semnasr
@@ -361,6 +353,7 @@
      (s/cat :head  #{'IntegerConstant}
             :value ::i64nz
             :ttype ::i64-scalar-ttype-semnasr))))
+
 
 (s/def ::integer-non-zero-constant-semnasr
   (s/or :i8  ::i8-non-zero-constant-semnasr
@@ -472,72 +465,11 @@
             :value (s/? or-leaf))) ))
 
 
-(s/def ::binop-no-div
-  (set/difference (eval (s/describe :asr.autospecs/binop))
-                  #{'Div}))
-
-
 ;; To visualize the tree, uncomment this and do "lein run" at a
 ;; terminal.
 #_(-> ::i32-bin-op-semnasr
     (s/exercise 25)
     inspect-tree)
-
-
-(s/def ::i32-bin-op-semnasr-no-zero-divisor
-  (s/or
-   ;; The base case is necessary. Try commenting it out and
-   ;; running "lein test" at a terminal.
-   :base-no-div
-   (s/cat :head  #{'IntegerBinOp}
-          :left  ::i32-constant-semnasr
-          :op    ::binop-no-div
-          :right ::i32-constant-semnasr
-          :ttype ::i32-scalar-ttype-semnasr
-          :value (s/? ::i32-constant-semnasr))
-
-   :base-no-zero-divisor
-   (s/cat :head  #{'IntegerBinOp}
-          :left  ::i32-constant-semnasr
-          :op    #{'Div}
-          :right ::i32-non-zero-constant-semnasr
-          :ttype ::i32-scalar-ttype-semnasr
-          :value (s/? ::i32-constant-semnasr))
-
-   :recurse-no-div
-   (let [or-leaf (s/or :leaf   ::i32-constant-semnasr
-                       :branch ::i32-bin-op-semnasr-no-zero-divisor)]
-     (s/cat :head  #{'IntegerBinOp}
-            :left  or-leaf
-            :op    ::binop-no-div
-            :right or-leaf
-            :ttype ::i32-scalar-ttype-semnasr
-            :value (s/? or-leaf)))
-
-   :recurse-no-zero-divisor
-   (let [or-leaf (s/or :leaf   ::i32-constant-semnasr
-                       :branch ::i32-bin-op-semnasr-no-zero-divisor)
-         nz-leaf (s/or :nz-leaf ::i32-non-zero-constant-semnasr
-                       :branch ::i32-bin-op-semnasr-no-zero-divisor)]
-     (s/cat :head  #{'IntegerBinOp}
-            :left  or-leaf
-            :op    #{'Div}
-            :right nz-leaf
-            :ttype ::i32-scalar-ttype-semnasr
-            :value (s/? or-leaf)))))
-
-
-;;  _                               _   _     _     _    _
-;; (_)_ __  _ __ _ _ _____ _____ __| | (_)_ _| |_  | |__(_)_ _  ___ _ __
-;; | | '  \| '_ \ '_/ _ \ V / -_) _` | | | ' \  _| | '_ \ | ' \/ _ \ '_ \
-;; |_|_|_|_| .__/_| \___/\_/\___\__,_| |_|_||_\__| |_.__/_|_||_\___/ .__/
-;;         |_|                                                     |_|
-
-;; For testing, exclude bit-ops from IntegerBinOps.
-(s/def ::binop-no-bits
-  (set/difference
-   (eval (s/describe :asr.autospecs/binop))
-   #{'BitAnd 'BitOr 'BitXor 'BitLShift, 'BitRShift}))
 
 
 ;;       _                     _    _       _ _______
@@ -735,8 +667,8 @@
 ;;; produces nil 2.6 percent of the time, always in div-by-0 or 0
 ;;; to negative power.
 
-
-#_(let [NTESTS 10000
+#_
+(let [NTESTS 10000
       _ (reset! call-count 0)
       ibops (gen/sample
              (i32-bin-op-leaf-semsem-gen-pluggable
@@ -823,6 +755,7 @@
   (reset! bad-operator-count   0)
   (reset! something-else-count 0))
 
+
 (defn instrumentation-dict []
   {:call-count           @call-count
    :div-0-count          @div-0-count
@@ -836,7 +769,8 @@
 ;; The difference to the example above is that cnils will be zero
 ;; but the call-count will be a little higher than NTESTS.
 
-#_(let [NTESTS 10000, _ (reset-instrumentation)
+#_
+(let [NTESTS 10000, _ (reset-instrumentation)
       ibops (gen/sample
              #_(i32-bin-op-leaf-semsem-gen-pluggable
                 asr-i32-unchecked-binop->clojure-op)
@@ -983,6 +917,7 @@
 (def RELATIVE_RECURSION_FREQUENCY 95)
 (def RELATIVE_BASE_FREQUENCY      05)
 
+
 (dotimes [_ 2]
   (let [the-gen (i32-bin-op-semsem-gen-pluggable
                  asr-i32-unchecked-binop->clojure-op)]
@@ -1011,7 +946,6 @@
                   :ttype ::i32-scalar-ttype-semnasr
                   :value ::i32-constant-semnasr)))
         (fn [] the-gen)))))
-
 
 #_
 (let [NTESTS 10000, _ (reset-instrumentation)
@@ -1053,6 +987,7 @@
                              (+ 1 lc) r)))
         (+ (-i32-bin-op-semsem-leaf-count lc l)
            (-i32-bin-op-semsem-leaf-count lc r))))))
+
 
 (def i32-bin-op-semsem-leaf-count
   (partial -i32-bin-op-semsem-leaf-count 0))
