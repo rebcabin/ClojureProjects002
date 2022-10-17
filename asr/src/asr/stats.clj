@@ -28,15 +28,15 @@
 (defn chart-out
   [[axes records & [[fval sval] :as cols]]]
   (defn lpad
-    "Adds spaces to string `st` on the left if it's smaller than
-  `size` chars."
+    "Add spaces to string `st` on the left if it's smaller than `size`
+  chars."
     [st size]
     (let [st* (str st), len (count st*)]
       (if (<= len size)
         (string/join (concat (repeat (- size len) \space) [st*])))))
   (defn pad-val
-    "Returns a tuple containing both the length of `st` and an all
-  space string of equal length."
+    "Return a tuple of the length of `st` and an all-space string of
+  equal length."
     [st]
     (let [st* (str st), len (count st*)]
       [len (string/join (repeat len \space))]))

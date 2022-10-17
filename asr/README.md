@@ -67,23 +67,151 @@ target
 
 ## Theory of Operation
 
+This project exists to create test strings, ***programs***, in the
+common [Intermediate
+Representation](https://en.wikipedia.org/wiki/Intermediate_representation)
+(IR) of the [LCompilers](https://github.com/lcompilers) such as
+[LFortran](https://gitlab.com/lfortran) and
+[LPython](https://github.com/lcompilers/lpython).
+
+The programs we generate in this Clojure program are not expressed
+in a surface language like Python or Fortran. They are expressed
+in the common [Intermediate
+Representations](https://en.wikipedia.org/wiki/Intermediate_representation)
+(IR) of the LPython and LFortran compilers. The language of that
+common IR is called [ASR](https://github.com/lcompilers/libasr).
+This Clojure program thus tests the back ends of the LCompilers.
+
+The mathematical space of ASR programs is the infinite set of
+trees specified by the ASR grammar. Testing all programs in such
+an infinite set is obviously not possible, so we test as many
+machine-generated programs as we can. We probabilistically
+generate devious cases not found by hand, because humans are
+tragically biased test-writers. Machine-generated test cases are
+critical for making compilers robust.
+[`clojure.spec.alpha`](https://github.com/clojure/spec.alpha)
+helps us find such devious cases.
+
+## Roadmap for this Project's Source Code
+
+### Autospecs
+
 The grammar for [ASR](https://github.com/lcompilers/libasr) is
-written in ASDL.
+written in [ASDL](https://asdl.sourceforge.net/), a moribund
+language for specifying compiler [Intermediate
+Representations](https://en.wikipedia.org/wiki/Intermediate_representation).
 
-The grammar for ASDL is written in
-[instaparse](https://github.com/Engelberg/instaparse). Instaparse
-gives us a parser for the ASR written in ASDL. From that, we get
-lots of autospecs (see `autospecs.clj`) in
-[`clojure.spec`](https://www.google.com/search?client=firefox-b-1-d&q=clojure.spec.alpha).
-We write lots of those specs automatically in `autoparse.clj`.
-We also write some specs by hand, committed ones in `specs.cls`
-and experimental ones in `core.clj`.
+No current tools exist for ASDL, so we write our own. Our grammar
+for ASDL is expressed in
+[instaparse](https://github.com/Engelberg/instaparse) in the file
+`grammar.clj`. Instaparse gives us a parser for the ASR, which is
+in ASDL in the file `asr.clj`. From that, we automatically write
+many autospecs the language of in
+[`clojure.spec.alpha`](https://www.google.com/search?client=firefox-b-1-d&q=clojure.spec.alpha).
+See `autospecs.clj`. Here is an abbreviated, recursive sample spec
+for ASR `IntegerBinOps` that bottom out in ASR `IntegerConstants`
 
-Once we have specs, we generate test strings for ASR by various
-hooks and crooks.
+```clojure
+(s/def ::i32-bin-op-semsem
+  (s/with-gen
+    (s/or  :base  ::i32-bin-op-leaf-semsem
+     :recurse
+     (let [or-leaf
+           (s/with-gen      ;; generates IntegerConstants
+             (s/or  :leaf   ::i32-bin-op-leaf-semsem
+                    :branch ::i32-bin-op-semsem)
+             (fn [] (gen/frequency
+                     [[,RELATIVE_RECURSION_FREQUENCY
+                       ::i32-bin-op-semsem]
+                      [,RELATIVE_BASE_FREQUENCY
+                       ::i32-bin-op-leaf-semsem]])))]
+       (s/cat :head  #{'IntegerBinOp}
+              :left  or-leaf
+              :op    :asr.autospecs/binop
+              :right or-leaf
+              :ttype ::i32-scalar-ttype-semnasr
+              :value ::i32-constant-semnasr)))
+    (fn [] the-gen)))
+```
+
+### Handwritten Specs
+
+We also write some specs by hand: committed specs in `specs.cls`
+and experimental specs in `core.clj`. We occasionally backpatch
+some autospecs. Here is an example, handwritten spec for
+identifiers:
+
+```clojure
+(let [alpha-re #"[a-zA-Z]"  ;; The famous "let over lambda."
+      alphameric-re #"[a-zA-Z0-9]*"]
+  (def alpha?
+    #(re-matches alpha-re %))
+  (def alphameric?
+    #(re-matches alphameric-re %))
+  (defn identifier? [s]
+    (and (alpha? (subs s 0 1))
+         (alphameric? (subs s 1))))
+  (def identifier-generator
+    (tgen/let [c (gen/char-alpha)
+               s (gen/string-alphanumeric)]
+      (str c s)))
+  (s/def :asr.specs/identifier  ;; side effects the spec registry!
+    (s/with-gen
+      identifier?
+      (fn [] identifier-generator))))
+```
+
+### Generated Programs
+
+Once we have specs, `Clojure.spec.gen.alpha` and
+`clojure.test.check.generators` help us generate trees of ASR. See
+`core_test.clj` for many examples. In that file, we test the
+test-generator itself. Here is one small example:
+
+```clojure
+(testing "Recursive left, base-answer"
+  (is (let [test-vector
+          '[IntegerBinOp
+           [IntegerBinOp                       ; recur-left
+            [IntegerConstant 2 (Integer 4 [])] ;   left
+            Add                                ;   binop
+            [IntegerConstant 3 (Integer 4 [])] ;   right
+            (Integer 4 []) ;   answer-ttype
+            [IntegerConstant 5 (Integer 4 [])]] ;   answer
+           Mul                                  ; binop
+           [IntegerConstant 5 (Integer 4 [])]   ; right
+           (Integer 4 [])                       ; answer-ttype
+           [IntegerConstant 25 (Integer 4 [])]]] ; answer
+       (s/valid? :asr.core/i32-bin-op-semnasr test-vector))))
+```
 
 The development horizon is in `core.clj`. As stuff evolves from
 experimental into production, it migrates into `specs.clj`
+
+## Classifying Compiler Errors
+
+1. `synnasr`: Syntactically Correct Nonsense ASR
+
+   These are trees that satisfy that ASR grammar but specify
+   semantically meaningless programs such as adding applying
+   integer operations to string operands. ASR processors (compiler
+   back ends) must never crash or go into infinite loops on such
+   inputs.
+
+2. `semnasr`: Semantically Correct Nonsense ASR
+
+   These are trees that do not have type-mismatch and other
+   top-level semantical errors, but still specify semantical
+   nonsense at a value level, such as producing `null` from
+   compile-time arithmetic like `2 + 3`. ASR processors (compiler
+   back ends) must produce error messages on such inputs.
+
+3. `semsem`: Doubly Semantically Correct Nonsense ASR
+
+   These are trees without type errors and without value errors,
+   but are such that humans would (probably) not write. These
+   probe the arithmetic capabilities of the back ends and expose
+   issues such as truncation and overflow.
 
 ## Naming Conventions
 

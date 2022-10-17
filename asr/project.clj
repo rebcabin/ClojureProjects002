@@ -12,7 +12,8 @@
                  [org.clojure/algo.monads        "0.1.6"]
                  [instaparse                     "1.4.12"]
                  [swiss-arrows                   "0.6.0"] ; experimental
-                 [camel-snake-kebab              "0.4.3"]]
+                 [camel-snake-kebab              "0.4.3"]
+                 [org.bytedeco/javacpp           "1.5.7"]]
   :main ^:skip-aot asr.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all

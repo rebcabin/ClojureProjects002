@@ -914,6 +914,9 @@
 ;;; Must define the new spec twice so that the old spec gets
 ;;; recursively backpatched.
 
+;; TODO: These frequencies seem not to have a large effect
+;; on the distribution of leaf counts (see stats.clj)
+
 (def RELATIVE_RECURSION_FREQUENCY 95)
 (def RELATIVE_BASE_FREQUENCY      05)
 
