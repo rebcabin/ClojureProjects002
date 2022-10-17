@@ -13,7 +13,8 @@
                  [instaparse                     "1.4.12"]
                  [swiss-arrows                   "0.6.0"] ; experimental
                  [camel-snake-kebab              "0.4.3"]
-                 [org.bytedeco/javacpp           "1.5.7"]]
+                 [org.bytedeco/javacpp           "1.5.7"]
+                 [org.bytedeco.javacpp-presets/openblas-platform "0.2.19-1.3"]]
   :main ^:skip-aot asr.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all

@@ -4,7 +4,8 @@
   (:require [clojure.math                  :as    math   ]
             [clojure.string                :as    string ]
             [clojure.spec.alpha            :as    s      ]
-            [clojure.spec.gen.alpha        :as    gen    ]))
+            [clojure.spec.gen.alpha        :as    gen    ]
+            [asr.utils                     :refer [echo] ]))
 
 
 (def sample [[140 190 1 8]
@@ -125,7 +126,7 @@
 
 #_
 (binding [s/*recursion-limit* 4]
-  (let [data (->  (sample-size-distribution 100)          #_echo)
+  (let [data (->  (sample-size-distribution 100)           #_echo)
         lx   (->> data (map first)  (apply min)            #_echo)
         hx   (->> data (map first)  (apply max)            #_echo)
         ly   (->> data (map second) (apply min) log10+1    #_echo)
@@ -141,6 +142,9 @@
         cht  (->> is (concat (list [ilx ihx, ily ihy]
                                    (count gs)))            #_echo)]
     (chart-out cht)))
+;; => Syntax error compiling at (/Users/brian/Documents/GitHub/ClojureProjects002/asr/src/asr/stats.clj:137:14).
+;;    Unable to resolve symbol: echo in this context
+
 ;; => ["20   .   .   .   .   .   .   .   .   .   .   .   ."
 ;;     "19   @   .   .   .   .   .   .   .   .   .   .   ."
 ;;     "18   @   .   .   .   .   .   .   .   .   .   .   ."

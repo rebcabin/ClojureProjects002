@@ -1235,7 +1235,7 @@
   (testing "various nil-punning returns:"
     (testing "good value i32bop"
       (is (zero?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerBinOp
               (IntegerConstant -131974 (Integer 4 []))
               Pow
@@ -1244,19 +1244,19 @@
               (IntegerConstant 0 (Integer 4 [])))))))
     (testing "good value i32con"
       (is (= -131974
-             (maybe-value-i32-semsem
+             (fetch-value-i32-bin-op-semsem
               '(IntegerConstant -131974 (Integer 4 []))))))
     (testing "wrong \"kind\""
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerConstant -131974 (Integer 8 []))))))
     (testing "seriously bad structure"
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             nil))))
     (testing "nil value"
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerBinOp
               (IntegerConstant  -131974 (Integer 4 []))
               Pow
@@ -1265,7 +1265,7 @@
               (IntegerConstant nil (Integer 4 [])))))))
     (testing "slightly bad structure (wrong head)"
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerBinOp
               (IntegerFOOBAR  -131974 (Integer 4 []))
               Pow
@@ -1274,7 +1274,7 @@
               (IntegerConstant 434343 (Integer 4 [])))))))
     (testing "wrong value"
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerBinOp
               (IntegerConstant -131974 (Integer 4 []))
               Pow
@@ -1283,7 +1283,7 @@
               (IntegerConstant 434343 (Integer 4 [])))))))
     (testing "bad operator"
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerBinOp
               (IntegerConstant -131974 (Integer 4 []))
               FOOBAR
@@ -1292,7 +1292,7 @@
               (IntegerConstant 434343 (Integer 4 [])))))))
     (testing "zero to a negative power"
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerBinOp
               (IntegerConstant 0 (Integer 4 []))
               Pow
@@ -1301,7 +1301,7 @@
               (IntegerConstant 0 (Integer 4 [])))))))
     (testing "divide by zero"
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerBinOp
               (IntegerConstant -131974 (Integer 4 []))
               Div
@@ -1310,7 +1310,7 @@
               (IntegerConstant 0 (Integer 4 [])))))))
     (testing "missing output clause"
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerBinOp
               (IntegerConstant -131974 (Integer 4 []))
               Pow
@@ -1318,7 +1318,7 @@
               (Integer 4 []))))))
     (testing "underflow"
       (is (nil?
-           (maybe-value-i32-semsem
+           (fetch-value-i32-bin-op-semsem
             '(IntegerBinOp
               (IntegerConstant -131974 (Integer 4 []))
               Pow
@@ -1393,6 +1393,37 @@
                  (IntegerConstant 0 (Integer 4 []))))))))
 
 
+;;                         _         _ _______   _    _
+;;  __ ___ _ __  _ __ _  _| |_ ___  (_)__ /_  ) | |__(_)_ _  ___ _ __
+;; / _/ _ \ '  \| '_ \ || |  _/ -_) | ||_ \/ /  | '_ \ | ' \/ _ \ '_ \
+;; \__\___/_|_|_| .__/\_,_|\__\___| |_|___/___| |_.__/_|_||_\___/ .__/
+;;              |_|                                             |_|
+
+(let [compute (partial compute-i32-bin-op-value
+                       asr-i32-unchecked-binop->clojure-op)]
+  (deftest unit-compute-i32-binop
+    (is (= -3145728 ;; kinda pi-ish :)
+           (compute '(IntegerBinOp
+                      (IntegerConstant -3 (Integer 4 []))
+                      BitLShift
+                      (IntegerConstant 852 (Integer 4 []))
+                      (Integer 4 [])
+                      (IntegerConstant -3145728 (Integer 4 []))))))))
+
+
+(let [foo (-> (s/gen :asr.core/i32-bin-op-semsem)
+              (gen/sample 100))
+      compute (partial compute-i32-bin-op-value
+                       asr-i32-unchecked-binop->clojure-op)]
+  (deftest compute-vs-fetch-i32-bin-op
+    (is (every?
+         identity
+         (->> foo
+              (map (juxt fetch-value-i32-bin-op-semsem
+                         compute))
+              (map #(apply = %)))))))
+
+
 ;;                      _       _  __   __
 ;;  ___ __ _ _ __  _ __| |___  / |/  \ /  \
 ;; (_-</ _` | '  \| '_ \ / -_) | | () | () |
@@ -1409,6 +1440,9 @@
      (testing "validity"
        (is (every? identity
                    (map #(s/valid? :asr.core/i32-bin-op-semsem %) foo))))
-     (testing "value"
+     (testing "fetched value not nil"
        (is (not-any? nil?
-                     (map maybe-value-i32-semsem foo)))))))
+                     (map fetch-value-i32-bin-op-semsem foo))))
+     (testing "computed value not nil"
+       (is (not-any? nil?
+                     (map fetch-value-i32-bin-op-semsem foo)))))))

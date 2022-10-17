@@ -807,7 +807,7 @@
 ;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_/__/\___|_|_|_|
 ;;                               |_|
 
-;;; defective version for a forward reference (backpatch later).
+;;; defective version for a forward reference (backpatch later);
 ;;; Now, we let the generator produce constants to bottom out
 ;;; recursion, and the spec pred for ::i32-bin-op-leaf-semsem
 ;;; can produce "bad structure." It does so about half the time.
@@ -818,7 +818,7 @@
         :i32con ::i32-constant-semnasr))
 
 
-(defn maybe-value-i32-semsem
+(defn fetch-value-i32-bin-op-semsem
   "Given an IntegerConstant or an IntegerBinOp (icobo), fetch the
   value, if there is one. Return nil if there is anything invalid
   about the input. An IntegerBinOp is semsem-valid if its two
@@ -826,7 +826,7 @@
   equals the operator applied to the two inputs.
 
   Notice this co-cursively calls ::i32-bin-op-semsem, which will
-  call maybe-value-i32-semsem via the generator
+  call fetch-value-i32-bin-op-semsem via the generator
   i32-bin-op-semsem-gen-pluggable after ::i32-bin-op-semsem is
   backpatched below.
 
@@ -843,17 +843,30 @@
     nil))
 
 
+(defn compute-i32-bin-op-value
+  "Compute, rather than fetch, an i32-bin-op value."
+  [ops-map icobo]
+  (let [[h & s] icobo]
+    (case h
+      IntegerBinOp (let [[l o r t v] s
+                         l- (compute-i32-bin-op-value ops-map l)
+                         o- (ops-map o)
+                         r- (compute-i32-bin-op-value ops-map r)]
+                     (o- l- r-))
+      IntegerConstant (let [[v t] s]
+                        v))))
+
+
 ;; As above, this generator propagates nils.
 
 (defn i32-bin-op-semsem-gen-pluggable
   "Given an ops-map from ASR binops to implementations, generate an
-  i32 ASR IntegerBinOp node, recursively.
-  monad."
+  i32 ASR IntegerBinOp node, recursively."
   [ops-map]
   (let [tt   '(Integer 4 [])
         ic    (fn [i] (list 'IntegerConstant i tt))
         res   (fn [l b r v] (list 'IntegerBinOp l b r tt (ic v)))
-        meval maybe-value-i32-semsem #_shorthand ]
+        meval fetch-value-i32-bin-op-semsem #_shorthand ]
     (gen/one-of
      [ ;; base case
       (s/gen ::i32-bin-op-leaf-semsem)
@@ -861,9 +874,9 @@
       (tgen/let [lbop  (s/gen ::i32-bin-op-semsem)
                  rbop  (s/gen ::i32-bin-op-semsem)
                  binop (s/gen :asr.autospecs/binop)]
-        (let [left  (meval lbop)
-              right (meval rbop)
-              value ((ops-map binop) left right)
+        (let [left   (meval lbop)
+              right  (meval rbop)
+              value  ((ops-map binop) left right)
               result (if (nil? value)  nil
                          (res lbop binop rbop value))
               _      (swap! call-count inc)]
