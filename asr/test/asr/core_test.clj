@@ -1412,7 +1412,7 @@
 
 
 (let [foo (-> (s/gen :asr.core/i32-bin-op-semsem)
-              (gen/sample 100))
+              (gen/sample NTESTS))
       compute (partial compute-i32-bin-op-value
                        asr-i32-unchecked-binop->clojure-op)]
   (deftest compute-vs-fetch-i32-bin-op
@@ -1424,14 +1424,14 @@
               (map #(apply = %)))))))
 
 
-;;                      _       _  __   __
-;;  ___ __ _ _ __  _ __| |___  / |/  \ /  \
-;; (_-</ _` | '  \| '_ \ / -_) | | () | () |
-;; /__/\__,_|_|_|_| .__/_\___| |_|\__/ \__/
+;;                      _
+;;  ___ __ _ _ __  _ __| |___
+;; (_-</ _` | '  \| '_ \ / -_)
+;; /__/\__,_|_|_|_| .__/_\___|
 ;;                |_|
 
 (let [foo (-> (s/gen :asr.core/i32-bin-op-semsem)
-              (gen/sample 100))]
+              (gen/sample NTESTS100))]
  (deftest sample-100-test
    (testing "sample of 100 i32 bin ops:"
      (testing "leaf counts"
@@ -1441,8 +1441,5 @@
        (is (every? identity
                    (map #(s/valid? :asr.core/i32-bin-op-semsem %) foo))))
      (testing "fetched value not nil"
-       (is (not-any? nil?
-                     (map fetch-value-i32-bin-op-semsem foo))))
-     (testing "computed value not nil"
        (is (not-any? nil?
                      (map fetch-value-i32-bin-op-semsem foo)))))))
