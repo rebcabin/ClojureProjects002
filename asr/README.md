@@ -172,12 +172,12 @@ test-generator itself. Here is one small example:
 (testing "Recursive left, base-answer"
   (is (let [test-vector
           '[IntegerBinOp
-           [IntegerBinOp                       ; recur-left
-            [IntegerConstant 2 (Integer 4 [])] ;   left
-            Add                                ;   binop
-            [IntegerConstant 3 (Integer 4 [])] ;   right
-            (Integer 4 []) ;   answer-ttype
-            [IntegerConstant 5 (Integer 4 [])]] ;   answer
+             [IntegerBinOp                       ; recur-left
+              [IntegerConstant 2 (Integer 4 [])] ;   left
+              Add                                ;   binop
+              [IntegerConstant 3 (Integer 4 [])] ;   right
+              (Integer 4 []) ;   answer-ttype
+              [IntegerConstant 5 (Integer 4 [])]] ;   answer
            Mul                                  ; binop
            [IntegerConstant 5 (Integer 4 [])]   ; right
            (Integer 4 [])                       ; answer-ttype
