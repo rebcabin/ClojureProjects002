@@ -209,7 +209,7 @@ experimental into production, it migrates into `specs.clj`
 3. `semsem`: Doubly Semantically Correct Nonsense ASR
 
    These are trees without type errors and without value errors,
-   but are such that humans would (probably) not write. These
+   but are such that humans would (probably) not write then. These
    probe the arithmetic capabilities of the back ends and expose
    issues such as truncation and overflow.
 
