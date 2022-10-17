@@ -193,7 +193,7 @@ experimental into production, it migrates into `specs.clj`
 1. `synnasr`: Syntactically Correct Nonsense ASR
 
    These are trees that satisfy that ASR grammar but specify
-   semantically meaningless programs such as adding applying
+   semantically meaningless programs such as applying
    integer operations to string operands. ASR processors (compiler
    back ends) must never crash or go into infinite loops on such
    inputs.
