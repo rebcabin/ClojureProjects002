@@ -1431,7 +1431,7 @@
 ;;                |_|
 
 (let [foo (-> (s/gen :asr.core/i32-bin-op-semsem)
-              (gen/sample NTESTS100))]
+              (gen/sample NTESTS))]
  (deftest sample-100-test
    (testing "sample of 100 i32 bin ops:"
      (testing "leaf counts"
