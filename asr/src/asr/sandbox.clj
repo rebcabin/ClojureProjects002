@@ -35,6 +35,62 @@ Abc
 ;; => 5
 (.testStringEcho abc "world!")
 ;; => "world!"
+(.testStringEcho abc "(IntegerBinOp
+                 (IntegerBinOp
+                  (IntegerBinOp
+                   (IntegerConstant 40212 (Integer 4 []))
+                   Div
+                   (IntegerConstant -2 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant -20106 (Integer 4 [])))
+                  Mul
+                  (IntegerBinOp
+                   (IntegerBinOp
+                    (IntegerConstant -1399 (Integer 4 []))
+                    BitXor
+                    (IntegerConstant -288 (Integer 4 []))
+                    (Integer 4 [])
+                    (IntegerConstant 1129 (Integer 4 [])))
+                   BitRShift
+                   (IntegerBinOp
+                    (IntegerBinOp
+                     (IntegerConstant -23465 (Integer 4 []))
+                     Mul
+                     (IntegerConstant -2841072 (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant -2053722256 (Integer 4 [])))
+                    Add
+                    (IntegerBinOp
+                     (IntegerConstant -1426 (Integer 4 []))
+                     BitRShift
+                     (IntegerConstant 1256806 (Integer 4 []))
+                     (Integer 4 [])
+                     (IntegerConstant -1 (Integer 4 [])))
+                    (Integer 4 [])
+                    (IntegerConstant -2053722257 (Integer 4 [])))
+                   (Integer 4 [])
+                   (IntegerConstant 0 (Integer 4 [])))
+                  (Integer 4 [])
+                  (IntegerConstant 0 (Integer 4 [])))
+                 Mul
+                 (IntegerBinOp
+                  (IntegerBinOp
+                   (IntegerConstant 7113 (Integer 4 []))
+                   BitAnd
+                   (IntegerConstant -407199570 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant 136 (Integer 4 [])))
+                  BitAnd
+                  (IntegerBinOp
+                   (IntegerConstant -3 (Integer 4 []))
+                   BitLShift
+                   (IntegerConstant 852 (Integer 4 []))
+                   (Integer 4 [])
+                   (IntegerConstant -3145728 (Integer 4 [])))
+                  (Integer 4 [])
+                  (IntegerConstant 0 (Integer 4 [])))
+                 (Integer 4 [])
+                 (IntegerConstant 0 (Integer 4 [])))")
 
 ;;; DOESN'T WORK:
 
