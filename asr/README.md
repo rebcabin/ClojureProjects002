@@ -200,7 +200,7 @@ in `src/asr/sandbox.clj`.
 2. Write implementations in C++; see `Abc.hpp`.
 3. Build and run according to the pattern obvious in `build-run.sh`
 4. Put `Abc.class` in a copy of `javacpp.jar` so it's easy to find.
-5. Put the modified `javacpp.jar`
+5. Put the modified `javacpp.jar` at the same level as `project.clj`.
 
 ### Essential findings
 
