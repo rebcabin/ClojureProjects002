@@ -390,3 +390,62 @@
   )
 
 (do-synnasr)
+
+#_
+(gen/sample (s/gen ::symbol))
+;; => ((ClassType)
+;;     (GenericProcedure)
+;;     (DerivedType "n" "T")
+;;     (Program "g63")
+;;     (Block)
+;;     (Module "ev" "GNk3gf" "w")
+;;     (ClassProcedure "w9Z0SOV" "Dy2k3")
+;;     (GenericProcedure "J4c2hA" "AZ2h81" "jd6R" "A26r5" "gqYE2F" "B77g")
+;;     (EnumType "D1H" "xD6b" "E1954Lx")
+;;     (CustomOperator))
+
+#_
+(gen/sample (s/gen ::expr))
+;; => ((StringRepeat)
+;;     (IntegerBitLen "YK")
+;;     (IntegerUnaryMinus "N")
+;;     (IntegerBitNot "P01" "jI")
+;;     (SetLen "z0VSE" "JDQx8")
+;;     (LogicalNot "l" "y")
+;;     (RealUnaryMinus "t" "NE5Nz" "v216Qt" "C0Ayr0")
+;;     (DictItem)
+;;     (StringRepeat "SNp8zM0Cy" "RVTZ868T" "kfK" "Fw" "IR9" "CNm38n4A" "Ed")
+;;     (LogicalCompare "J4vF1" "Kc82pf48X" "d9Pea" "Hjz7"))
+
+#_(gen/sample (s/gen ::stmt))
+;; => ((DoConcurrentLoop)
+;;     (FileWrite)
+;;     (Associate "O94" "Q")
+;;     (ExplicitDeallocate "f")
+;;     (Assign "U9" "j9II" "nt8nD" "b")
+;;     (SetRemove "tF87Fk" "RZH")
+;;     (WhileLoop "mix20P1")
+;;     (Assign)
+;;     (Nullify "C64Vb0Pea" "pQ3SzOGy0" "N764Wj2" "OCVd2d" "L7JZEL" "nV")
+;;     (Associate "m36GyXoH08" "QFB56Y4K" "N39EPb9x92" "u" "opQ"))
+
+#_
+(gen/sample (s/gen ::ttype))
+;; => ((CPtr)
+;;     (TypeParameter "R0")
+;;     (Pointer)
+;;     (CPtr)
+;;     (Integer "qe7Eo" "D9dlt")
+;;     (Logical "n9qe2B")
+;;     (Integer "kda4Uq3")
+;;     (Complex "co6t" "NEi" "dE9" "x" "t0A5W")
+;;     (Logical
+;;      "r"
+;;      "O1QAl"
+;;      "K4UD0Ndc4"
+;;      "IOWI6VT09"
+;;      "h62inrmva"
+;;      "JD"
+;;      "b0Uona"
+;;      "keR4S59Mq")
+;;     (Class "Gb8hBf1kBu" "p3nT6f" "jCJ75" "m19AD884" "wjOr59cY" "iI33" "op6RA"))
