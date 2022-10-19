@@ -12,7 +12,8 @@
 ;; Because Abc has been added to javacpp.jar, and because
 ;; javacpp.jar is in :resource-paths of project.clj, we don't need
 ;; to import the class name if we're just using it. Here are two
-;; ways to use it.
+;; ways to use it. (I found it difficult to use Abc without putting
+;; it in the javacpp.jar).
 (. (Abc.) testMethod 42)
 (.testMethod (Abc.) 42)
 

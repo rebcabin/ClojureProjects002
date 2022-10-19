@@ -1,5 +1,12 @@
 set -x
 
+##############################
+#                            #
+# SET THIS FOR YOUR MACHINE! #
+#                            #
+##############################
+JDK_LOC=/opt/homebrew/Cellar/openjdk/19/libexec/openjdk.jdk/Contents/Home
+
 rm Abc.class
 rm jniAbc.cpp
 rm jnijavacpp.cpp
@@ -20,8 +27,8 @@ java  -jar javacpp.jar -d . -o jniAbc -Xcompiler -L. Abc.java
 
 
 clang++ \
-    -I/opt/homebrew/Cellar/openjdk/19/libexec/openjdk.jdk/Contents/Home/include/darwin \
-    -I/opt/homebrew/Cellar/openjdk/19/libexec/openjdk.jdk/Contents/Home/include \
+    -I${JDK_LOC}/include/darwin \
+    -I${JDK_LOC}/include \
     jniAbc.cpp \
     jnijavacpp.cpp \
     -O3 -L. -arch arm64 -Wl,-rpath,@loader_path/. \
@@ -35,6 +42,8 @@ java -cp javacpp.jar:. --add-opens=java.base/java.lang=ALL-UNNAMED Abc.java
 cp javacpp.jar ../../../resources
 cp Abc.class ../../../resources
 cp libjniAbc.dylib ../../..  # in project dir so Abc.class can find it
+
 pushd ../../../resources/
 jar uvf javacpp.jar Abc.class
+rm Abc.class
 popd

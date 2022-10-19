@@ -79,18 +79,19 @@ in a surface language like Python or Fortran. They are expressed
 in the common [Intermediate
 Representations](https://en.wikipedia.org/wiki/Intermediate_representation)
 (IR) of the LPython and LFortran compilers. The language of that
-common IR is called [ASR](https://github.com/lcompilers/libasr).
-This Clojure program thus tests the back ends of the LCompilers.
+common IR is [ASR](https://github.com/lcompilers/libasr).
+This Clojure program thus tests the back ends of the LCompilers by 
+generating trees of ASR.
 
-The mathematical space of ASR programs is the infinite set of
+The mathematical set of ASR programs is the infinite set of
 trees specified by the ASR grammar. Testing all programs in such
 an infinite set is obviously not possible, so we test as many
-machine-generated programs as we can. We probabilistically
-generate devious cases not found by hand, because humans are
+as we can, hand-written and machine-generated. We probabilistically
+generate devious cases because humans are
 tragically biased test-writers. Machine-generated test cases are
 critical for making compilers robust.
 [`clojure.spec.alpha`](https://github.com/clojure/spec.alpha)
-helps us find such devious cases.
+helps us find devious cases.
 
 ## Roadmap for this Project's Source Code
 
@@ -136,7 +137,7 @@ for ASR `IntegerBinOps` that bottom out in ASR `IntegerConstants`
 
 ### Handwritten Specs
 
-We also write some specs by hand: committed specs in `specs.cls`
+We write some specs by hand: committed specs in `specs.cls`
 and experimental specs in `core.clj`. We occasionally backpatch
 some autospecs. Here is an example, handwritten spec for
 identifiers:
@@ -187,6 +188,33 @@ test-generator itself. Here is one small example:
 
 The development horizon is in `core.clj`. As stuff evolves from
 experimental into production, it migrates into `specs.clj`
+
+## Feeding ASR to Compiler Back-Ends
+
+Via [javacpp](https://github.com/bytedeco/javacpp). See work-in-progress
+in `src/asr/sandbox.clj`.
+
+### Abbreviated Instructions
+
+1. Write stubs in Java; see `Abc.java`.
+2. Write implementations in C++; see `Abc.hpp`.
+3. Build and run according to the pattern obvious in `build-run.sh`
+4. Put `Abc.class` in a copy of `javacpp.jar` so it's easy to find.
+5. Put the modified `javacpp.jar`
+
+### Essential findings
+
+1. `build-run.sh` encapsulates hard-won facts about interfacing 
+   Clojure, java, and C++.
+2. We found it convenient to put the required dylib at the same
+   directory level as `project.clj`. Otherwise, we must figure out
+   `java.library.path` and Clojure `:native-path`, neither of which 
+   are straightforward. 
+3. We found it convenient to add our class files to a copy of
+   `javacpp.jar`. Otherwise, we must figure out how to propagate
+   java `CLASSPATH` to Clojure, and that's not straightforward.
+   
+
 
 ## Classifying Compiler Errors
 
