@@ -213,8 +213,6 @@ in `src/asr/sandbox.clj`.
 3. We found it convenient to add our class files to a copy of
    `javacpp.jar`. Otherwise, we must figure out how to propagate
    java `CLASSPATH` to Clojure, and that's not straightforward.
-   
-
 
 ## Classifying Compiler Errors
 
