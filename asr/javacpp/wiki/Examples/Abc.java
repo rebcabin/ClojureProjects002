@@ -18,6 +18,15 @@ public class Abc extends Pointer {
 
     public native void testMethod(int a);  // Method we want to use
 
+    public native int  testFunction(int a, int b);
+
+    public native int  testStrings(String s);
+
+    // javacpp Doesn't like this
+    // public native int  testStringMutation(String s);
+
+    public native String testStringEcho(String s);
+
     public static void main(String[] args) {
         Abc abc = new Abc();
         abc.testMethod(123);

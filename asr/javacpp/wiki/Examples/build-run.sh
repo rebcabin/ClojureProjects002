@@ -1,7 +1,15 @@
+set -x
+
 rm Abc.class
 rm jniAbc.cpp
 rm jnijavacpp.cpp
 rm libjniAbc.dylib
+
+rm ../../../resources/Abc.class
+rm ../../../resources/Abc.java
+rm ../../../resources/jniAbc.cpp
+rm ../../../resources/jnijavacpp.cpp
+rm ../../../libjniAbc.dylib
 
 
 javac -cp javacpp.jar Abc.java
@@ -22,3 +30,11 @@ clang++ \
 
 
 java -cp javacpp.jar:. --add-opens=java.base/java.lang=ALL-UNNAMED Abc.java
+
+
+cp javacpp.jar ../../../resources
+cp Abc.class ../../../resources
+cp libjniAbc.dylib ../../..  # in project dir so Abc.class can find it
+pushd ../../../resources/
+jar uvf javacpp.jar Abc.class
+popd
