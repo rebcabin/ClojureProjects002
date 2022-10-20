@@ -3,7 +3,9 @@
         [asr.utils]
         [asr.data]
         [asr.parsed]
-        [asr.autospecs])
+        [asr.autospecs]
+        [asr.expr.synnasr]
+        [asr.expr.semnasr])
 
   (:require [clojure.math                  :as    math   ]
             [clojure.test                  :refer :all   ]
@@ -650,24 +652,24 @@
 
 (deftest integer-ttype-semnasr-conformance
   (testing "Integer ttype conformance"
-    (is (s/valid? :asr.core/integer-ttype-semnasr
+    (is (s/valid? :asr.expr.semnasr/integer-ttype
                   '(Integer 4 [])                ))
-    (is (s/valid? :asr.core/integer-ttype-semnasr
+    (is (s/valid? :asr.expr.semnasr/integer-ttype
                   '(Integer 1 [1 2])             ))
-    (is (s/valid? :asr.core/integer-ttype-semnasr
+    (is (s/valid? :asr.expr.semnasr/integer-ttype
                   '(Integer 8 [] [1 2] [] [3 4]) ))
-    (is (not (s/valid? :asr.core/integer-ttype-semnasr  ;; NOT case!
+    (is (not (s/valid? :asr.expr.semnasr/integer-ttype  ;; NOT case!
                   '(Integer 4)                   )))
-    (is (s/valid? :asr.core/integer-ttype-semnasr
+    (is (s/valid? :asr.expr.semnasr/integer-ttype
                   '(Integer 2 ())                ))
-    (is (s/valid? :asr.core/integer-ttype-semnasr
+    (is (s/valid? :asr.expr.semnasr/integer-ttype
                   '(Integer 2 (1 2))             ))
-    (is (s/valid? :asr.core/integer-ttype-semnasr
+    (is (s/valid? :asr.expr.semnasr/integer-ttype
                   '(Integer 2 () (1 2) () (3 4)) ))
     (is (every?
-         (partial s/valid? :asr.core/integer-ttype-semnasr)
+         (partial s/valid? :asr.expr.semnasr/integer-ttype)
          (for [_ (range NTESTS)]
-           (gen/generate (s/gen :asr.core/integer-ttype-semnasr)))))
+           (gen/generate (s/gen :asr.expr.semnasr/integer-ttype)))))
     ))
 
 

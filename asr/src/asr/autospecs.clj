@@ -257,6 +257,9 @@
   "Spec one tuple type, head-spec and term-spec, by term."
   [term]
 
+  ;; These are lazy, so you have to do something to force them.
+  ;; "Echo" is enough.
+
   (->> tuple-stuffs
        (filter #(= term (-> % :term)))
        (map tuple-head-spec-from-stuff)
@@ -336,10 +339,13 @@
 
   (println "symconst head specs: ")
 
-  (->> symconst-stuffs
+  ;; These are lazy, so you have to do something to them to force
+  ;; them. "count" and "echo" suffice.
+
+(->> symconst-stuffs
        (map spec-from-symconst-stuff)
        (map eval)
-       #_count
+       count
        echo)
 
   (println "symconst term specs: ")
@@ -347,7 +353,7 @@
   (->> symconst-stuffss-by-term
        (map symconst-spec-for-term)
        (map eval)
-       #_count
+       count
        echo)
 
 ;;; We need a cycle-breaking spec for dimension to bootstrap the
@@ -363,7 +369,7 @@
   (->> tuple-stuffs
        (map tuple-head-spec-from-stuff)
        (map eval)
-       #_count
+       count
        echo)
 
   (println "tuple term specs: ")
@@ -371,7 +377,7 @@
   (->> tuple-stuffss-by-term
        (map tuple-term-spec-from-stuffs)
        (map eval)
-       #_count
+       count
        echo)
 
   ;; This isn't good enough. Let's write some head specs for it by
@@ -389,7 +395,15 @@
   ;; WORK-IN-PROGRESS
   )
 
+
 (do-synnasr)
+
+
+;;                      _
+;;  ___ __ _ _ __  _ __| |___ ___
+;; (_-</ _` | '  \| '_ \ / -_|_-<
+;; /__/\__,_|_|_|_| .__/_\___/__/
+;;                |_|
 
 #_
 (gen/sample (s/gen ::symbol))
