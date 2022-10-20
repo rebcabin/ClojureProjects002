@@ -4,6 +4,7 @@
         [asr.data]
         [asr.parsed]
         [asr.numbers]
+        [asr.arithmetic]
         [asr.autospecs]
         [asr.expr.synnasr]
         [asr.expr.semnasr])
