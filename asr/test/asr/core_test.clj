@@ -3,6 +3,7 @@
         [asr.utils]
         [asr.data]
         [asr.parsed]
+        [asr.numbers]
         [asr.autospecs]
         [asr.expr.synnasr]
         [asr.expr.semnasr])
@@ -650,7 +651,7 @@
 ;; |_|_||_\__\___\__, \___|_|    \__|\__|\_, | .__/\___|
 ;;               |___/                   |__/|_|
 
-(deftest integer-ttype-semnasr-conformance
+(deftest integer-ttype-conformance
   (testing "Integer ttype conformance"
     (is (s/valid? :asr.expr.semnasr/integer-ttype
                   '(Integer 4 [])                ))
@@ -674,41 +675,41 @@
 
 
 ;;  _ _______                  _            _
-;; (_)__ /_  )  __ ___ _ _  __| |_ __ _ _ _| |_   ___ ___ _ __  _ _  __ _ ____ _
-;; | ||_ \/ /  / _/ _ \ ' \(_-<  _/ _` | ' \  _| (_-</ -_) '  \| ' \/ _` (_-< '_|
-;; |_|___/___| \__\___/_||_/__/\__\__,_|_||_\__| /__/\___|_|_|_|_||_\__,_/__/_|
+;; (_)__ /_  )  __ ___ _ _  __| |_ __ _ _ _| |_
+;; | ||_ \/ /  / _/ _ \ ' \(_-<  _/ _` | ' \  _|
+;; |_|___/___| \__\___/_||_/__/\__\__,_|_||_\__|
 
-(deftest i32-constant-semnasr-conformance
-  (testing "i32-constant-semnasr conformance:"
+(deftest i32-constant-conformance
+  (testing "i32-constant conformance:"
     (testing "list"
-      (is (s/valid? :asr.core/i32-constant-semnasr
+      (is (s/valid? :asr.expr.semnasr/i32-constant
                     '(IntegerConstant 5 (Integer 4 [])))))
     (testing "vector"
-      (is (s/valid? :asr.core/i32-constant-semnasr
+      (is (s/valid? :asr.expr.semnasr/i32-constant
                     '[IntegerConstant 5 (Integer 4 [])])))))
 
 
-(deftest i32-constant-semnasr-non-conformance
-  (testing "i32-constant-semnasr NON-conformance:"
+(deftest i32-constant-non-conformance
+  (testing "i32-constant NON-conformance:"
     (testing "wrong \"kind\", i.e., integer size"
-      (is (not (s/valid? :asr.core/i32-constant-semnasr
+      (is (not (s/valid? :asr.expr.semnasr/i32-constant
                          '(IntegerConstant 5 (Integer 8 []))))))
     (testing "wrong type of value"
-      (is (not (s/valid? :asr.core/i32-constant-semnasr
+      (is (not (s/valid? :asr.expr.semnasr/i32-constant
                          '(IntegerConstant 5.0 (Integer 4 []))))))
     (testing "wrong tag"
-      (is (not (s/valid? :asr.core/i32-constant-semnasr
+      (is (not (s/valid? :asr.expr.semnasr/i32-constant
                          '(foobarConstant 5 (Integer 4 []))))))
     (testing "wrong ttype"
-      (is (not (s/valid? :asr.core/i32-constant-semnasr
+      (is (not (s/valid? :asr.expr.semnasr/i32-constant
                          '(IntegerConstant 5 (Float 4 []))))))
     (testing "missing ttype"
-      (is (not (s/valid? :asr.core/i32-constant-semnasr
+      (is (not (s/valid? :asr.expr.semnasr/i32-constant
                          '(IntegerConstant 5)))))
     (testing "wrong structure"
-      (is (not (s/valid? :asr.core/i32-constant-semnasr
+      (is (not (s/valid? :asr.expr.semnasr/i32-constant
                          43)))
-      (is (not (s/valid? :asr.core/i32-constant-semnasr
+      (is (not (s/valid? :asr.expr.semnasr/i32-constant
                          '((IntegerConstant 5.0 (Integer 8 [])))))))))
 
 
@@ -718,7 +719,7 @@
 ;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_|_||_\__,_/__/_|
 ;;                               |_|
 
-(deftest i32-bin-op-semnasr-conformance
+(deftest i32-bin-op-conformance
   (testing "conformance to structural integer bin-op specs (not correct arithmetic):"
     (testing "base case, base-answer"
       (is (let [test-vector '[IntegerBinOp
@@ -727,7 +728,7 @@
                              [IntegerConstant 3 (Integer 4 [])]  ; right
                              (Integer 4 [])                      ; answer-ttype
                              [IntegerConstant 5 (Integer 4 [])]]] ; answer
-           (s/valid? :asr.core/i32-bin-op-semnasr test-vector))))
+           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Base case, no-answer"
       (is (let [test-vector '[IntegerBinOp
@@ -735,7 +736,7 @@
                              Add                                ; binop
                              [IntegerConstant 3 (Integer 4 [])] ; right
                              (Integer 4 []) ]]                  ; answer-ttype
-           (s/valid? :asr.core/i32-bin-op-semnasr test-vector))))
+           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Recurse left, no answers"
       (is (let [test-vector '[IntegerBinOp
@@ -747,7 +748,7 @@
                              Add                                 ; binop
                              [IntegerConstant 3 (Integer 4 [])]  ; right
                              (Integer 4 [])] ]                   ; ttype
-           (s/valid? :asr.core/i32-bin-op-semnasr test-vector))))
+           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Base case, doubly recursive-answer"
       (is (let [test-vector '[IntegerBinOp
@@ -764,7 +765,7 @@
                               Add                                 ; binop
                               [IntegerConstant 3 (Integer 4 [])]  ; right
                               (Integer 4 []) ]]]                  ; ttype
-           (s/valid? :asr.core/i32-bin-op-semnasr test-vector))))
+           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Recursive left, base-answer"
       (is (let [test-vector '[IntegerBinOp
@@ -778,7 +779,7 @@
                              [IntegerConstant 5 (Integer 4 [])]   ; right
                              (Integer 4 [])                       ; answer-ttype
                              [IntegerConstant 25 (Integer 4 [])]]] ; answer
-           (s/valid? :asr.core/i32-bin-op-semnasr test-vector))))
+           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Recursive right, base-answer"
       (is (let [test-vector '[IntegerBinOp
@@ -792,7 +793,7 @@
                               [IntegerConstant 42 (Integer 4 [])]] ;   answer
                              (Integer 4 [])                       ; answer-ttype
                              [IntegerConstant 42 (Integer 4 [])]]] ; answer
-           (s/valid? :asr.core/i32-bin-op-semnasr test-vector))))
+           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Recursive right, recursive answer"
       (is (let [test-vector '[IntegerBinOp
@@ -810,7 +811,7 @@
                               [IntegerConstant 4 (Integer 4 [])]
                               (Integer 4 [])
                               [IntegerConstant 25 (Integer 4 [])]]]]
-           (s/valid? :asr.core/i32-bin-op-semnasr test-vector))))
+           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "base, recursive answer"
       (is (let [test-vector '[IntegerBinOp
@@ -824,11 +825,11 @@
                               [IntegerConstant 4 (Integer 4 [])]
                               (Integer 4 [])
                               [IntegerConstant 25 (Integer 4 [])]]]]
-           (s/valid? :asr.core/i32-bin-op-semnasr test-vector))))
+           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "big-honkin' case"
       (is (s/valid?
-          :asr.core/i32-bin-op-semnasr
+          :asr.expr.semnasr/i32-bin-op
           '[IntegerBinOp
             [IntegerBinOp
              [IntegerBinOp
@@ -882,10 +883,10 @@
 
     (testing "Stress. Guaranteed by clojure.spec, but ya' never know."
       (is (every?
-          (partial s/valid? :asr.core/i32-bin-op-semnasr)
+          (partial s/valid? :asr.expr.semnasr/i32-bin-op)
           (binding [s/*recursion-limit* RECURSION-LIMIT]
             (for [_ (range NTESTS)]
-              (-> :asr.core/i32-bin-op-semnasr
+              (-> :asr.expr.semnasr/i32-bin-op
                   s/gen
                   gen/generate))))))))
 
@@ -899,29 +900,29 @@
 (deftest integer-generators
   (testing "::i8, ::i8nz, ::i16, etc."
     (is (not-any? zero?
-                  (gen/sample (s/gen :asr.core/i8nz) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i8nz) NTESTS)))
     (is (not-any? zero?
-                  (gen/sample (s/gen :asr.core/i16nz) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i16nz) NTESTS)))
     (is (not-any? zero?
-                  (gen/sample (s/gen :asr.core/i32nz) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i32nz) NTESTS)))
     (is (not-any? zero?
-                  (gen/sample (s/gen :asr.core/i64nz) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i64nz) NTESTS)))
     (is (not-any? #(> % Byte/MAX_VALUE)
-                  (gen/sample (s/gen :asr.core/i8) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i8) NTESTS)))
     (is (not-any? #(> % Short/MAX_VALUE)
-                  (gen/sample (s/gen :asr.core/i16) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i16) NTESTS)))
     (is (not-any? #(> % Integer/MAX_VALUE)
-                  (gen/sample (s/gen :asr.core/i32) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i32) NTESTS)))
     (is (not-any? #(> % Long/MAX_VALUE)
-                  (gen/sample (s/gen :asr.core/i64) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i64) NTESTS)))
     (is (not-any? #(< % Byte/MIN_VALUE)
-                  (gen/sample (s/gen :asr.core/i8) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i8) NTESTS)))
     (is (not-any? #(< % Short/MIN_VALUE)
-                  (gen/sample (s/gen :asr.core/i16) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i16) NTESTS)))
     (is (not-any? #(< % Integer/MIN_VALUE)
-                  (gen/sample (s/gen :asr.core/i32) NTESTS)))
+                  (gen/sample (s/gen :asr.numbers/i32) NTESTS)))
     (is (not-any? #(< % Long/MIN_VALUE)
-                  (gen/sample (s/gen :asr.core/i64) NTESTS)))))
+                  (gen/sample (s/gen :asr.numbers/i64) NTESTS)))))
 
 
 ;;  _     _                                          _   _
