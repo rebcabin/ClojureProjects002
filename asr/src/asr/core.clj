@@ -5,7 +5,8 @@
         [asr.numbers]
         [asr.specs]
         [asr.parsed]
-        [asr.autospecs])
+        [asr.autospecs]
+        [asr.expr.semnasr])
 
   (:require [clojure.spec.alpha            :as    s         ]
             [clojure.pprint                :refer [pprint]  ]
@@ -14,86 +15,6 @@
             [clojure.test.check.generators :as    tgen      ]
             [clojure.math.numeric-tower    :refer [expt]    ]
             [clojure.set                   :as    set       ]))
-
-
-;;  _     _                                  _            _   _
-;; (_)_ _| |_ ___ __ _ ___ _ _   ___ __ __ _| |__ _ _ _  | |_| |_ _  _ _ __  ___
-;; | | ' \  _/ -_) _` / -_) '_| (_-</ _/ _` | / _` | '_| |  _|  _| || | '_ \/ -_)
-;; |_|_||_\__\___\__, \___|_|   /__/\__\__,_|_\__,_|_|    \__|\__|\_, | .__/\___|
-;;               |___/                                            |__/|_|
-
-;; Often, we need a scalar that has no dimensionss [sic].
-
-(s/def ::integer-scalar-ttype-semnasr
-  (s/spec
-   (s/cat :head        #{'Integer}
-          :kind        #{1 2 4 8}
-          :dimensionss #{[]})))
-
-#_
-(-> ::integer-scalar-ttype-semnasr (s/exercise 4))
-;; => ([(Integer 2 []) {:head Integer, :kind 2, :dimensionss []}]
-;;     [(Integer 4 []) {:head Integer, :kind 4, :dimensionss []}]
-;;     [(Integer 1 []) {:head Integer, :kind 1, :dimensionss []}]
-;;     [(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}])
-
-;; Particular ones so we can match the "kind," i8 thru i64, by
-;; hand. Written in this funny way for test-generation.
-
-(do
-  (s/def ::i8-scalar-ttype-semnasr
-    (s/spec ; nestable
-     (s/cat :head        #{'Integer}
-            :kind        #{1}
-            :dimensionss #{[]})))
-
-  (s/def ::i16-scalar-ttype-semnasr
-    (s/spec ; nestable
-     (s/cat :head        #{'Integer}
-            :kind        #{2}
-            :dimensionss #{[]})))
-
-  (s/def ::i32-scalar-ttype-semnasr
-    (s/spec ; nestable
-     (s/cat :head        #{'Integer}
-            :kind        #{4}
-            :dimensionss #{[]})))
-
-  (s/def ::i64-scalar-ttype-semnasr
-    (s/spec ; nestable
-     (s/cat :head        #{'Integer}
-            :kind        #{8}
-            :dimensionss #{[]}))))
-
-#_(-> ::i64-scalar-ttype-semnasr (s/exercise 2))
-;; => ([(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}]
-;;     [(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}])
-
-;; TEACHING NOTE: With nesting. Because every spec is wrapped in
-;; s/spec, results are nested under s/alt.
-
-#_(-> (s/alt ::i8-scalar-ttype-semnasr
-           ::i16-scalar-ttype-semnasr
-           ::i32-scalar-ttype-semnasr
-           ::i64-scalar-ttype-semnasr)
-    (s/exercise 2))
-;; => ([[(Integer 2 [])]
-;;      [:asr.core/i8-scalar-ttype-semnasr
-;;       {:head Integer, :kind 2, :dimensionss []}]]
-;;     [[(Integer 8 [])]
-;;      [:asr.core/i32-scalar-ttype-semnasr
-;;       {:head Integer, :kind 8, :dimensionss []}]])
-
-;; TEACHING NOTE: Without nesting. Results are not nested under
-;; s/or.
-
-#_(-> (s/or :1 ::i8-scalar-ttype-semnasr
-          :2 ::i16-scalar-ttype-semnasr
-          :4 ::i32-scalar-ttype-semnasr
-          :8 ::i64-scalar-ttype-semnasr)
-    (s/exercise 2))
-;; => ([(Integer 8 []) [:8 {:head Integer, :kind 8, :dimensionss []}]]
-;;     [(Integer 1 []) [:1 {:head Integer, :kind 1, :dimensionss []}]])
 
 
 ;;  _     _                               _
@@ -183,25 +104,25 @@
     (s/spec
      (s/cat :head  #{'IntegerConstant}
             :value ::i8
-            :ttype ::i8-scalar-ttype-semnasr)))
+            :ttype :asr.expr.semnasr/i8-scalar-ttype)))
 
   (s/def ::i16-constant-semnasr
     (s/spec
      (s/cat :head  #{'IntegerConstant}
             :value ::i16
-            :ttype ::i16-scalar-ttype-semnasr)))
+            :ttype :asr.expr.semnasr/i16-scalar-ttype)))
 
   (s/def ::i32-constant-semnasr
     (s/spec
      (s/cat :head  #{'IntegerConstant}
             :value ::i32
-            :ttype ::i32-scalar-ttype-semnasr)))
+            :ttype :asr.expr.semnasr/i32-scalar-ttype)))
 
   (s/def ::i64-constant-semnasr
     (s/spec
      (s/cat :head  #{'IntegerConstant}
             :value ::i64
-            :ttype ::i64-scalar-ttype-semnasr))))
+            :ttype :asr.expr.semnasr/i64-scalar-ttype))))
 
 
 (s/def ::integer-constant-semnasr
@@ -230,25 +151,25 @@
     (s/spec
      (s/cat :head  #{'IntegerConstant}
             :value ::i8nz
-            :ttype ::i8-scalar-ttype-semnasr)))
+            :ttype :asr.expr.semnasr/i8-scalar-ttype)))
 
   (s/def ::i16-non-zero-constant-semnasr
     (s/spec
      (s/cat :head  #{'IntegerConstant}
             :value ::i16nz
-            :ttype ::i16-scalar-ttype-semnasr)))
+            :ttype :asr.expr.semnasr/i16-scalar-ttype)))
 
   (s/def ::i32-non-zero-constant-semnasr
     (s/spec
      (s/cat :head  #{'IntegerConstant}
             :value ::i32nz
-            :ttype ::i32-scalar-ttype-semnasr)))
+            :ttype :asr.expr.semnasr/i32-scalar-ttype)))
 
   (s/def ::i64-non-zero-constant-semnasr
     (s/spec
      (s/cat :head  #{'IntegerConstant}
             :value ::i64nz
-            :ttype ::i64-scalar-ttype-semnasr))))
+            :ttype :asr.expr.semnasr/i64-scalar-ttype))))
 
 
 (s/def ::integer-non-zero-constant-semnasr
@@ -347,7 +268,7 @@
           :left  ::i32-constant-semnasr
           :op    :asr.autospecs/binop
           :right ::i32-constant-semnasr
-          :ttype ::i32-scalar-ttype-semnasr
+          :ttype :asr.expr.semnasr/i32-scalar-ttype
           :value (s/? ::i32-constant-semnasr))
 
    :recurse
@@ -357,7 +278,7 @@
             :left  or-leaf
             :op    :asr.autospecs/binop
             :right or-leaf
-            :ttype ::i32-scalar-ttype-semnasr
+            :ttype :asr.expr.semnasr/i32-scalar-ttype
             :value (s/? or-leaf))) ))
 
 
@@ -855,7 +776,7 @@
                   :left  or-leaf
                   :op    :asr.autospecs/binop
                   :right or-leaf
-                  :ttype ::i32-scalar-ttype-semnasr
+                  :ttype :asr.expr.semnasr/i32-scalar-ttype
                   :value ::i32-constant-semnasr)))
         (fn [] the-gen)))))
 
