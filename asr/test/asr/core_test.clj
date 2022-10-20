@@ -7,7 +7,8 @@
         [asr.arithmetic]
         [asr.autospecs]
         [asr.expr.synnasr]
-        [asr.expr.semnasr])
+        [asr.expr.semnasr]
+        [asr.expr.semsem])
 
   (:require [clojure.math                  :as    math   ]
             [clojure.test                  :refer :all   ]
@@ -1004,134 +1005,134 @@
 ;;                                 |_|
 
 (deftest i32-bin-op-leaf-semsem-conformance
-  (testing "conformance to :asr.core/i32-bin-op-leaf-semsem"
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+  (testing "conformance to :asr.core/i32-bin-op-leaf"
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant -1 (Integer 4 []))
                     BitOr
                     (IntegerConstant 0 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant -1 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant -1 (Integer 4 []))
                     BitLShift
                     (IntegerConstant 0 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant -1 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 1 (Integer 4 []))
                     BitRShift
                     (IntegerConstant 0 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 1 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant -4 (Integer 4 []))
                     BitAnd
                     (IntegerConstant -4 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant -4 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 0 (Integer 4 []))
                     Add
                     (IntegerConstant 0 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 0 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 5 (Integer 4 []))
                     Add
                     (IntegerConstant -1 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 4 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 61 (Integer 4 []))
                     BitRShift
                     (IntegerConstant -4 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 0 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 13 (Integer 4 []))
                     BitOr
                     (IntegerConstant -1 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant -1 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 0 (Integer 4 []))
                     Div
                     (IntegerConstant 246 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 0 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 14 (Integer 4 []))
                     Mul
                     (IntegerConstant -54 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant -756 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant -82 (Integer 4 []))
                     Pow
                     (IntegerConstant -25 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 0 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant -43 (Integer 4 []))
                     Pow
                     (IntegerConstant -1002 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 0 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 2316 (Integer 4 []))
                     BitXor
                     (IntegerConstant -3 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant -2319 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 622 (Integer 4 []))
                     Sub
                     (IntegerConstant 34 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 588 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 17 (Integer 4 []))
                     BitRShift
                     (IntegerConstant -2403 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 0 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant 3207 (Integer 4 []))
                     Sub
                     (IntegerConstant -1108 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 4315 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant -1 (Integer 4 []))
                     Add
                     (IntegerConstant 284 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant 283 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant -657 (Integer 4 []))
                     BitOr
                     (IntegerConstant -356 (Integer 4 []))
                     (Integer 4 [])
                     (IntegerConstant -1 (Integer 4 [])))))
-    (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+    (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                   '(IntegerBinOp
                     (IntegerConstant -131974 (Integer 4 []))
                     Pow
@@ -1140,7 +1141,7 @@
                     (IntegerConstant 0 (Integer 4 [])))))
     (testing "TODO: a nil value conforms, but we want to eliminate
                    nils in the generator"
-      (is (s/valid? :asr.core/i32-bin-op-leaf-semsem
+      (is (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                    '(IntegerBinOp
                      (IntegerConstant -41056462 (Integer 4 []))
                      Pow
@@ -1150,12 +1151,12 @@
 
 
 (deftest i32-bin-op-leaf-semsem-non-conformance
-  (testing "non-conformance of :asr.core/i32-bin-op-leaf-semsem:"
+  (testing "non-conformance of :asr.expr.semsem/i32-bin-op-leaf:"
     (testing "wrong structure"
-      (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
+      (is (not (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                          'foo))))
     (testing "wrong keywords"
-      (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
+      (is (not (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                          '(bag
                            (foo 42 bar)
                            Pow
@@ -1163,7 +1164,7 @@
                            (boo 4 far)
                            (qux 32 pgh))))))
     (testing "wrong value"
-      (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
+      (is (not (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                          '(IntegerBinOp
                            (IntegerConstant -131974 (Integer 4 []))
                            Pow
@@ -1175,7 +1176,7 @@
     ;; to types and kinds (semnasr) on the preimage or
     ;; arithmetic (sem-sem) constraints on the values.
     (testing "nested structure (not leaf)"
-      (is (not (s/valid? :asr.core/i32-bin-op-leaf-semsem
+      (is (not (s/valid? :asr.expr.semsem/i32-bin-op-leaf
                          '(IntegerBinOp
                            (IntegerBinOp
                             (IntegerConstant -657 (Integer 4 []))
@@ -1192,10 +1193,10 @@
 (deftest i32-bin-op-leaf-semsem-gen-pluggable-test
   (testing "all non-nils are valid"
     (is (every?
-         (partial s/valid? :asr.core/i32-bin-op-leaf-semsem)
+         (partial s/valid? :asr.expr.semsem/i32-bin-op-leaf)
          (filter (comp not nil?)
                  (gen/sample
-                  (s/gen :asr.core/i32-bin-op-leaf-semsem)
+                  (s/gen :asr.expr.semsem/i32-bin-op-leaf)
                   NTESTS))))))
 
 
@@ -1236,7 +1237,7 @@
 ;; |_|_|_\__,_|\_, |_.__/\___|  \_/\__,_|_|\_,_\___| |_|___/___|
 ;;             |__/
 
-;; Co-cursively calls spec ::i32-bin-op-semsem.
+;; Co-cursively calls spec ::i32-bin-op.
 
 (deftest maybe-value-i32-semsem-test
   (testing "various nil-punning returns:"
@@ -1418,7 +1419,7 @@
                       (IntegerConstant -3145728 (Integer 4 []))))))))
 
 
-(let [foo (-> (s/gen :asr.core/i32-bin-op-semsem)
+(let [foo (-> (s/gen :asr.expr.semsem/i32-bin-op)
               (gen/sample NTESTS))
       compute (partial compute-i32-bin-op-value
                        asr-i32-unchecked-binop->clojure-op)]
@@ -1437,7 +1438,7 @@
 ;; /__/\__,_|_|_|_| .__/_\___|
 ;;                |_|
 
-(let [foo (-> (s/gen :asr.core/i32-bin-op-semsem)
+(let [foo (-> (s/gen :asr.expr.semsem/i32-bin-op)
               (gen/sample NTESTS))]
  (deftest sample-100-test
    (testing "sample of 100 i32 bin ops:"
@@ -1446,7 +1447,7 @@
                    (map i32-bin-op-semsem-leaf-count foo))))
      (testing "validity"
        (is (every? identity
-                   (map #(s/valid? :asr.core/i32-bin-op-semsem %) foo))))
+                   (map #(s/valid? :asr.expr.semsem/i32-bin-op %) foo))))
      (testing "fetched value not nil"
        (is (not-any? nil?
                      (map fetch-value-i32-bin-op-semsem foo)))))))

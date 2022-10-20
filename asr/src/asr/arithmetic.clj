@@ -101,6 +101,3 @@
    'BitRShift #(.intValue (bit-shift-right %1 %2))})
 
 ;;; TODO: Note that MOD, REM, QUOTIENT are missing!
-
-
-;;; See core_test.clj for examples showing propagated failures.

@@ -1,5 +1,7 @@
 (ns asr.stats
-  (:use [asr.core])
+  (:use
+   [asr.numbers]
+   [asr.expr.semsem])
 
   (:require [clojure.math                  :as    math   ]
             [clojure.string                :as    string ]
