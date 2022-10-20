@@ -605,11 +605,14 @@
   (deftest IntegerBinop-conformance-test
     (testing "IntegerBinop conforms to dummy expr spec and
               to evolving integer-bin-op spec."
-
       (is (= test-vector
              (s/conform :asr.autospecs/expr test-vector)))
-
-      (is (s/valid? :asr.autospecs/integer-bin-op test-vector)))))
+      (is (s/valid? :asr.autospecs/integer-bin-op test-vector)))
+    (testing "specs may not generate"
+      (is (not (nil? (gen/generate (s/gen :asr.autospecs/expr)))))
+      (is (thrown?
+           Exception
+           (gen/generate (s/gen :asr.autospecs/integer-bin-op)))))))
 
 
 (let [integer-bin-op-stuff
