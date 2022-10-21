@@ -1,6 +1,5 @@
 (ns asr.core-test
   (:use [asr.core]
-        [asr.utils]
         [asr.data]
         [asr.parsed]
         [asr.numbers]
@@ -25,16 +24,11 @@
 (def LONGTESTS      1000) ;; Bigger for inline stresses
 
 
-;;  _____       _     ___                   _               _        _
-;; |_   _|__ __| |_  | __|_ ___ __  ___ _ _(_)_ __  ___ _ _| |_ __ _| |
-;;   | |/ -_|_-<  _| | _|\ \ / '_ \/ -_) '_| | '  \/ -_) ' \  _/ _` | |
-;;   |_|\___/__/\__| |___/_\_\ .__/\___|_| |_|_|_|_\___|_||_\__\__,_|_|
-;;                           |_|
-;;  ___           _  _   _   ___ ___
-;; / __|_  _ _ _ | \| | /_\ / __| _ \
-;; \__ \ || | ' \| .` |/ _ \\__ \   /
-;; |___/\_, |_||_|_|\_/_/ \_\___/_|_\
-;;      |__/
+;;        _   _ _
+;;  _   _| |_(_) |___
+;; | | | | __| | / __|
+;; | |_| | |_| | \__ \
+;;  \__,_|\__|_|_|___/
 
 (deftest kebab-test
   (testing "kebab-case from asr.utils"
@@ -47,10 +41,24 @@
          (asr.utils/nskw-kebab-from :should-fail)))))
 
 
+;;           _           _
+;; __      _| |__   ___ | | ___   ___ _ __   ___  ___
+;; \ \ /\ / / '_ \ / _ \| |/ _ \ / __| '_ \ / _ \/ __|
+;;  \ V  V /| | | | (_) | |  __/ \__ \ |_) |  __/ (__
+;;   \_/\_/ |_| |_|\___/|_|\___| |___/ .__/ \___|\___|
+;;                                   |_|
+
 (deftest whole-spec-test
   (testing "whole example passes trivial spec"
     (is (s/valid? list? asr.data/expr-01-211000))))
 
+
+;;                      _      _
+;;  ___ _ __   ___  ___| | ___| |_
+;; / __| '_ \ / _ \/ __| |/ _ \ __|
+;; \__ \ |_) |  __/ (__| |  __/ |_
+;; |___/ .__/ \___|\___|_|\___|\__|
+;;     |_|
 
 (deftest shallow-map-from-speclet-test
 
@@ -105,6 +113,13 @@
             '({:ASDL-SYMCONST "Public"}
               {:ASDL-SYMCONST "Private"})}))))
 
+
+;;        _ _               _
+;;   __ _| | |   __ _ _   _| |_ ___  ___ _ __   ___  ___ ___
+;;  / _` | | |  / _` | | | | __/ _ \/ __| '_ \ / _ \/ __/ __|
+;; | (_| | | | | (_| | |_| | || (_) \__ \ |_) |  __/ (__\__ \
+;;  \__,_|_|_|  \__,_|\__,_|\__\___/|___/ .__/ \___|\___|___/
+;;                                      |_|
 
 (deftest all-terms-test
   (testing "check all 28 terms"
@@ -472,6 +487,27 @@
                 set)))))
 
 
+(deftest install-symconst-stuffss-by-term-test
+  (testing "installing symconst stuffss by term"
+    (is (= #{:asr.autospecs/deftype
+             :asr.autospecs/arraybound
+             :asr.autospecs/storage-type
+             :asr.autospecs/binop
+             :asr.autospecs/presence
+             :asr.autospecs/integerboz
+             :asr.autospecs/logicalbinop
+             :asr.autospecs/trait
+             :asr.autospecs/abi
+             :asr.autospecs/cast-kind
+             :asr.autospecs/intent
+             :asr.autospecs/access
+             :asr.autospecs/cmpop}
+           (->> symconst-stuffss-by-term
+                (map symconst-spec-for-term)
+                (map eval)
+                set)))))
+
+
 (deftest all-heads-for-symbols-test
   (testing "all 13 heads for symbols"
     (is (= '#{Block               Function            GenericProcedure
@@ -537,6 +573,13 @@
            (heads-for-composite :asr.autospecs/expr)))))
 
 
+;;  _     _         _ _     _       _     _
+;; | |__ (_) __ _  | (_)___| |_    | |__ (_) __ _   _ __ ___   __ _ _ __
+;; | '_ \| |/ _` | | | / __| __|   | '_ \| |/ _` | | '_ ` _ \ / _` | '_ \
+;; | |_) | | (_| | | | \__ \ |_ _  | |_) | | (_| | | | | | | | (_| | |_) |
+;; |_.__/|_|\__, | |_|_|___/\__( ) |_.__/|_|\__, | |_| |_| |_|\__,_| .__/
+;;          |___/              |/           |___/                  |_|
+
 (deftest count-of-big-list-of-stuff
   (testing "count of big list of stuff"
     (is (= 227 (count big-list-of-stuff)))))
@@ -556,31 +599,11 @@
                 count)))))
 
 
-;;                               _     _
-;;  ____  _ _ __  __ ___ _ _  __| |_  | |_ ___ _ _ _ __  ___
-;; (_-< || | '  \/ _/ _ \ ' \(_-<  _| |  _/ -_) '_| '  \(_-<
-;; /__/\_, |_|_|_\__\___/_||_/__/\__|  \__\___|_| |_|_|_/__/
-;;     |__/
-
-(deftest install-symconst-stuffss-by-term-test
-  (testing "installing symconst stuffss by term"
-    (is (= #{:asr.autospecs/deftype
-             :asr.autospecs/arraybound
-             :asr.autospecs/storage-type
-             :asr.autospecs/binop
-             :asr.autospecs/presence
-             :asr.autospecs/integerboz
-             :asr.autospecs/logicalbinop
-             :asr.autospecs/trait
-             :asr.autospecs/abi
-             :asr.autospecs/cast-kind
-             :asr.autospecs/intent
-             :asr.autospecs/access
-             :asr.autospecs/cmpop}
-           (->> symconst-stuffss-by-term
-                (map symconst-spec-for-term)
-                (map eval)
-                set)))))
+;;  ___ _________    ____ ___ _   _    ___  ____
+;; |_ _|___ /___ \  | __ )_ _| \ | |  / _ \|  _ \
+;;  | |  |_ \ __) | |  _ \| ||  \| | | | | | |_) |
+;;  | | ___) / __/  | |_) | || |\  | | |_| |  __/
+;; |___|____/_____| |____/___|_| \_|  \___/|_|
 
 
 ;;  ___     _                    ___ _      ___
@@ -1451,3 +1474,113 @@
      (testing "fetched value not nil"
        (is (not-any? nil?
                      (map fetch-value-i32-bin-op-semsem foo)))))))
+
+
+;;  ______   ____  __ ____   ___  _
+;; / ___\ \ / /  \/  | __ ) / _ \| |
+;; \___ \\ V /| |\/| |  _ \| | | | |
+;;  ___) || | | |  | | |_) | |_| | |___
+;; |____/ |_| |_|  |_|____/ \___/|_____|
+
+(deftest expr-01-211000-is-not-a-symbol
+  (is (not (s/valid? :asr.autospecs/symbol expr-01-211000))))
+
+;;                _         _   _        _    _
+;;  ____  _ _ __ | |__  ___| | | |_ __ _| |__| |___
+;; (_-< || | '  \| '_ \/ _ \ | |  _/ _` | '_ \ / -_)
+;; /__/\_, |_|_|_|_.__/\___/_|  \__\__,_|_.__/_\___|
+;;     |__/
+
+(deftest two-example-symbol-tables
+  (is (s/valid?
+       :asr.specs/symbol-table
+       '(SymbolTable
+         2 {:x (Variable
+                2 x Local () () Default
+                (Integer 4 []) Source Public Required .false.),
+            :x2 (Variable
+                 2 x2 Local () () Default
+                 (Integer 8 []) Source Public Required .false.),
+            :y (Variable
+                2 y Local () () Default
+                (Real 4 []) Source Public Required .false.),
+            :y2 (Variable
+                 2 y2 Local () () Default (Real 8 [])
+                 Source Public Required .false.)})))
+
+  (is (s/valid?
+       :asr.specs/symbol-table
+       '(SymbolTable
+         1
+         {:_lpython_main_program
+          (Function
+           (SymbolTable 4 {})
+           _lpython_main_program
+           []
+           []
+           [(SubroutineCall 1 main0 () [] ())] ()
+           Source Public Implementation () .false. .false. .false. .false.),
+          :main0
+          (Function
+           (SymbolTable
+            2 {:x (Variable
+                   2 x Local () () Default
+                   (Integer 4 []) Source Public Required .false.),
+               :x2 (Variable
+                    2 x2 Local () () Default
+                    (Integer 8 []) Source Public Required .false.),
+               :y (Variable
+                   2 y Local () () Default
+                   (Real 4 []) Source Public Required .false.),
+               :y2 (Variable
+                    2 y2 Local () () Default (Real 8 [])
+                    Source Public Required .false.)})
+           main0 [] []
+           [(= (Var 2 x)
+               (IntegerBinOp
+                (IntegerBinOp
+                 (IntegerConstant
+                  2 (Integer 4 []))
+                 Add
+                 (IntegerConstant
+                  3
+                  (Integer 4 []))
+                 (Integer 4 [])
+                 (IntegerConstant
+                  5 (Integer 4 [])))
+                Mul
+                (IntegerConstant
+                 5 (Integer 4 []))
+                (Integer 4 [])
+                (IntegerConstant
+                 25 (Integer 4 []))) ())
+            (Print () [(Var 2 x)] () ())]
+           () Source Public Implementation () .false. .false. .false. .false.),
+          :main_program
+          (Program
+           (SymbolTable 3 {})
+           main_program []
+           [(SubroutineCall 1 _lpython_main_program () [] ())])}))))
+
+
+;;               _      _    _
+;; __ ____ _ _ _(_)__ _| |__| |___
+;; \ V / _` | '_| / _` | '_ \ / -_)
+;;  \_/\__,_|_| |_\__,_|_.__/_\___|
+
+(deftest sample-asr-variable
+  (is (s/valid?
+       :asr.specs/variable
+       '(Variable        ; head
+         2               ; parent-symtab
+         x               ; nym
+         Local           ; intent
+         ()              ; symbolic-value
+         ()              ; value
+         Default         ; storage-type
+         (Integer 4 [])  ; type
+         Source          ; abi
+         Public          ; access
+         Required        ; presence
+         .false.         ; value-attr
+         ))))

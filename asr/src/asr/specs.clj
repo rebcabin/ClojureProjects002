@@ -1,43 +1,19 @@
 (ns asr.specs
   (:use [asr.utils]
-        [asr.numbers])
+        [asr.data]
+        [asr.numbers]
+        [asr.base-specs]
+        [asr.autospecs])
   (:require [clojure.spec.alpha            :as s   ]
+            [clojure.zip                   :as z   ]
             [clojure.spec.gen.alpha        :as gen ]
             [clojure.test.check.generators :as tgen]))
 
 
-;;  _    _         _   _  __ _
-;; (_)__| |___ _ _| |_(_)/ _(_)___ _ _
-;; | / _` / -_) ' \  _| |  _| / -_) '_|
-;; |_\__,_\___|_||_\__|_|_| |_\___|_|
-
-(let [alpha-re #"[a-zA-Z]"  ;; The famous "let over lambda."
-      alphameric-re #"[a-zA-Z0-9]*"]
-  (def alpha?
-    #(re-matches alpha-re %))
-  (def alphameric?
-    #(re-matches alphameric-re %))
-  (defn identifier? [s]
-    (and (alpha? (subs s 0 1))
-         (alphameric? (subs s 1))))
-  (def identifier-generator
-    (tgen/let [c (gen/char-alpha)
-               s (gen/string-alphanumeric)]
-      (str c s)))
-  (s/def :asr.specs/identifier  ;; side effects the spec registry!
-    (s/with-gen
-      identifier?
-      (fn [] identifier-generator))))
-
-#_
-(gen/sample (s/gen ::identifier))
-;; => ("A" "t" "ua" "T" "t" "S3bu85" "xGi" "PJre" "RyHKK0QX4" "TIhjmK1e")
-
-
-;;  _ _      _ _                   _
-;; (_|_)  __| (_)_ __  ___ _ _  __(_)___ _ _  ___
-;;  _ _  / _` | | '  \/ -_) ' \(_-< / _ \ ' \(_-<
-;; (_|_) \__,_|_|_|_|_\___|_||_/__/_\___/_||_/__/
+;;     _ _                   _
+;;  __| (_)_ __  ___ _ _  __(_)___ _ _  ___
+;; / _` | | '  \/ -_) ' \(_-< / _ \ ' \(_-<
+;; \__,_|_|_|_|_\___|_||_/__/_\___/_||_/__/
 
 (s/def ::dimensions
   (s/coll-of (s/or :nat-int nat-int?, :bigint :asr.numbers/bignat)
@@ -57,3 +33,69 @@
 ;;     [[] []]
 ;;     [[2671503976487097 5] [[:bigint 2671503976487097] [:nat-int 5]]])
 ;;     [[6694 3] [[:bigint 6694] [:nat-int 3]]])
+
+
+;;                _         _   _        _    _
+;;  ____  _ _ __ | |__  ___| | | |_ __ _| |__| |___
+;; (_-< || | '  \| '_ \/ _ \ | |  _/ _` | '_ \ / -_)
+;; /__/\_, |_|_|_|_.__/\___/_|  \__\__,_|_.__/_\___|
+;;     |__/
+
+(s/def ::symbol-table
+  (s/cat :head #{'SymbolTable}
+         :uid  pos?
+         :dict (s/map-of keyword? :asr.autospecs/symbol
+                         :conform-keys true #_"disallow duplicates")))
+
+
+;;               _      _    _
+;; __ ____ _ _ _(_)__ _| |__| |___
+;; \ V / _` | '_| / _` | '_ \ / -_)
+;;  \_/\__,_|_| |_\__,_|_.__/_\___|
+
+;; Variable(
+;;   symbol_table parent_symtab,   -- actually a uid
+;;   identifier   name,
+;;   intent       intent,
+;;   expr?        symbolic_value,
+;;   expr?        value,
+;;   storage_type storage,
+;;   ttype        type,
+;;   abi          abi,
+;;   access       access,
+;;   presence     presence,
+;;   bool         value_attr,
+
+(s/def ::variable
+  (s/cat :head           #{'Variable}
+         :parent-symtab  pos?
+         :nym            symbol?  ; ::identifier
+         :intent         :asr.autospecs/intent
+         :symbolic-value (s/spec (s/? :asr.autospecs/expr))
+         :value          (s/spec (s/? :asr.autospecs/expr))
+         :storage-type   :asr.autospecs/storage-type
+         :type           :asr.autospecs/ttype
+         :abi            :asr.autospecs/abi
+         :access         :asr.autospecs/access
+         :presencs       :asr.autospecs/presence
+         :value-attr     :asr.autospecs/bool))
+
+(s/def ::variable
+  (s/cat :head           #{'Variable}
+         :parent-symtab  #(and (int? %) (> % 0))  ; pos? won't generate
+         :nym            symbol?  ; ::identifier
+         :intent         :asr.autospecs/intent
+         :symbolic-value (s/spec (s/? :asr.autospecs/expr))
+         :value          (s/spec (s/? :asr.autospecs/expr))
+         :storage-type   :asr.autospecs/storage-type
+         :type           :asr.autospecs/ttype
+         :abi            :asr.autospecs/abi
+         :access         :asr.autospecs/access
+         :presencs       :asr.autospecs/presence
+         :value-attr     :asr.autospecs/bool))
+
+;; (gen/generate (s/gen ::variable))
+;; (gen/generate (s/gen #(and (int? %) (> % 0))))
+;; (gen/generate (s/gen symbol?))
+;; (s/exercise ::identifier)
+;; (gen/generate (s/gen :asr.autospecs/expr))

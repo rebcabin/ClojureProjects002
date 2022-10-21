@@ -1,6 +1,6 @@
 (ns asr.autospecs
   (:use [asr.utils]
-        [asr.specs])
+        [asr.base-specs])
 
   (:require [asr.parsed :refer [big-map-of-speclets-from-terms
                                 big-list-of-stuff
@@ -86,8 +86,8 @@
 ;; \__,_|\_,_|_|_|_|_|_|_|_\___/__/
 
 (defn dummy-generator-for-heads
-  "Insert a list of random length of random identifiers. For
-  producing dummy specs that are later backpatched by hand."
+  "Insert a random-length list of random identifiers. For
+  generating dummy specs that are later backpatched by hand."
   [heads]
   (tgen/let [head (s/gen heads)
              rest (gen/list (s/gen :asr.specs/identifier))]
@@ -97,11 +97,11 @@
 (defn dummy-lpred
   "Check simply that the instance is a list with an appropriate head
   and zero or more items of any type. For producing dummy specs
-  that are later backpatched by hand."
-  [heads]
+  that are later backpatched by hand. Won't generate without help."
+  [heads-set]
   (s/and seq?
          (fn [lyst] (-> lyst count (>= 1)))
-         (fn [lyst] (-> lyst first heads))))
+         (fn [lyst] (-> lyst first heads-set))))
 
 
 ;;                        __                                     _ _
@@ -386,7 +386,7 @@
   (s/def ::int   int?)
   (s/def ::float float?)
   (s/def ::bool  (s/or :clj-bool boolean?
-                       :asr-bool #(or (= % '.true.) (= % '.false))))
+                       :asr-bool #(or (= % '.true.) (= % '.false.))))
 
   ;; ttype
   ;;     = Integer(int kind, dimension* dims)

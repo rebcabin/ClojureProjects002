@@ -3,11 +3,11 @@
    [asr.numbers]
    [asr.expr.semsem])
 
-  (:require [clojure.math                  :as    math   ]
-            [clojure.string                :as    string ]
-            [clojure.spec.alpha            :as    s      ]
-            [clojure.spec.gen.alpha        :as    gen    ]
-            [asr.utils                     :refer [echo] ]))
+  (:require [asr.utils                :refer [echo] ]
+            [clojure.spec.alpha       :as    s      ]
+            [clojure.spec.gen.alpha   :as    gen    ]
+            [clojure.string           :as    string ]
+            [clojure.math             :as    math   ]))
 
 
 (def sample [[140 190 1 8]
