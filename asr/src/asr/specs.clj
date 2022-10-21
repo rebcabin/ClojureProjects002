@@ -80,19 +80,75 @@
          :presencs       :asr.autospecs/presence
          :value-attr     :asr.autospecs/bool))
 
-(s/def ::variable
-  (s/cat :head           #{'Variable}
-         :parent-symtab  #(and (int? %) (> % 0))  ; pos? won't generate
-         :nym            symbol?  ; ::identifier
-         :intent         :asr.autospecs/intent
-         :symbolic-value (s/spec (s/? :asr.autospecs/expr))
-         :value          (s/spec (s/? :asr.autospecs/expr))
-         :storage-type   :asr.autospecs/storage-type
-         :type           :asr.autospecs/ttype
-         :abi            :asr.autospecs/abi
-         :access         :asr.autospecs/access
-         :presencs       :asr.autospecs/presence
-         :value-attr     :asr.autospecs/bool))
+(defn- f1 [it]
+  (if (empty? it) () (first it)))
+
+(s/def ::temporary
+  (s/with-gen
+    (s/cat
+     :head           #{'Variable}
+     :parent-symtab  pos?
+     :nym            symbol?            ; ::identifier
+     :intent         :asr.autospecs/intent
+     :symbolic-value (s/or :empty empty?
+                           :expr  :asr.autospecs/expr)
+     :value          (s/or :empty empty?
+                           :expr  :asr.autospecs/expr)
+     :storage-type   :asr.autospecs/storage-type
+     :type           :asr.autospecs/ttype
+     :abi            :asr.autospecs/abi
+     :access         :asr.autospecs/access
+     :presencs       :asr.autospecs/presence
+     :value-attr     :asr.autospecs/bool
+     )
+    (fn []
+      (tgen/fmap
+       list*
+       (tgen/tuple
+        (tgen/return 'Variable)
+        (tgen/fmap inc tgen/nat)
+        (tgen/fmap symbol (s/gen ::identifier))
+        (s/gen :asr.autospecs/intent)
+        (tgen/one-of [(tgen/return ())
+                      (s/gen :asr.autospecs/expr)])
+        (tgen/one-of [(tgen/return ())
+                      (s/gen :asr.autospecs/expr)])
+        (s/gen :asr.autospecs/storage-type)
+        (s/gen :asr.autospecs/ttype)
+        (s/gen :asr.autospecs/abi)
+        (s/gen :asr.autospecs/access)
+        (s/gen :asr.autospecs/presence)
+        (tgen/one-of [(tgen/return '.true.')
+                      (tgen/return '.false.)])
+        )))))
+
+(gen/generate (s/gen ::temporary))
+;; => (Variable 6 T9b1mV2065BfVvq1ks9v3T2B Unspecified [])
+;; => (Variable
+;;     13
+;;     FHtS1LkB1vig5mO2XNRW49PS2t7u4
+;;     Out
+;;     [(StringChr
+;;       "p348Pe"
+;;       "F05T7pmxt9y7lj2c7IY2GiXROS6Rbx4"
+;;       "hV3"
+;;       "Whz174"
+;;       "LElz79O"
+;;       "j6G2AU9EO7Z1oPrMKMEzIcjAR730"
+;;       "Bkf0LF7ziLNNB5Yu"
+;;       "C722F0sgJx9Zhay"
+;;       "y42o2YRDnU74fyLvcfn3UJ3H5y11"
+;;       "giX"
+;;       "XL3SIST8q7jR1Bo00vPlG3lu8OwQ"
+;;       "xpC0vOW3r9wC4dD7"
+;;       "UdaB9GKeEzaCRNL6nxggWL9J8729R0"
+;;       "a4E32S2laJ"
+;;       "is7laASca2Btq3mso6EVH68E9pD"
+;;       "w13liZuuN1eX0u3PWsH5oQ"
+;;       "kYD64")])
+;; => (Variable 24 VA4JWqe55ED146LOhIN9JKn InOut [])
+;; => (Variable 8 lHSY3 InOut)
+
 
 ;; (gen/generate (s/gen ::variable))
 ;; (gen/generate (s/gen #(and (int? %) (> % 0))))
