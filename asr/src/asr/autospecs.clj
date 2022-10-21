@@ -90,7 +90,9 @@
   generating dummy specs that are later backpatched by hand."
   [heads]
   (tgen/let [head (s/gen heads)
-             rest (gen/list (s/gen :asr.specs/identifier))]
+             rest (gen/list
+                   (tgen/fmap symbol
+                              (s/gen :asr.specs/identifier)))]
     (cons head rest)))
 
 
