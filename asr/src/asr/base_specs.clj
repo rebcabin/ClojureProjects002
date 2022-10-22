@@ -17,18 +17,22 @@
     #(re-matches alpha-re %))
   (def alphameric?
     #(re-matches alphameric-re %))
-  (defn identifier? [s]
-    (and (alpha? (subs s 0 1))
-         (alphameric? (subs s 1))))
+  (defn identifier? [sy]
+    (let [s (str sy)]
+      (and (alpha? (subs s 0 1))
+           (alphameric? (subs s 1)))))
   (def identifier-generator
     (tgen/let [c (gen/char-alpha)
                s (gen/string-alphanumeric)]
-      (str c s)))
+      (symbol (str c s))))
   (s/def :asr.specs/identifier ;; side effects the spec registry!
     (s/with-gen
       identifier?
       (fn [] identifier-generator))))
 
 #_
-(gen/sample (s/gen ::identifier))
-;; => ("A" "t" "ua" "T" "t" "S3bu85" "xGi" "PJre" "RyHKK0QX4" "TIhjmK1e")
+(gen/sample (s/gen :asr.specs/identifier))
+;; => (k hM LV QWC qW0X RGk3u W Kg6X Q2YvFO621 ODUt9)
+
+#_
+(s/valid? :asr.specs/identifier 'foobar)

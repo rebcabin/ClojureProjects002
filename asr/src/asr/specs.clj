@@ -41,6 +41,8 @@
 ;; /__/\_, |_|_|_|_.__/\___/_|  \__\__,_|_.__/_\___|
 ;;     |__/
 
+;;; No generator, yet. Just a validator.
+
 (s/def ::symbol-table
   (s/cat :head #{'SymbolTable}
          :uid  pos?
@@ -140,6 +142,56 @@
 
 (gen/sample (s/gen ::tuple-ttype))
 ;; => ((Tuple)
+;;     (Tuple (List (Character 1 [1])))
+;;     (Tuple (Set (Integer 8 [])) (Complex 4 [0 7]))
+;;     (Tuple)
+;;     (Tuple
+;;      (Tuple (Real 8 []))
+;;      (List (Character 1 []))
+;;      (Character 1 [7 1047388359946])
+;;      (Integer 2 [1 60608278]))
+;;     (Tuple
+;;      (List (Logical 8 []))
+;;      (List (List (Character 1 [17144])))
+;;      (Complex 4 [])
+;;      (Character 1 [2]))
+;;     (Tuple (Character 1 [81532]) (List (Real 8 [])) (Real 8 [6 745]))
+;;     (Tuple
+;;      (Tuple
+;;       (Complex 8 [])
+;;       (Real 8 [1])
+;;       (Complex 8 [])
+;;       (Complex 8 [0])
+;;       (List (Integer 8 [219382722219]))
+;;       (Character 1 [25880128])
+;;       (Complex 8 []))
+;;      (Real 4 [])
+;;      (Character 1 [13]))
+;;     (Tuple
+;;      (Logical 8 [])
+;;      (Tuple
+;;       (Real 4 [4 4])
+;;       (Tuple
+;;        (Logical 1 [20 431243])
+;;        (Set (Integer 8 []))
+;;        (Complex 4 [11 1])
+;;        (Tuple))
+;;       (Integer 2 [32])
+;;       (Character 1 [16])
+;;       (Set (Real 4 []))
+;;       (Integer 8 [2517628 1])
+;;       (Character 1 [3 56768332])
+;;       (Real 8 []))
+;;      (Set (List (Complex 4 [838788129960 0]))))
+;;     (Tuple
+;;      (Real 4 [168469188 23])
+;;      (Real 8 [])
+;;      (Set (Set (Complex 4 [3424])))
+;;      (Logical 4 [13969 1])
+;;      (Character 1 [1])
+;;      (Real 4 [6 482188844534185])
+;;      (Logical 8 [115])))
+;; => ((Tuple)
 ;;     (Tuple)
 ;;     (Tuple (Character 1 [18]))
 ;;     (Tuple (Character 1 []) (Integer 2 []) (Real 4 []))
@@ -171,7 +223,18 @@
         :tuple     ::tuple-ttype
         ))
 
+
 (gen/sample (s/gen ::ttype))
+;; => ((Integer 1 [])
+;;     (Set (Set (Logical 4 [0])))
+;;     (Logical 1 [])
+;;     (Set (Set (Real 8 [0 3025])))
+;;     (Set (Complex 4 [1 576454]))
+;;     (Real 8 [5])
+;;     (Set (Integer 2 [516997 15]))
+;;     (Complex 4 [14])
+;;     (Integer 8 [66 288322])
+;;     (Logical 1 [2 9]))
 ;; => ((Complex 4 [1999])
 ;;     (List (Set (Tuple (List (Real 4 [0])))))
 ;;     (Real 4 [2])
@@ -210,6 +273,48 @@
 ;;     (Logical 1 [2 23]))
 
 
+;;     _         _            _   _
+;;  __| |___ _ _(_)_ _____ __| | | |_ _  _ _ __  ___
+;; / _` / -_) '_| \ V / -_) _` | |  _| || | '_ \/ -_)
+;; \__,_\___|_| |_|\_/\___\__,_|  \__|\_, | .__/\___|
+;;                                    |__/|_|
+
+;;; NOTE: this is NOT derived-ttype [sic, two t's], rather
+;;; derived-type is a HEAD, DerivedType, kebabulated, of the TERM
+;;; symbol. However, derived-ttype uses derived-type.
+
+(s/def ::derived-type
+  (s/cat
+   :head         #{'DerivedType}
+   :symbol-table #{'placeholder-symbol-table}
+   :nym          ::identifier
+   :members      (s/* ::identifier)
+   :abi          :asr.autospecs/abi
+   :access       :asr.autospecs/access
+   :parent       (s/or :derived-type ::identifier
+                       :class-type   ::identifier)
+   ))
+
+(s/exercise ::derived-type 1)
+;; => ([(DerivedType placeholder-symbol-table C Source Private D)
+;;      {:head DerivedType,
+;;       :symbol-table placeholder-symbol-table,
+;;       :nym C,
+;;       :abi Source,
+;;       :access Private,
+;;       :parent [:derived-type D]}])
+
+
+(s/def ::derived-ttype
+  (s/cat
+   :head         #{'Derived}
+   :derived-type ::identifier
+   :dims         ::dimensions))
+
+(s/exercise ::derived-ttype 1)
+;; => ([(Derived c [957])
+;;      {:head Derived, :derived-type c, :dims [[:bigint 957]]}])
+
 
 ;;               _      _    _
 ;; __ ____ _ _ _(_)__ _| |__| |___
@@ -234,7 +339,7 @@
     (s/cat
      :head           #{'Variable}
      :parent-symtab  pos?
-     :nym            symbol?            ; ::identifier
+     :nym            ::identifier ;symbol?            ; ::identifier
      :intent         :asr.autospecs/intent
      :symbolic-value (s/or :empty empty?
                            :expr  :asr.autospecs/expr)
