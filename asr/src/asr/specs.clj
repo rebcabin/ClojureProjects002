@@ -824,8 +824,6 @@
      :parent-symtab  pos?
      :nym            ::identifier ;symbol?            ; ::identifier
      :intent         :asr.autospecs/intent
-     ;; :symbolic-value (s/spec (s/?  :asr.autospecs/expr)) don't nest!
-     ;; :value          (s/spec (s/?  :asr.autospecs/expr))
      :symbolic-value (s/or :expr  :asr.autospecs/expr
                            :empty empty?)
      :value          (s/or :expr  :asr.autospecs/expr
@@ -834,7 +832,7 @@
      :type           :asr.autospecs/ttype
      :abi            :asr.autospecs/abi
      :access         :asr.autospecs/access
-     :presencs       :asr.autospecs/presence
+     :presence       :asr.autospecs/presence
      :value-attr     :asr.specs/bool
      )
     (fn []
@@ -845,10 +843,14 @@
         (tgen/fmap inc tgen/nat)                     ; parent-symtab
         (s/gen ::identifier)                         ; nym
         (s/gen :asr.autospecs/intent)                ; intent
-        (tgen/vector (s/gen :asr.autospecs/expr))  ;;; FIXME
-        (tgen/vector (s/gen :asr.autospecs/expr))  ;;; FIXME
+
+        (tgen/vector (s/gen :asr.autospecs/expr))  ;;; FIXME ; symbolic-value
+        (tgen/vector (s/gen :asr.autospecs/expr))  ;;; FIXME ; value
+
         (s/gen :asr.autospecs/storage-type)          ; storage-type
+
         (s/gen ::ttype)                              ;; don't auto!
+
         (s/gen :asr.autospecs/abi)                   ; abi
         (s/gen :asr.autospecs/access)                ; access
         (s/gen :asr.autospecs/presence)              ; presence
@@ -856,28 +858,109 @@
                       (tgen/return '.false.)])
         )))))
 
-#_(s/exercise ::variable 4)
-;; => ([(Variable
-;;       1
-;;       b
-;;       Unspecified
-;;       []
-;;       []
-;;       Parameter
-;;       (CPtr)
-;;       Source
-;;       Public
-;;       Optional
-;;       .true.)
-;;      {:value [:empty []],
-;;       :type (CPtr),
-;;       :head Variable,
-;;       :abi Source,
-;;       :intent Unspecified,
-;;       :access Public,
-;;       :presencs Optional,
-;;       :nym b,
-;;       :parent-symtab 1,
-;;       :storage-type Parameter,
-;;       :symbolic-value [:empty []],
-;;       :value-attr [:asr-bool .true.]}])
+;; FIXME: Cannot exercise ::variable too deeply lest stack
+;; overflow. However, we can iterate over it.
+
+#_(for [_ (range 4)]
+ (s/exercise ::variable 1))
+;; => (([(Variable
+;;        1
+;;        x
+;;        In
+;;        []
+;;        []
+;;        Allocatable
+;;        (Tuple [])
+;;        BindC
+;;        Public
+;;        Optional
+;;        .false.)
+;;       {:presence Optional,
+;;        :value [:empty []],
+;;        :type (Tuple []),
+;;        :head Variable,
+;;        :abi BindC,
+;;        :intent In,
+;;        :access Public,
+;;        :nym x,
+;;        :parent-symtab 1,
+;;        :storage-type Allocatable,
+;;        :symbolic-value [:empty []],
+;;        :value-attr [:asr-bool .false.]}])
+;;     ([(Variable
+;;        1
+;;        H
+;;        Out
+;;        []
+;;        []
+;;        Default
+;;        (Dict
+;;         (Set (TypeParameter [0]))
+;;         (Dict (CPtr) (TypeParameter [])))
+;;        LFortranModule
+;;        Private
+;;        Required
+;;        .true.)
+;;       {:presence Required,
+;;        :value [:empty []],
+;;        :type
+;;        (Dict
+;;         (Set (TypeParameter [0]))
+;;         (Dict (CPtr) (TypeParameter []))),
+;;        :head Variable,
+;;        :abi LFortranModule,
+;;        :intent Out,
+;;        :access Private,
+;;        :nym H,
+;;        :parent-symtab 1,
+;;        :storage-type Default,
+;;        :symbolic-value [:empty []],
+;;        :value-attr [:asr-bool .true.]}])
+;;     ([(Variable
+;;        1
+;;        P
+;;        Unspecified
+;;        []
+;;        []
+;;        Save
+;;        (Character 1 [0])
+;;        Intrinsic
+;;        Private
+;;        Required
+;;        .false.)
+;;       {:presence Required,
+;;        :value [:empty []],
+;;        :type (Character 1 [0]),
+;;        :head Variable,
+;;        :abi Intrinsic,
+;;        :intent Unspecified,
+;;        :access Private,
+;;        :nym P,
+;;        :parent-symtab 1,
+;;        :storage-type Save,
+;;        :symbolic-value [:empty []],
+;;        :value-attr [:asr-bool .false.]}])
+;;     ([(Variable
+;;        1
+;;        r
+;;        Out
+;;        []
+;;        []
+;;        Parameter
+;;        (Pointer (Integer 2 [0]))
+;;        Intrinsic
+;;        Private
+;;        Optional
+;;        .true.)
+;;       {:presence Optional,
+;;        :value [:empty []],
+;;        :type (Pointer (Integer 2 [0])),
+;;        :head Variable,
+;;        :abi Intrinsic,
+;;        :intent Out,
+;;        :access Private,
+;;        :nym r,
+;;        :parent-symtab 1,
+;;        :storage-type Parameter,
+;;        :symbolic-value [:empty []],
+;;        :value-attr [:asr-bool .true.]}]))
