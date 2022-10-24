@@ -396,7 +396,7 @@
                       (s/gen ::identifier)]) ; parent
         )))))
 
-(map second (s/exercise ::derived-type 4))
+#_(map second (s/exercise ::derived-type 4))
 ;; => ({:head DerivedType,
 ;;      :symbol-table symbol-table-placeholder,
 ;;      :nym i,
@@ -505,7 +505,7 @@
                       (s/gen ::identifier)]) ; parent
         )))))
 
-(map second (s/exercise ::derived-type 4))
+#_(map second (s/exercise ::derived-type 4))
 ;; => ({:head DerivedType,
 ;;      :symbol-table symbol-table-placeholder,
 ;;      :nym U,
@@ -548,7 +548,7 @@
    :enum-type  ::enum-type
    :dims       ::dimensions))
 
-(s/exercise ::enum-ttype 1)
+#_(s/exercise ::enum-ttype 1)
 ;; => ([(Enum
 ;;       EnumType
 ;;       symbol-table-placeholder
@@ -727,7 +727,7 @@
 
 ;;; Here's the old, inadequate stuff:
 
-(s/exercise :asr.autospecs/ttype)
+#_(s/exercise :asr.autospecs/ttype)
 ;; => ([(List) (List)]
 ;;     [(List) (List)]
 ;;     [(Set) (Set)]
