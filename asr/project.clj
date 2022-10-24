@@ -8,14 +8,14 @@
   :resource-paths ["resources/javacpp.jar"]
   ; :native-path "resources"
   :dependencies [[org.clojure/clojure            "1.11.1"]
-                 ;; [org.clojure/core.logic         "1.0.1"]
                  [org.clojure/test.check         "1.1.1"]
                  [org.clojure/math.numeric-tower "0.0.5"]
-                 ;; [org.clojure/algo.monads        "0.1.6"]
                  [instaparse                     "1.4.12"]
-                 ;; [swiss-arrows                   "0.6.0"] ; experimental
                  [camel-snake-kebab              "0.4.3"]
                  [org.bytedeco/javacpp           "1.5.7"]
+                 #_[swiss-arrows                   "0.6.0"] ; experimental
+                 #_[org.clojure/core.logic         "1.0.1"]
+                 #_[org.clojure/algo.monads        "0.1.6"]
                  #_[org.bytedeco.javacpp-presets/openblas-platform "0.3.5-1.4.4"]]
   :main ^:skip-aot asr.core
   :target-path "target/%s"
