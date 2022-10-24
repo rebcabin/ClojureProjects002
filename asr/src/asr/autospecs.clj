@@ -382,19 +382,11 @@
        count
        echo)
 
-  ;; This isn't good enough. Let's write some head specs for it by
-  ;; hand.
-
-  (s/def ::int   int?)
-  (s/def ::float float?)
-  (s/def ::bool  (s/or :clj-bool boolean?
-                       :asr-bool #(or (= % '.true.) (= % '.false.))))
-
   ;; ttype
   ;;     = Integer(int kind, dimension* dims)
   ;;     | ...
 
-  ;; WORK-IN-PROGRESS
+  ;; WORK-IN-PROGRESS : see specs.clj
   )
 
 

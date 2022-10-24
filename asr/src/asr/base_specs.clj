@@ -4,12 +4,26 @@
             [clojure.test.check.generators :as tgen]))
 
 
+(println "CYCLE BREAKING base-specs (identifier, bool, int, float, etc.)
+installed in asr.specs.")
+
+
+;;       _
+;;  __ _| |_ ___ _ __  ___
+;; / _` |  _/ _ \ '  \(_-<
+;; \__,_|\__\___/_|_|_/__/
+
+(s/def :asr.specs/int   int?)
+(s/def :asr.specs/float float?)
+(s/def :asr.specs/bool  (s/or :clj-bool boolean?
+                     :asr-bool #(or (= % '.true.) (= % '.false.))))
+
+
 ;;  _    _         _   _  __ _
 ;; (_)__| |___ _ _| |_(_)/ _(_)___ _ _
 ;; | / _` / -_) ' \  _| |  _| / -_) '_|
 ;; |_\__,_\___|_||_\__|_|_| |_\___|_|
 
-(println "CYCLE BREAKING identifier spec installed in asr.specs, defined in asr.base-specs.")
 
 (let [alpha-re #"[a-zA-Z]" ;; The famous "let over lambda."
       alphameric-re #"[a-zA-Z0-9]*"]

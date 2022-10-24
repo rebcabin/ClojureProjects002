@@ -1583,4 +1583,45 @@
          Public          ; access
          Required        ; presence
          .false.         ; value-attr
-         ))))
+         )))
+  (is  (s/valid?
+        :asr.specs/variable
+        '(Variable        ; head
+          2               ; parent-symtab
+          x               ; nym
+          Local           ; intent
+          (IntegerConstant
+           5 (Integer 4 [])) ; symbolic-value
+          (SetConstant)      ; value
+          Default         ; storage-type
+          (Integer 4 [])  ; type
+          Source          ; abi
+          Public          ; access
+          Required        ; presence
+          .false.         ; value-attr
+          ))))
+
+
+;;  _              _
+;; | |__  ___  ___| |
+;; | '_ \/ _ \/ _ \ |
+;; |_.__/\___/\___/_|
+
+(deftest bool-spec-test
+  (is (s/valid? :asr.specs/bool '.false.))
+  (is (s/valid? :asr.specs/bool '.true.))
+  (is (s/valid? :asr.specs/bool false))
+  (is (s/valid? :asr.specs/bool true)))
+
+
+;;  _             _       _   _
+;; | |_ _  _ _ __| |___  | |_| |_ _  _ _ __  ___
+;; |  _| || | '_ \ / -_) |  _|  _| || | '_ \/ -_)
+;;  \__|\_,_| .__/_\___|  \__|\__|\_, | .__/\___|
+;;          |_|                   |__/|_|
+
+(deftest tuple-ttype-test
+  (is (s/valid? :asr.specs/tuple-ttype
+                '(Tuple [])))
+  (is (s/valid? :asr.specs/tuple-ttype
+                '(Tuple [(Character 1 []) (Integer 4 [])]))))

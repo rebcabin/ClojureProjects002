@@ -79,6 +79,7 @@
    :kind ::integer-kind
    :dims ::dimensions))
 
+#_
 (gen/sample (s/gen ::integer-ttype))
 ;; => ((Integer 2 [25])
 ;;     (Integer 1 [])
@@ -115,7 +116,9 @@
    :kind ::logical-kind
    :dims ::dimensions))
 
-;;; Defective ansatz; backpatch later to break recursive cycle
+;;; Defective ansatz; backpatch later to break recursive cycle.
+;;; But, at this point, we need something defined for ttype so
+;;; we can define the set, list, and tuple ttypes.
 
 (s/def ::ttype
   (s/or :integer   ::integer-ttype
@@ -124,6 +127,9 @@
         :character ::character-ttype
         :logical   ::logical-ttype))
 
+;; So far, only! It gets bigger
+
+#_
 (gen/sample (s/gen ::ttype))
 ;; => ((Character 1 [])
 ;;     (Logical 1 [1 29])
@@ -147,61 +153,49 @@
    :ttype ::ttype))
 
 (s/def ::tuple-ttype
-  (s/cat
-   :head  #{'Tuple}
-   :ttype (s/* ::ttype)))
+  (s/with-gen
+    (s/cat
+     :head  #{'Tuple}
+     :type (s/or :empty     empty?
+                 :vector-of (s/* ::ttype)))
+    (fn []
+      (tgen/fmap
+       list*
+       (tgen/tuple
+        (tgen/return 'Tuple)
+        (tgen/vector (s/gen ::ttype)))))))
 
+#_
 (gen/sample (s/gen ::tuple-ttype))
-;; => ((Tuple)
-;;     (Tuple (List (Character 1 [1])))
-;;     (Tuple (Set (Integer 8 [])) (Complex 4 [0 7]))
-;;     (Tuple)
+;; => ((Tuple [])
+;;     (Tuple [])
+;;     (Tuple [(Real 8 []) (Complex 4 [207992 130290])])
+;;     (Tuple [(Logical 4 [1213 0]) (Logical 4 [22])])
 ;;     (Tuple
-;;      (Tuple (Real 8 []))
-;;      (List (Character 1 []))
-;;      (Character 1 [7 1047388359946])
-;;      (Integer 2 [1 60608278]))
+;;      [(Integer 4 [1 0])
+;;       (Logical 1 [939])
+;;       (Real 8 [])
+;;       (Logical 1 [1 77])])
+;;     (Tuple [(Logical 1 [0]) (Real 8 []) (Character 1 [1 2])])
+;;     (Tuple [])
+;;     (Tuple [(Real 8 [0]) (Logical 8 []) (Real 8 [63 1])])
 ;;     (Tuple
-;;      (List (Logical 8 []))
-;;      (List (List (Character 1 [17144])))
-;;      (Complex 4 [])
-;;      (Character 1 [2]))
-;;     (Tuple (Character 1 [81532]) (List (Real 8 [])) (Real 8 [6 745]))
+;;      [(Logical 1 [12 358])
+;;       (Real 4 [1])
+;;       (Complex 4 [40262711142239])
+;;       (Complex 4 [])
+;;       (Logical 8 [])
+;;       (Integer 4 [5174422140])
+;;       (Complex 4 [])
+;;       (Complex 4 [3109799523510])])
 ;;     (Tuple
-;;      (Tuple
-;;       (Complex 8 [])
-;;       (Real 8 [1])
-;;       (Complex 8 [])
-;;       (Complex 8 [0])
-;;       (List (Integer 8 [219382722219]))
-;;       (Character 1 [25880128])
-;;       (Complex 8 []))
-;;      (Real 4 [])
-;;      (Character 1 [13]))
-;;     (Tuple
-;;      (Logical 8 [])
-;;      (Tuple
-;;       (Real 4 [4 4])
-;;       (Tuple
-;;        (Logical 1 [20 431243])
-;;        (Set (Integer 8 []))
-;;        (Complex 4 [11 1])
-;;        (Tuple))
-;;       (Integer 2 [32])
-;;       (Character 1 [16])
-;;       (Set (Real 4 []))
-;;       (Integer 8 [2517628 1])
-;;       (Character 1 [3 56768332])
-;;       (Real 8 []))
-;;      (Set (List (Complex 4 [838788129960 0]))))
-;;     (Tuple
-;;      (Real 4 [168469188 23])
-;;      (Real 8 [])
-;;      (Set (Set (Complex 4 [3424])))
-;;      (Logical 4 [13969 1])
-;;      (Character 1 [1])
-;;      (Real 4 [6 482188844534185])
-;;      (Logical 8 [115])))
+;;      [(Integer 8 [64979707082 191214])
+;;       (Logical 8 [0])
+;;       (Complex 4 [])
+;;       (Integer 4 [])
+;;       (Real 8 [])
+;;       (Logical 1 [104723020110])
+;;       (Character 1 [10])]))
 
 ;;; Filling this out as we go along
 
@@ -216,44 +210,138 @@
         :tuple     ::tuple-ttype
         ))
 
-(gen/sample (s/gen ::ttype))
-;; => ((Complex 4 [1999])
-;;     (List (Set (Tuple (List (Real 4 [0])))))
-;;     (Real 4 [2])
-;;     (Real 4 [0 461312])
-;;     (List
-;;      (Tuple (Real 8 [452385 0]) (Complex 8 []) (Real 8 [1]) (Character 1 [])))
-;;     (Logical 1 [])
-;;     (Complex 4 [1])
-;;     (Tuple
-;;      (Integer 8 [13778708900817910 335])
-;;      (Real 8 [3])
-;;      (List (Integer 8 []))
-;;      (Tuple
-;;       (Character 1 [])
-;;       (Tuple
-;;        (Real 4 [])
+#_
+(s/exercise ::ttype)
+;; => ([(Logical 4 [35 8])
+;;      [:logical
+;;       {:head Logical, :kind 4, :dims [[:bigint 35] [:bigint 8]]}]]
+;;     [(Character 1 [0 1])
+;;      [:character
+;;       {:head Character,
+;;        :kind 1,
+;;        :dims [[:nat-int 0] [:nat-int 1]]}]]
+;;     [(Real 8 [1 83])
+;;      [:real
+;;       {:head Real, :kind 8, :dims [[:nat-int 1] [:bigint 83]]}]]
+;;     [(Set (Logical 1 [0 1605884]))
+;;      [:set
+;;       {:head Set,
+;;        :ttype
+;;        [:logical
+;;         {:head Logical,
+;;          :kind 1,
+;;          :dims [[:bigint 0] [:bigint 1605884]]}]}]]
+;;     [(Set (Real 4 [2]))
+;;      [:set
+;;       {:head Set,
+;;        :ttype [:real {:head Real, :kind 4, :dims [[:nat-int 2]]}]}]]
+;;     [(Character 1 [2 0])
+;;      [:character
+;;       {:head Character,
+;;        :kind 1,
+;;        :dims [[:nat-int 2] [:nat-int 0]]}]]
+;;     [(Integer 4 [2361])
+;;      [:integer {:head Integer, :kind 4, :dims [[:bigint 2361]]}]]
+;;     [(Tuple
+;;       [(List (Set (Integer 1 [])))
+;;        (Character 1 [1 14447796685686])])
+;;      [:tuple
+;;       {:head Tuple,
+;;        :type
+;;        [:vector-of
+;;         [[:list
+;;           {:head List,
+;;            :ttype
+;;            [:set
+;;             {:head Set,
+;;              :ttype
+;;              [:integer {:head Integer, :kind 1, :dims []}]}]}]
+;;          [:character
+;;           {:head Character,
+;;            :kind 1,
+;;            :dims [[:nat-int 1] [:bigint 14447796685686]]}]]]}]]
+;;     [(Tuple
+;;       [(Integer 1 [19])
+;;        (Logical 1 [])
 ;;        (Tuple
-;;         (Complex 4 [564183751926])
-;;         (Set (Logical 1 [4]))
-;;         (List (Set (Real 4 [])))
-;;         (Character 1 [])
-;;         (Character 1 [24224899141586803 8798]))
-;;        (Real 4 [])
-;;        (Logical 8 [])
-;;        (Logical 1 [28 238560])
-;;        (Integer 2 [15 459231440654]))
-;;       (Character 1 [1 0])
-;;       (Real 4 [28760941 1047131])
-;;       (Set
-;;        (Tuple
-;;         (Integer 1 [])
-;;         (List (Character 1 [1266388707 3]))
-;;         (Integer 4 [71233937802715]))))
-;;      (Set (Logical 1 [])))
-;;     (List (Integer 1 []))
-;;     (Logical 1 [2 23]))
+;;         [(Set (List (Complex 4 [24])))
+;;          (Character 1 [114 1])
+;;          (Character 1 [16180267365 6])
+;;          (Character 1 [2 42959100])
+;;          (Real 4 [])])
+;;        (List (Real 4 [3]))
+;;        (Set (Real 8 []))
+;;        (Set (Complex 8 [23 2072723744791]))])
+;;      [:tuple
+;;       {:head Tuple,
+;;        :type
+;;        [:vector-of
+;;         [[:integer {:head Integer, :kind 1, :dims [[:bigint 19]]}]
+;;          [:logical {:head Logical, :kind 1, :dims []}]
+;;          [:tuple
+;;           {:head Tuple,
+;;            :type
+;;            [:vector-of
+;;             [[:set
+;;               {:head Set,
+;;                :ttype
+;;                [:list
+;;                 {:head List,
+;;                  :ttype
+;;                  [:complex
+;;                   {:head Complex,
+;;                    :kind 4,
+;;                    :dims [[:nat-int 24]]}]}]}]
+;;              [:character
+;;               {:head Character,
+;;                :kind 1,
+;;                :dims [[:nat-int 114] [:nat-int 1]]}]
+;;              [:character
+;;               {:head Character,
+;;                :kind 1,
+;;                :dims [[:bigint 16180267365] [:nat-int 6]]}]
+;;              [:character
+;;               {:head Character,
+;;                :kind 1,
+;;                :dims [[:nat-int 2] [:bigint 42959100]]}]
+;;              [:real {:head Real, :kind 4, :dims []}]]]}]
+;;          [:list
+;;           {:head List,
+;;            :ttype
+;;            [:real {:head Real, :kind 4, :dims [[:nat-int 3]]}]}]
+;;          [:set
+;;           {:head Set,
+;;            :ttype [:real {:head Real, :kind 8, :dims []}]}]
+;;          [:set
+;;           {:head Set,
+;;            :ttype
+;;            [:complex
+;;             {:head Complex,
+;;              :kind 8,
+;;              :dims [[:nat-int 23] [:bigint 2072723744791]]}]}]]]}]]
+;;     [(Complex 8 []) [:complex {:head Complex, :kind 8, :dims []}]])
 
+
+;;                                     __   __
+;;  _______  __ _  ___  ___  ___ ___ _/ /  / /__ ___
+;; / __/ _ \/  ' \/ _ \/ _ \(_-</ _ `/ _ \/ / -_|_-<
+;; \__/\___/_/_/_/ .__/\___/___/\_,_/_.__/_/\__/___/
+;;              /_/
+
+;;; private, reusable, composable mini-specs:
+
+(s/def ::-members
+  (s/or :vector-of (s/* ::identifier)
+        :empty     empty?))
+
+;; Don't check a symbol against empty first; order matters!
+;; NOTE: An identifier will check against :derived-type first
+;; and never make it to class-type.
+
+(s/def ::-parent
+  (s/or :parent (s/or :derived-type ::identifier
+                      :class-type   ::identifier)
+        :empty empty?))
 
 ;;                   __        ___      __        _             __
 ;;   ___ __ ____ _  / /  ___  / (_) ___/ /__ ____(_)  _____ ___/ /
@@ -285,25 +373,58 @@
 ;;; https://github.com/lcompilers/lpython/issues/1224
 
 (s/def ::derived-type
-  (s/cat
-   :head         #{'DerivedType}
-   :symbol-table #{'symbol-table-placeholder}
-   :nym          ::identifier
-   :members      (s/* ::identifier)
-   :abi          :asr.autospecs/abi
-   :access       :asr.autospecs/access
-   :parent       (s/or :derived-type ::identifier
-                       :class-type   ::identifier)
-   ))
+  (s/with-gen
+    (s/cat
+     :head         #{'DerivedType}
+     :symbol-table #{'symbol-table-placeholder}
+     :nym          ::identifier
+     :members      ::-members
+     :abi          :asr.autospecs/abi
+     :access       :asr.autospecs/access
+     :parent       ::-parent)
+    (fn []
+      (tgen/fmap
+       list*
+       (tgen/tuple
+        (tgen/return 'DerivedType)
+        (tgen/return 'symbol-table-placeholder) ; FIXME
+        (s/gen ::identifier)                    ; nym
+        (tgen/vector (s/gen ::identifier))      ; members
+        (s/gen :asr.autospecs/abi)              ; abi
+        (s/gen :asr.autospecs/access)           ; access
+        (tgen/one-of [(tgen/return ())
+                      (s/gen ::identifier)]) ; parent
+        )))))
 
-(s/exercise ::derived-type 1)
-;; => ([(DerivedType placeholder-symbol-table C Source Private D)
-;;      {:head DerivedType,
-;;       :symbol-table placeholder-symbol-table,
-;;       :nym C,
-;;       :abi Source,
-;;       :access Private,
-;;       :parent [:derived-type D]}])
+(map second (s/exercise ::derived-type 4))
+;; => ({:head DerivedType,
+;;      :symbol-table symbol-table-placeholder,
+;;      :nym i,
+;;      :members [:vector-of []],
+;;      :abi BindC,
+;;      :access Public,
+;;      :parent [:parent [:derived-type G]]}
+;;     {:head DerivedType,
+;;      :symbol-table symbol-table-placeholder,
+;;      :nym s4,
+;;      :members [:vector-of [EL]],
+;;      :abi Interactive,
+;;      :access Public,
+;;      :parent [:empty ()]}
+;;     {:head DerivedType,
+;;      :symbol-table symbol-table-placeholder,
+;;      :nym e,
+;;      :members [:vector-of []],
+;;      :abi Interactive,
+;;      :access Public,
+;;      :parent [:empty ()]}
+;;     {:head DerivedType,
+;;      :symbol-table symbol-table-placeholder,
+;;      :nym T90,
+;;      :members [:vector-of [P7Q6]],
+;;      :abi Interactive,
+;;      :access Public,
+;;      :parent [:parent [:derived-type a]]})
 
 
 ;;      __        _             __  __  __
@@ -318,9 +439,26 @@
    :derived-type ::derived-type
    :dims         ::dimensions))
 
-(s/exercise ::derived-ttype 1)
-;; => ([(Derived c [957])
-;;      {:head Derived, :derived-type c, :dims [[:bigint 957]]}])
+#_(s/exercise ::derived-ttype 1)
+;; =>  [(Derived
+;;       DerivedType
+;;       symbol-table-placeholder
+;;       kY
+;;       []
+;;       Interactive
+;;       Public
+;;       A7
+;;       [974])
+;;      {:head Derived,
+;;       :derived-type
+;;       {:head DerivedType,
+;;        :symbol-table symbol-table-placeholder,
+;;        :nym kY,
+;;        :members [:vector-of []],
+;;        :abi Interactive,
+;;        :access Public,
+;;        :parent [:parent [:derived-type A7]]},
+;;       :dims [[:bigint 974]]}])
 
 
 ;;                   __        ___                         __
@@ -341,17 +479,61 @@
 ;;   symbol?      parent)
 
 (s/def ::enum-type
-  (s/cat
-   :head         #{'EnumType}
-   :symbol-table #{'symbol-table-placeholder}
-   :nym          ::identifier
-   :members      (s/* ::identifier)
-   :abi          :asr.autospecs/abi
-   :access       :asr.autospecs/access
-   :type         ::ttype
-   :parent       (s/or :derived-type ::identifier
-                       :class-type   ::identifier)
-   ))
+  (s/with-gen
+    (s/cat
+     :head         #{'EnumType}
+     :symbol-table #{'symbol-table-placeholder}
+     :nym          ::identifier
+     :members      ::-members
+     :abi          :asr.autospecs/abi
+     :access       :asr.autospecs/access
+     :type         ::ttype
+     :parent       ::-parent
+     )
+    (fn []
+      (tgen/fmap
+       list*
+       (tgen/tuple
+        (tgen/return 'EnumType)
+        (tgen/return 'symbol-table-placeholder) ; FIXME
+        (s/gen ::identifier)                    ; nym
+        (tgen/vector (s/gen ::identifier))      ; members
+        (s/gen :asr.autospecs/abi)              ; abi
+        (s/gen :asr.autospecs/access)           ; access
+        (s/gen ::ttype)
+        (tgen/one-of [(tgen/return ())
+                      (s/gen ::identifier)]) ; parent
+        )))))
+
+(map second (s/exercise ::derived-type 4))
+;; => ({:head DerivedType,
+;;      :symbol-table symbol-table-placeholder,
+;;      :nym U,
+;;      :members [:vector-of []],
+;;      :abi Interactive,
+;;      :access Public,
+;;      :parent [:parent [:derived-type y]]}
+;;     {:head DerivedType,
+;;      :symbol-table symbol-table-placeholder,
+;;      :nym q,
+;;      :members [:vector-of [S]],
+;;      :abi LFortranModule,
+;;      :access Public,
+;;      :parent [:parent [:derived-type u5]]}
+;;     {:head DerivedType,
+;;      :symbol-table symbol-table-placeholder,
+;;      :nym F7,
+;;      :members [:vector-of [TTI D]],
+;;      :abi GFortranModule,
+;;      :access Public,
+;;      :parent [:parent [:derived-type bY]]}
+;;     {:head DerivedType,
+;;      :symbol-table symbol-table-placeholder,
+;;      :nym keIQ,
+;;      :members [:vector-of [nk]],
+;;      :abi Source,
+;;      :access Private,
+;;      :parent [:empty ()]})
 
 
 ;;                         __  __
@@ -367,7 +549,46 @@
    :dims       ::dimensions))
 
 (s/exercise ::enum-ttype 1)
-;; => ([(Enum b []) {:head Enum, :enum-type b, :dims []}])
+;; => ([(Enum
+;;       EnumType
+;;       symbol-table-placeholder
+;;       h
+;;       []
+;;       Intrinsic
+;;       Private
+;;       (Derived
+;;        DerivedType
+;;        symbol-table-placeholder
+;;        b
+;;        []
+;;        LFortranModule
+;;        Public
+;;        ()
+;;        [1 0])
+;;       L
+;;       [1])
+;;      {:head Enum,
+;;       :enum-type
+;;       {:head EnumType,
+;;        :symbol-table symbol-table-placeholder,
+;;        :nym h,
+;;        :members [:vector-of []],
+;;        :abi Intrinsic,
+;;        :access Private,
+;;        :type
+;;        [:derived
+;;         {:head Derived,
+;;          :derived-type
+;;          {:head DerivedType,
+;;           :symbol-table symbol-table-placeholder,
+;;           :nym b,
+;;           :members [:vector-of []],
+;;           :abi LFortranModule,
+;;           :access Public,
+;;           :parent [:empty ()]},
+;;          :dims [[:nat-int 1] [:nat-int 0]]}],
+;;        :parent [:parent [:derived-type L]]},
+;;       :dims [[:bigint 1]]}])
 
 
 ;;                   __        ___       __               __
@@ -429,6 +650,9 @@
    :head  #{'Pointer}
    :type  ::ttype))
 
+#_
+(s/exercise ::pointer-ttype 1)
+
 
 ;;            __        __  __
 ;;  _______  / /_____  / /_/ /___ _____  ___
@@ -458,13 +682,30 @@
    :dims ::dimensions
    :rt   (s/* ::restriction)
    ))
+
+(s/exercise ::type-parameter-ttype 4)
+;; => ([(TypeParameter [0])
+;;      {:head TypeParameter, :dims [[:nat-int 0]]}]
+;;     [(TypeParameter [] Restrction SupportsPlus)
+;;      {:head TypeParameter,
+;;       :dims [],
+;;       :rt [{:head Restrction, :rt SupportsPlus}]}]
+;;     [(TypeParameter [1 1] Restrction Divisible)
+;;      {:head TypeParameter,
+;;       :dims [[:nat-int 1] [:nat-int 1]],
+;;       :rt [{:head Restrction, :rt Divisible}]}]
+;;     [(TypeParameter [2 0])
+;;      {:head TypeParameter, :dims [[:nat-int 2] [:nat-int 0]]}])
+
+
 ;;  _   _                               _      __
 ;; | |_| |_ _  _ _ __  ___   _ _ ___ __| |___ / _|
 ;; |  _|  _| || | '_ \/ -_) | '_/ -_) _` / -_)  _|
 ;;  \__|\__|\_, | .__/\___| |_| \___\__,_\___|_|
 ;;          |__/|_|
 
-;;; Filling this out as we go along
+;;; This is everything, up to but not including symbol_table. This
+;;; still has the placeholder for symbol_table.
 
 (s/def ::ttype
   (s/or :integer        ::integer-ttype
@@ -500,199 +741,68 @@
 ;;      (Complex KFr H11qG Hk5Kn77 P4n25cl7u Ju)]
 ;;     [(Real ml9oHevc2) (Real ml9oHevc2)])
 
-;;; Here's the new, fixed-up stuff:
+;;; Here's the new, fixed-up stuff; we still have symbol-table
+;;; placeholder:
 
-(s/exercise ::ttype)
-;; => ([(Dict (Integer 2 []) (Class ClassType t Source Private []))
+#_
+(s/exercise ::ttype 2)
+;; => ([(Dict
+;;       (Tuple [])
+;;       (Dict
+;;        (Dict
+;;         (Integer 2 [])
+;;         (Derived
+;;          DerivedType
+;;          symbol-table-placeholder
+;;          G
+;;          []
+;;          Source
+;;          Private
+;;          a
+;;          [5 0]))
+;;        (Class ClassType s Interactive Public [])))
 ;;      [:dict
 ;;       {:head Dict,
-;;        :key-type [:integer {:head Integer, :kind 2, :dims []}],
+;;        :key-type [:tuple {:head Tuple, :type [:empty []]}],
 ;;        :value-type
-;;        [:class
-;;         {:head Class,
-;;          :class-type
-;;          {:head ClassType, :nym t, :abi Source, :access Private},
-;;          :dims []}]}]]
-;;     [(Set (Pointer (TypeParameter [1 0])))
-;;      [:set
-;;       {:head Set,
-;;        :ttype
-;;        [:pointer
-;;         {:head Pointer,
-;;          :type
-;;          [:type-parameter
-;;           {:head TypeParameter,
-;;            :dims [[:nat-int 1] [:nat-int 0]]}]}]}]]
-;;     [(Set (Character 1 []))
-;;      [:set
-;;       {:head Set,
-;;        :ttype [:character {:head Character, :kind 1, :dims []}]}]]
-;;     [(Real 8 []) [:real {:head Real, :kind 8, :dims []}]]
-;;     [(Tuple
-;;       (Derived
-;;        DerivedType
-;;        symbol-table-placeholder
-;;        y99Jg
-;;        eDC
-;;        L3
-;;        Dn
-;;        Intrinsic
-;;        Private
-;;        ANdva
-;;        [2675])
-;;       (List
-;;        (Set
-;;         (Tuple
-;;          (Enum
-;;           EnumType
-;;           symbol-table-placeholder
-;;           so
-;;           G1tlT
-;;           bKOn9
-;;           GS8
-;;           BindC
-;;           Private
-;;           (Dict
-;;            (Derived
-;;             DerivedType
-;;             symbol-table-placeholder
-;;             o
-;;             GFortranModule
-;;             Private
-;;             n5g5f
-;;             [2 1])
-;;            (Real 8 [0]))
-;;           Q
-;;           [1 3724932396])
-;;          (Real 4 [])
-;;          (Integer 1 []))))
-;;       (List (Class ClassType TG GFortranModule Private [4 6]))
-;;       (Logical 8 [1 0]))
-;;      [:tuple
-;;       {:head Tuple,
-;;        :ttype
-;;        [[:derived
-;;          {:head Derived,
-;;           :derived-type
-;;           {:head DerivedType,
-;;            :symbol-table symbol-table-placeholder,
-;;            :nym y99Jg,
-;;            :members [eDC L3 Dn],
-;;            :abi Intrinsic,
-;;            :access Private,
-;;            :parent [:derived-type ANdva]},
-;;           :dims [[:bigint 2675]]}]
-;;         [:list
-;;          {:head List,
-;;           :ttype
-;;           [:set
-;;            {:head Set,
-;;             :ttype
-;;             [:tuple
-;;              {:head Tuple,
-;;               :ttype
-;;               [[:enum
-;;                 {:head Enum,
-;;                  :enum-type
-;;                  {:head EnumType,
-;;                   :symbol-table symbol-table-placeholder,
-;;                   :nym so,
-;;                   :members [G1tlT bKOn9 GS8],
-;;                   :abi BindC,
-;;                   :access Private,
-;;                   :type
-;;                   [:dict
-;;                    {:head Dict,
-;;                     :key-type
-;;                     [:derived
-;;                      {:head Derived,
-;;                       :derived-type
-;;                       {:head DerivedType,
-;;                        :symbol-table symbol-table-placeholder,
-;;                        :nym o,
-;;                        :abi GFortranModule,
-;;                        :access Private,
-;;                        :parent [:derived-type n5g5f]},
-;;                       :dims [[:nat-int 2] [:nat-int 1]]}],
-;;                     :value-type
-;;                     [:real
-;;                      {:head Real, :kind 8, :dims [[:nat-int 0]]}]}],
-;;                   :parent [:derived-type Q]},
-;;                  :dims [[:nat-int 1] [:bigint 3724932396]]}]
-;;                [:real {:head Real, :kind 4, :dims []}]
-;;                [:integer {:head Integer, :kind 1, :dims []}]]}]}]}]
-;;         [:list
-;;          {:head List,
-;;           :ttype
-;;           [:class
-;;            {:head Class,
-;;             :class-type
-;;             {:head ClassType,
-;;              :nym TG,
-;;              :abi GFortranModule,
-;;              :access Private},
-;;             :dims [[:nat-int 4] [:nat-int 6]]}]}]
-;;         [:logical
-;;          {:head Logical,
-;;           :kind 8,
-;;           :dims [[:nat-int 1] [:nat-int 0]]}]]}]]
-;;     [(Pointer (Complex 8 []))
-;;      [:pointer
-;;       {:head Pointer,
-;;        :type [:complex {:head Complex, :kind 8, :dims []}]}]]
-;;     [(TypeParameter
-;;       [0 2052028268]
-;;       Restrction
-;;       SupportsZero
-;;       Restrction
-;;       SupportsPlus
-;;       Restrction
-;;       Any
-;;       Restrction
-;;       SupportsPlus)
-;;      [:type-parameter
-;;       {:head TypeParameter,
-;;        :dims [[:nat-int 0] [:bigint 2052028268]],
-;;        :rt
-;;        [{:head Restrction, :rt SupportsZero}
-;;         {:head Restrction, :rt SupportsPlus}
-;;         {:head Restrction, :rt Any}
-;;         {:head Restrction, :rt SupportsPlus}]}]]
-;;     [(Pointer
-;;       (Enum
-;;        EnumType
-;;        symbol-table-placeholder
-;;        t0
-;;        W
-;;        Interactive
-;;        Private
-;;        (TypeParameter [])
-;;        YP
-;;        [13634627160747788 12409532]))
-;;      [:pointer
-;;       {:head Pointer,
-;;        :type
-;;        [:enum
-;;         {:head Enum,
-;;          :enum-type
-;;          {:head EnumType,
-;;           :symbol-table symbol-table-placeholder,
-;;           :nym t0,
-;;           :members [W],
-;;           :abi Interactive,
-;;           :access Private,
-;;           :type [:type-parameter {:head TypeParameter, :dims []}],
-;;           :parent [:derived-type YP]},
-;;          :dims [[:bigint 13634627160747788] [:bigint 12409532]]}]}]]
-;;     [(Logical 1 [234785814526])
-;;      [:logical
-;;       {:head Logical, :kind 1, :dims [[:bigint 234785814526]]}]]
-;;     [(CPtr) [:cptr {:head CPtr}]])
+;;        [:dict
+;;         {:head Dict,
+;;          :key-type
+;;          [:dict
+;;           {:head Dict,
+;;            :key-type [:integer {:head Integer, :kind 2, :dims []}],
+;;            :value-type
+;;            [:derived
+;;             {:head Derived,
+;;              :derived-type
+;;              {:head DerivedType,
+;;               :symbol-table symbol-table-placeholder,
+;;               :nym G,
+;;               :members [:vector-of []],
+;;               :abi Source,
+;;               :access Private,
+;;               :parent [:parent [:derived-type a]]},
+;;              :dims [[:bigint 5] [:nat-int 0]]}]}],
+;;          :value-type
+;;          [:class
+;;           {:head Class,
+;;            :class-type
+;;            {:head ClassType,
+;;             :nym s,
+;;             :abi Interactive,
+;;             :access Public},
+;;            :dims []}]}]}]]
+;;     [(Tuple []) [:tuple {:head Tuple, :type [:empty []]}]])
+;; => ([(Tuple []) [:tuple {:head Tuple, :type [:empty []]}]]
+;;     [(List (CPtr))
+;;      [:list {:head List, :ttype [:cptr {:head CPtr}]}]])
 
-;;               _      _    _
-;; __ ____ _ _ _(_)__ _| |__| |___
-;; \ V / _` | '_| / _` | '_ \ / -_)
-;;  \_/\__,_|_| |_\__,_|_.__/_\___|
+
+;;                _         _ _                _      _    _
+;;  ____  _ _ __ | |__  ___| (_) __ ____ _ _ _(_)__ _| |__| |___
+;; (_-< || | '  \| '_ \/ _ \ |_  \ V / _` | '_| / _` | '_ \ / -_)
+;; /__/\_, |_|_|_|_.__/\___/_(_)  \_/\__,_|_| |_\__,_|_.__/_\___|
+;;     |__/
 
 ;; Variable(
 ;;   symbol_table parent_symtab,   -- actually a uid
@@ -714,16 +824,18 @@
      :parent-symtab  pos?
      :nym            ::identifier ;symbol?            ; ::identifier
      :intent         :asr.autospecs/intent
-     :symbolic-value (s/or :empty empty?
-                           :expr  :asr.autospecs/expr)
-     :value          (s/or :empty empty?
-                           :expr  :asr.autospecs/expr)
+     ;; :symbolic-value (s/spec (s/?  :asr.autospecs/expr)) don't nest!
+     ;; :value          (s/spec (s/?  :asr.autospecs/expr))
+     :symbolic-value (s/or :expr  :asr.autospecs/expr
+                           :empty empty?)
+     :value          (s/or :expr  :asr.autospecs/expr
+                           :empty empty?)
      :storage-type   :asr.autospecs/storage-type
      :type           :asr.autospecs/ttype
      :abi            :asr.autospecs/abi
      :access         :asr.autospecs/access
      :presencs       :asr.autospecs/presence
-     :value-attr     :asr.autospecs/bool
+     :value-attr     :asr.specs/bool
      )
     (fn []
       (tgen/fmap
@@ -731,69 +843,41 @@
        (tgen/tuple
         (tgen/return 'Variable)
         (tgen/fmap inc tgen/nat)                     ; parent-symtab
-        (tgen/fmap symbol (s/gen ::identifier))      ; nym
+        (s/gen ::identifier)                         ; nym
         (s/gen :asr.autospecs/intent)                ; intent
-        (tgen/one-of [(tgen/return ())               ; symbolic-value
-                      (s/gen :asr.autospecs/expr)])
-        (tgen/one-of [(tgen/return ())               ; value
-                      (s/gen :asr.autospecs/expr)])
-        (s/gen :asr.autospecs/storage-type)
-        (s/gen :asr.autospecs/ttype)
-        (s/gen :asr.autospecs/abi)
-        (s/gen :asr.autospecs/access)
-        (s/gen :asr.autospecs/presence)
-        (tgen/one-of [(tgen/return '.true.')         ; value-attr
+        (tgen/vector (s/gen :asr.autospecs/expr))  ;;; FIXME
+        (tgen/vector (s/gen :asr.autospecs/expr))  ;;; FIXME
+        (s/gen :asr.autospecs/storage-type)          ; storage-type
+        (s/gen ::ttype)                              ;; don't auto!
+        (s/gen :asr.autospecs/abi)                   ; abi
+        (s/gen :asr.autospecs/access)                ; access
+        (s/gen :asr.autospecs/presence)              ; presence
+        (tgen/one-of [(tgen/return '.true.)          ; value-attr
                       (tgen/return '.false.)])
         )))))
 
-(gen/sample (s/gen :asr.specs/dimensions))
-;; => ([0] [354 0] [1] [] [] [5 1] [23089 4] [] [38 41229205] [])
-
-(gen/sample (s/gen :asr.autospecs/ttype))
-;; => ((Pointer)
-;;     (Tuple)
-;;     (Class j5 B6)
-;;     (Integer)
-;;     (Set B)
-;;     (Enum Y W88e95)
-;;     (Real E8t4d8 R)
-;;     (List GsYGINHf YDF jky0ixn1 qk J SMJ1)
-;;     (Character lv7w)
-;;     (CPtr XXi2 f a7bh2ld0z d335Nq9 pDy tsI0xD2))
-
-(gen/generate (s/gen ::variable))
-;; => (Variable
-;;     23
-;;     B0dQK0KM3nLH2AhI
-;;     Local                            ; intent
-;;     ()                               ; symbolic-value
-;;     ()                               ; value
-;;     Parameter                        ; storage-type
-;;     (Tuple aDt00G2S46GwSmLVu73Q6Ap)  ; ttype
-;;     LFortranModule                   ; abi
-;;     Public                           ; access
-;;     Optional                         ; presence
-;;     .false.)                         ; value-attr
-;; => (Variable
-;;     22
-;;     kIhur6JLELa2T6S34VPY
-;;     Unspecified
-;;     ()
-;;     ()
-;;     Save
-;;     (TypeParameter
-;;      BXyWy
-;;      Ag4i7VSz1
-;;      M2E544sGj
-;;      iqtO2k481I9LYlAsKjB0S2z5YmV6D8)
-;;     GFortranModule
-;;     Private
-;;     Optional
-;;     .false.)
-
-
-;; (gen/generate (s/gen ::variable))
-;; (gen/generate (s/gen #(and (int? %) (> % 0))))
-;; (gen/generate (s/gen symbol?))
-;; (s/exercise ::identifier)
-;; (gen/generate (s/gen :asr.autospecs/expr))
+#_(s/exercise ::variable 4)
+;; => ([(Variable
+;;       1
+;;       b
+;;       Unspecified
+;;       []
+;;       []
+;;       Parameter
+;;       (CPtr)
+;;       Source
+;;       Public
+;;       Optional
+;;       .true.)
+;;      {:value [:empty []],
+;;       :type (CPtr),
+;;       :head Variable,
+;;       :abi Source,
+;;       :intent Unspecified,
+;;       :access Public,
+;;       :presencs Optional,
+;;       :nym b,
+;;       :parent-symtab 1,
+;;       :storage-type Parameter,
+;;       :symbolic-value [:empty []],
+;;       :value-attr [:asr-bool .true.]}])
