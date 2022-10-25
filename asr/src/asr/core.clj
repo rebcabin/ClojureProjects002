@@ -7,7 +7,9 @@
         [asr.parsed]
         [asr.autospecs]
         [asr.arithmetic]
-        [asr.expr.semnasr])
+        [asr.expr.semnasr]
+        [asr.expr.semsem]
+        [swiss.arrows])
 
   (:require [clojure.spec.alpha            :as    s         ]
             [clojure.pprint                :refer [pprint]  ]
@@ -62,7 +64,41 @@
 (println "Please see the tests. Main doesn't do a whole lot ... yet.")
 
 
+(import java.io.File)
+
+
+(defn file-example [outfile-prefix, spec, n]
+  (let [outputs_dir (File. "outputs")
+        fout (File/createTempFile
+              outfile-prefix
+              ".txt"
+              outputs_dir)]
+    (-<> spec
+         s/gen
+         (gen/sample <> n)
+         pprint
+         with-out-str
+         (spit fout <>))))
+
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (println "Hello, World!"))
+
+  (let [outputs (File. "outputs")]
+    (->> (.listFiles outputs)
+         (map #(.toString %))))
+
+  (dotimes [_ 3]
+    (file-example
+     "ASR_IntegerBinOp_",
+     :asr.expr.semsem/i32-bin-op,
+     4))
+
+  (dotimes [_ 3]
+    (file-example
+     "ASR_Variable_",
+     :asr.specs/variable,
+     1))
+
+  )

@@ -13,7 +13,7 @@
                  [instaparse                     "1.4.12"]
                  [camel-snake-kebab              "0.4.3"]
                  [org.bytedeco/javacpp           "1.5.7"]
-                 #_[swiss-arrows                   "0.6.0"] ; experimental
+                 [swiss-arrows                   "1.0.0"] ; experimental
                  #_[org.clojure/core.logic         "1.0.1"]
                  #_[org.clojure/algo.monads        "0.1.6"]
                  #_[org.bytedeco.javacpp-presets/openblas-platform "0.3.5-1.4.4"]]
