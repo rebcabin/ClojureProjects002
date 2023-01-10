@@ -80,7 +80,7 @@ in the common [Intermediate
 Representations](https://en.wikipedia.org/wiki/Intermediate_representation)
 (IR) of the LPython and LFortran compilers. The language of that
 common IR is [ASR](https://github.com/lcompilers/libasr).
-This Clojure program thus tests the back ends of the LCompilers by 
+This Clojure program thus tests the back ends of the LCompilers by
 generating trees of ASR.
 
 The mathematical set of ASR programs is the infinite set of
@@ -187,32 +187,42 @@ test-generator itself. Here is one small example:
 ```
 
 The development horizon is in `core.clj`. As stuff evolves from
-experimental into production, it migrates into `specs.clj`
+experimental into production, it migrates into `specs.clj` and
+other namespaces.
 
 ## Feeding ASR to Compiler Back-Ends
 
-Via [javacpp](https://github.com/bytedeco/javacpp). See work-in-progress
-in `src/asr/sandbox.clj`.
+In the short run, this program will communicate with compiler back
+ends via files full of generated examples.
 
-### Abbreviated Instructions
+Get examples from the folder named `outputs` at the project level.
 
-1. Write stubs in Java; see `Abc.java`.
-2. Write implementations in C++; see `Abc.hpp`.
-3. Build and run according to the pattern obvious in `build-run.sh`
-4. Put `Abc.class` in a copy of `javacpp.jar` so it's easy to find.
-5. Put the modified `javacpp.jar` at the same level as `project.clj`.
+Create examples by modifying the `-main` function in `core.clj`.
 
-### Essential findings
+<!-- ### Future: via JavaCpp interop -->
 
-1. `build-run.sh` encapsulates hard-won facts about interfacing 
-   Clojure, java, and C++.
-2. We found it convenient to put the required dylib at the same
-   directory level as `project.clj`. Otherwise, we must figure out
-   `java.library.path` and Clojure `:native-path`, neither of which 
-   are straightforward. 
-3. We found it convenient to add our class files to a copy of
-   `javacpp.jar`. Otherwise, we must figure out how to propagate
-   java `CLASSPATH` to Clojure, and that's not straightforward.
+<!-- Via [javacpp](https://github.com/bytedeco/javacpp). See work-in-progress -->
+<!-- in `src/asr/sandbox.clj`. -->
+
+<!-- ### Abbreviated Instructions -->
+
+<!-- 1. Write stubs in Java; see `Abc.java`. -->
+<!-- 2. Write implementations in C++; see `Abc.hpp`. -->
+<!-- 3. Build and run according to the pattern obvious in `build-run.sh` -->
+<!-- 4. Put `Abc.class` in a copy of `javacpp.jar` so it's easy to find. -->
+<!-- 5. Put the modified `javacpp.jar` at the same level as `project.clj`. -->
+
+<!-- ### Essential findings -->
+
+<!-- 1. `build-run.sh` encapsulates hard-won facts about interfacing -->
+<!--    Clojure, java, and C++. -->
+<!-- 2. We found it convenient to put the required dylib at the same -->
+<!--    directory level as `project.clj`. Otherwise, we must figure out -->
+<!--    `java.library.path` and Clojure `:native-path`, neither of which -->
+<!--    are straightforward. -->
+<!-- 3. We found it convenient to add our class files to a copy of -->
+<!--    `javacpp.jar`. Otherwise, we must figure out how to propagate -->
+<!--    java `CLASSPATH` to Clojure, and that's not straightforward. -->
 
 ## Classifying Compiler Errors
 

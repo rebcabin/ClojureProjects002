@@ -9,6 +9,8 @@ targets/
 .lein-*/
 .env/
 
+asr/outputs/
+
 .nrepl-port
 
 .lein-deps-sum

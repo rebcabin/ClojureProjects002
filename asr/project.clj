@@ -12,8 +12,9 @@
                  [org.clojure/math.numeric-tower "0.0.5"]
                  [instaparse                     "1.4.12"]
                  [camel-snake-kebab              "0.4.3"]
-                 [org.bytedeco/javacpp           "1.5.7"]
                  [swiss-arrows                   "1.0.0"] ; experimental
+                 [pathetic                       "0.5.1"] ; experimental
+                 #_[org.bytedeco/javacpp           "1.5.7"]
                  #_[org.clojure/core.logic         "1.0.1"]
                  #_[org.clojure/algo.monads        "0.1.6"]
                  #_[org.bytedeco.javacpp-presets/openblas-platform "0.3.5-1.4.4"]]

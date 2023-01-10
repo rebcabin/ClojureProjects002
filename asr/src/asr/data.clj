@@ -1,4 +1,207 @@
-(ns asr.data)
+(ns asr.data
+  (:require [clojure.pprint  :refer [pprint] ]))
+
+
+;;     __
+;;   __\ \   ___ __ _ __
+;;  |___> > (_-</ _| '  \
+;;     /_/  /__/\__|_|_|_|
+;;
+
+
+(defmulti ->scm type)
+
+(defmethod ->scm (type 'symbol)
+  [item]
+  item)
+
+(defmethod ->scm (type "foo")
+  [item]
+  item)
+
+(defmethod ->scm (type 42)
+  [item]
+  item)
+
+(defmethod ->scm (type 3.14159)
+  [item]
+  item)
+
+(defmethod ->scm (type {:a 1})
+  [item]
+  "Convert Clojure dict to Scheme assoc-list."
+  item
+  (map (fn [p] (list
+                (symbol (first p))
+                (->scm (second p))))
+       (map (partial apply list)
+            (into () item))))
+
+(defmethod ->scm (type '())
+  [item]
+  item)
+
+(defmethod ->scm (type '(1 2 3))
+  [item]
+  (map ->scm item))
+
+(defmethod ->scm (type [1 2 3])
+  [item]
+  (map ->scm item))
+
+
+;;  _          _                      __  _
+;; | |_ ___ __| |_ __ ____ _ _ _ ___ /  \/ |
+;; |  _/ -_|_-<  _|\ V / _` | '_(_-<| () | |
+;;  \__\___/__/\__|_\_/\__,_|_| /__/_\__/|_|
+;;               |___|            |___|
+
+
+(def test_vars_01
+  " from test_vars_01b import test_name_other_module
+
+    def test_name():
+    print(__name__)
+    assert __name__ == \"__main__\"
+
+    test_name()
+    test_name_other_module()
+  "
+  '(TranslationUnit
+    (SymbolTable
+     1
+     {:_lpython_main_program
+      (Function
+       (SymbolTable 7 {})
+       _lpython_main_program
+       [test_name test_name_other_module]
+       []
+       [(SubroutineCall 1 test_name () [] ())
+        (SubroutineCall 1 test_name_other_module () [] ())]
+       ()
+       Source
+       Public
+       Implementation
+       ()
+       .false.
+       .false.
+       .false.
+       .false.
+       .false.
+       []
+       []
+       .false.),
+      :main_program
+      (Program
+       (SymbolTable 6 {})
+       main_program
+       []
+       [(SubroutineCall 1 _lpython_main_program () [] ())]),
+      :test_name
+      (Function
+       (SymbolTable
+        5
+        {:__name__
+         (Variable
+          5
+          __name__
+          []
+          Local
+          (StringConstant "__main__" (Character 1 8 () []))
+          (StringConstant "__main__" (Character 1 8 () []))
+          Default
+          (Character 1 8 () [])
+          Source
+          Public
+          Required
+          .false.)})
+       test_name
+       []
+       []
+       [(Print () [(Var 5 __name__)] () ())
+        (Assert
+         (StringCompare
+          (Var 5 __name__)
+          Eq
+          (StringConstant "__main__" (Character 1 8 () []))
+          (Logical 4 [])
+          (LogicalConstant .true. (Logical 4 [])))
+         ())]
+       ()
+       Source
+       Public
+       Implementation
+       ()
+       .false.
+       .false.
+       .false.
+       .false.
+       .false.
+       []
+       []
+       .false.),
+      :test_name_other_module
+      (ExternalSymbol
+       1
+       test_name_other_module
+       3
+       test_name_other_module
+       test_vars_01b
+       []
+       test_name_other_module
+       Public),
+      :test_vars_01b
+      (Module
+       (SymbolTable
+        3
+        {:test_name_other_module
+         (Function
+          (SymbolTable
+           4
+           {:__name__
+            (Variable
+             4
+             __name__
+             []
+             Local
+             (StringConstant "__non_main__" (Character 1 12 () []))
+             (StringConstant "__non_main__" (Character 1 12 () []))
+             Default
+             (Character 1 12 () [])
+             Source
+             Public
+             Required
+             .false.)})
+          test_name_other_module
+          []
+          []
+          [(Print () [(Var 4 __name__)] () ())
+           (Assert
+            (StringCompare
+             (Var 4 __name__)
+             NotEq
+             (StringConstant "__main__" (Character 1 8 () []))
+             (Logical 4 [])
+             (LogicalConstant .true. (Logical 4 [])))
+            ())]
+          ()
+          Source
+          Public
+          Implementation
+          ()
+          .false.
+          .false.
+          .false.
+          .false.
+          .false.
+          []
+          []
+          .false.)})
+       test_vars_01b
+       []
+       .false.
+       .false.)})
+    []))
 
 
 ;;                        __  _    ___ _ _  __   __   __
@@ -6,6 +209,7 @@
 ;; / -_) \ / '_ \ '_|___| () | |___/ /| | | () | () | () |
 ;; \___/_\_\ .__/_|      \__/|_|  /___|_|_|\__/ \__/ \__/
 ;;         |_|
+
 
 (def expr-01-211000
   "Here is the Python that generates the ASR below, from

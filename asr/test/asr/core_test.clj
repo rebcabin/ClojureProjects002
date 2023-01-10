@@ -15,7 +15,8 @@
             [clojure.spec.alpha            :as    s      ]
             [clojure.spec.gen.alpha        :as    gen    ]
             [clojure.test.check.generators :as    tgen   ]
-            [clojure.test.check.properties :as    tprop  ]))
+            [clojure.test.check.properties :as    tprop  ]
+            [asr.lpython                   :as    lpython]))
 
 
 (def ONETEST           1)
@@ -49,8 +50,9 @@
 ;;                                   |_|
 
 (deftest whole-spec-test
-  (testing "whole example passes trivial spec"
-    (is (s/valid? list? asr.data/expr-01-211000))))
+  (testing "whole examples pass trivial spec"
+    (is (s/valid? list? asr.data/expr-01-211000))
+    (is (s/valid? list? asr.data/test_vars_01))))
 
 
 ;;                      _      _
@@ -1625,3 +1627,112 @@
                 '(Tuple [])))
   (is (s/valid? :asr.specs/tuple-ttype
                 '(Tuple [(Character 1 []) (Integer 4 [])]))))
+
+
+
+;;  ___  ___ _ __ ___
+;; / __|/ __| '_ ` _ \
+;; \__ \ (__| | | | | |
+;; |___/\___|_| |_| |_|
+
+;; Deprecated 9 Jan 2023.
+
+(deftest ->scm-test
+  (is (= (->scm 'foo) 'foo))
+  (is (= (->scm 9) 9))
+  (is (= (->scm 2.71828) 2.71828)))
+
+
+;;     _    ____  ____    ___       _                           _
+;;    / \  / ___||  _ \  |_ _|_ __ | |_ ___ _ __ _ __  _ __ ___| |_ ___ _ __
+;;   / _ \ \___ \| |_) |  | || '_ \| __/ _ \ '__| '_ \| '__/ _ \ __/ _ \ '__|
+;;  / ___ \ ___) |  _ <   | || | | | ||  __/ |  | |_) | | |  __/ ||  __/ |
+;; /_/   \_\____/|_| \_\ |___|_| |_|\__\___|_|  | .__/|_|  \___|\__\___|_|
+;;                                              |_|
+
+(def expr2-pp
+  '(TranslationUnit
+    (SymbolTable
+     1
+     {:_lpython_main_program
+      (Function
+       (SymbolTable 4 {})
+       _lpython_main_program
+       [main0]
+       []
+       [(SubroutineCall 1 main0 () [] ())]
+       ()
+       Source
+       Public
+       Implementation
+       ()
+       .false.
+       .false.
+       .false.
+       .false.
+       .false.
+       []
+       []
+       .false.),
+      :main0
+      (Function
+       (SymbolTable
+        2
+        {:x
+         (Variable
+          2
+          x
+          []
+          Local
+          ()
+          ()
+          Default
+          (Integer 4 [])
+          Source
+          Public
+          Required
+          .false.)})
+       main0
+       []
+       []
+       [(=
+         (Var 2 x)
+         (IntegerBinOp
+          (IntegerBinOp
+           (IntegerConstant 2 (Integer 4 []))
+           Add
+           (IntegerConstant 3 (Integer 4 []))
+           (Integer 4 [])
+           (IntegerConstant 5 (Integer 4 [])))
+          Mul
+          (IntegerConstant 5 (Integer 4 []))
+          (Integer 4 [])
+          (IntegerConstant 25 (Integer 4 [])))
+         ())
+        (Print () [(Var 2 x)] () ())]
+       ()
+       Source
+       Public
+       Implementation
+       ()
+       .false.
+       .false.
+       .false.
+       .false.
+       .false.
+       []
+       []
+       .false.),
+      :main_program
+      (Program
+       (SymbolTable 3 {})
+       main_program
+       []
+       [(SubroutineCall 1 _lpython_main_program () [] ())])})
+    []))
+
+(def expr2-lpy "examples/expr2.py")
+
+(deftest lpython-asr-test
+  (is (= expr2-pp
+         (lpython/get-sample-clj expr2-lpy))))
