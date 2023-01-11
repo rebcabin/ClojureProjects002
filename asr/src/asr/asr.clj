@@ -1,9 +1,268 @@
-(ns asr.asr)
+(ns asr.asr
+  (:use [asr.utils])
+  (:require
+   [clojure.pprint :refer [pprint]]))
 
 
-;;  __ _ ____ _
-;; / _` (_-< '_|
-;; \__,_/__/_|
+;;  ___         _                            _
+;; | __|_ ___ _(_)_ _ ___ _ _  _ __  ___ _ _| |_
+;; | _|| ' \ V / | '_/ _ \ ' \| '  \/ -_) ' \  _|
+;; |___|_||_\_/|_|_| \___/_||_|_|_|_\___|_||_\__|
+
+
+;;; User names MUST NOT USE GREEK.
+
+
+(def ΓΠ
+  "Global Perimeter (Environment); has a frame φ : dict and a parent
+  perimeter π : Environment."
+  {:φ {}, :π ::π-nil})
+
+
+(defn is-global [env]
+  (nil? (:π env)))
+
+
+(defn eval-bindings [bindings]
+  (throw (AssertionError. "Forward-reference (incorrect) function called")))
+
+
+(defn new-env
+  [bindings env]
+  {:φ ((eval-bindings bindings) env), :π env})
+
+
+(defn lookup
+  "Classic recursion; TODO: consider tail-recursion with loop and
+  recur."
+  [sym env]
+  (cond
+    (= env ::π-nil) nil
+    true (let [r (:φ env)]
+           (cond
+             (nil? r) (lookup sym (:π env))
+             true r))))
+
+
+;;  _  _         _
+;; | \| |___  __| |___
+;; | .` / _ \/ _` / -_)
+;; |_|\_\___/\__,_\___|
+
+
+(defn eval-node
+  "sketch"
+  [node]
+  (fn [env]
+    (echo node)))
+
+
+(defn eval-nodes
+  "sketch"
+  [nodes]
+  (fn [env]
+    (map (fn [node]
+           ((eval-node node) env)) nodes)))
+
+
+;;  ___            _         _ _____     _    _
+;; / __|_  _ _ __ | |__  ___| |_   _|_ _| |__| |___
+;; \__ \ || | '  \| '_ \/ _ \ | | |/ _` | '_ \ / -_)
+;; |___/\_, |_|_|_|_.__/\___/_| |_|\__,_|_.__/_\___|
+;;      |__/
+
+
+(defmulti eval-symbol first)            ; forward reference
+
+
+(defn eval-bindings
+  [bindings]
+  (fn [env]
+    (loop [result {}
+           remaining bindings]
+      (if (seq remaining)               ; idiom for not empty
+        (let [[k v] (first remaining)]
+          (recur (into result {k ((eval-symbol v) env)})
+                 (rest remaining)))
+        result))))
+
+
+;;                             _
+;;  ____  _ _ __ _ __  ___ _ _| |_
+;; (_-< || | '_ \ '_ \/ _ \ '_|  _|
+;; /__/\_,_| .__/ .__/\___/_|  \__|
+;;         |_|  |_|
+
+
+(defn eval-symbols
+  "sketch"
+  [symbols]
+  (fn [env]
+    (map (fn [sym] ((eval-symbol sym) env))
+         symbols)))
+
+(defn eval-bool
+  [bool]
+  (fn [env]
+    (case bool
+      .true.  true
+      .false. false)))
+
+
+;;  ___            _         _
+;; / __|_  _ _ __ | |__  ___| |
+;; \__ \ || | '  \| '_ \/ _ \ |
+;; |___/\_, |_|_|_|_.__/\___/_|
+;;      |__/
+
+
+;;; docstrings apparently not allowed in defmethod
+
+
+(defmethod eval-symbol 'Program
+  [[head
+    symtab
+    nym
+    dependencies
+    body
+    :as program]]
+  (fn [env]
+    (echo {:head         head          ; 'Program
+           :symtab       symtab        ; 'SymbolTable
+           :nym          nym           ; identifier
+           :dependencies dependencies  ; identifier*
+           :body         body          ; stmt*
+           :env          env})))       ; Environment
+
+(defmethod eval-symbol 'SymbolTable
+  [[head
+    integer-id
+    bindings
+    :as symbol-table]]
+  (fn [env]
+    (echo {:head       head
+           :integer-id integer-id               ; int
+           :bindings   bindings                 ; dict
+           :env        (new-env bindings env)}) ; Environment
+    ))
+
+(defmethod eval-symbol 'ForTest
+  [[head]]
+  (fn [env]
+    (echo {:head head})))
+
+(defmethod eval-symbol 'Variable
+  [[head
+    parent-symtab
+    nym
+    dependencies
+    intent
+    symbolic-value
+    value
+    storage
+    type-                               ; Collides with Clojure built-in.
+    abi
+    access
+    presence
+    value-attr      ; bool (.true., .false.)
+    :as variable]]
+  (fn [env]
+    (echo {:head           head
+           :symtab         ((eval-symbol parent-symtab)   env)
+           :name           nym
+           :dependencies   dependencies
+           :intent         ((eval-node    intent)         env)
+           :symbolic-value ((eval-node    symbolic-value) env)
+           :value          ((eval-node    value)          env)
+           :storage        ((eval-node    storage)        env)
+           :type           ((eval-node    type-)          env)
+           :abi            ((eval-node    abi)            env)
+           :access         ((eval-node    access)         env)
+           :presence       ((eval-node    presence)       env)
+           :value-attr     ((eval-node    value-attr)     env)
+           }))  )
+
+(defmethod eval-symbol 'Function
+  [[head                       ; 'Function
+    symtab                     ; SymbolTable
+    nym                        ; identifier
+    dependencies               ; identifier*
+    args                       ; expr* !!! TODO !!! params ??? !!!
+    body                       ; stmt*
+    return-var                 ; expr?
+    abi                        ; abi
+    access                     ; access
+    deftype                    ; deftype
+    bindc-name                 ; string?
+    elemental                  ; bool (.true., .false.)
+    pure                       ; bool (.true., .false.)
+    module                     ; bool (.true., .false.)
+    inline                     ; bool (.true., .false.)
+    static                     ; bool (.true., .false.)
+    type-params                ; ttype*
+    restrictions               ; symbol*
+    is-restriction             ; bool (.true., .false.)
+    :as function]]
+  (fn [env]
+    (echo {:head           head
+           :symtab         ((eval-symbol symtab)          env)
+           :name           nym
+           :dependencies   dependencies
+           :args           ((eval-nodes   args)           env)
+           :body           ((eval-nodes   body)           env)
+           :return-var     ((eval-node    return-var)     env)
+           :abi            ((eval-node    abi)            env)
+           :access         ((eval-node    access)         env)
+           :deftype        ((eval-node    deftype)        env)
+           :bindc-name     bindc-name
+           :elemental      ((eval-bool    elemental)      env)
+           :pure           ((eval-bool    pure)           env)
+           :module         ((eval-bool    module)         env)
+           :inline         ((eval-bool    inline)         env)
+           :static         ((eval-bool    static)         env)
+           :type-params    ((eval-nodes   type-params)    env)
+           :restrictions   ((eval-symbols restrictions)   env)
+           :is-restriction ((eval-bool    is-restriction) env)
+           })))
+
+
+;;  _   _      _ _
+;; | | | |_ _ (_) |_
+;; | |_| | ' \| |  _|
+;;  \___/|_||_|_|\__|
+
+
+(defn eval-unit
+  [[head
+    global-scope
+    items
+    :as translation-unit]]
+  (assert (= 'TranslationUnit head)
+          "head of a translation unit must be the symbol TranslationUnit")
+  (fn [env]
+    (echo {:head         head
+           :global-scope ((eval-symbol global-scope) env) ; TODO: eval-symbol-table?
+           :items        ((eval-nodes items) env)})))
+
+
+;;  ____  _   _ ____  ____  _____ _   _ ____  _____ ____
+;; / ___|| | | / ___||  _ \| ____| \ | |  _ \| ____|  _ \
+;; \___ \| | | \___ \| |_) |  _| |  \| | | | |  _| | | | |
+;;  ___) | |_| |___) |  __/| |___| |\  | |_| | |___| |_| |
+;; |____/ \___/|____/|_|   |_____|_| \_|____/|_____|____/
+;;  ____  _______     _______ _     ___  ____  __  __ _____ _   _ _____
+;; |  _ \| ____\ \   / / ____| |   / _ \|  _ \|  \/  | ____| \ | |_   _|
+;; | | | |  _|  \ \ / /|  _| | |  | | | | |_) | |\/| |  _| |  \| | | |
+;; | |_| | |___  \ V / | |___| |__| |_| |  __/| |  | | |___| |\  | | |
+;; |____/|_____|  \_/  |_____|_____\___/|_|   |_|  |_|_____|_| \_| |_|
+
+
+;;              _ _                        _        _
+;;  __ _ ___ __| | |  ____ _  __ _ _ __ __| |_  ___| |_
+;; / _` (_-</ _` | | (_-< ' \/ _` | '_ (_-< ' \/ _ \  _|
+;; \__,_/__/\__,_|_| /__/_||_\__,_| .__/__/_||_\___/\__|
+;;                                |_|
+
 
 ;;; An immutable scrape from lcompilers web site, to have stable
 ;;; inputs for development. TODO: dynamically scrape this.

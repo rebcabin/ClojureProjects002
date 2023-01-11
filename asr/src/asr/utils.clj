@@ -11,13 +11,21 @@
 ;; \___\__|_||_\___/
 
 
-;; TODO: macro?
-(defn echo
-  "Print and return argument. Convenient for debugging -> call
-  chains."
-  [x]
-  (pprint x) x)
+(defmacro plnecho [x]
+  `(let [x# ~x]
+     (do (println '~x "~~>" x#)
+         x#)))
 
+;;; and pretty-printing version
+
+(defmacro echo [x]
+  `(let [x# ~x]
+     (do (println "-.-.-.-.-.-.-.-.-")
+         (clojure.pprint/pprint '~x)
+         (println "~~>")
+         (clojure.pprint/pprint x#)
+         (println "-'-'-'-'-'-'-'-'-")
+         x#)))
 
 ;;          _               _       _          _         __
 ;;  _ _  __| |____ __ _____| |_____| |__  __ _| |__ ___ / _|_ _ ___ _ __

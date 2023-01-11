@@ -1,5 +1,6 @@
 (ns asr.core-test
   (:use [asr.core]
+        [asr.asr]
         [asr.data]
         [asr.parsed]
         [asr.numbers]
@@ -7,7 +8,8 @@
         [asr.autospecs]
         [asr.expr.synnasr]
         [asr.expr.semnasr]
-        [asr.expr.semsem])
+        [asr.expr.semsem]
+        [asr.utils])
 
   (:require [clojure.math                  :as    math   ]
             [clojure.test                  :refer :all   ]
@@ -1650,6 +1652,57 @@
 ;; /_/   \_\____/|_| \_\ |___|_| |_|\__\___|_|  | .__/|_|  \___|\__\___|_|
 ;;                                              |_|
 
+(deftest global-environment-exists-test
+  (is ΓΠ))
+
+
+(deftest eval-bindings-test
+  "A SymbolTable is just a dict; to be usable, it must be a frame π in an
+Environment."
+  (let [foo {:a '(ForTest), :b '(ForTest), :c '(ForTest)}]
+    (is (= {:a {:head 'ForTest},
+            :b {:head 'ForTest},
+            :c {:head 'ForTest}}
+           ((eval-bindings foo) ΓΠ)))))
+
+
+(deftest eval-new-env-test
+  (let [foo {:a '(ForTest), :b '(ForTest), :c '(ForTest)}]
+    (is (= {:φ {:a {:head 'ForTest},
+                :b {:head 'ForTest},
+                :c {:head 'ForTest}},
+            :π ΓΠ}
+           (new-env foo ΓΠ)))))
+
+
+(deftest eval-program-symbol-test
+  (let [foo ((eval-symbol
+              '(Program
+                (SymbolTable 3 {})
+                main_program
+                []
+                [(SubroutineCall 1 _lpython_main_program () [] ())]))
+             ΓΠ)]
+    (is (= {:head         'Program,
+            :symtab       '(SymbolTable 3 {}),
+            :nym          'main_program,
+            :dependencies [],
+            :body         ['(SubroutineCall 1 _lpython_main_program () [] ())],
+            :env          ΓΠ}
+           foo))))
+
+
+(def mp {:main_program
+         '(Program
+           (SymbolTable 3 {})
+           main_program
+           []
+           [(SubroutineCall 1 _lpython_main_program () [] ())])})
+
+
+((eval-symbol (:main_program mp)) ΓΠ)
+
+
 (def expr2-pp
   '(TranslationUnit
     (SymbolTable
@@ -1673,8 +1726,8 @@
        .false.
        []
        []
-       .false.),
-      :main0
+       .fals:e.),
+      main0
       (Function
        (SymbolTable
         2
@@ -1722,17 +1775,20 @@
        .false.
        []
        []
-       .false.),
-      :main_program
+       .fals:e.),
+      main_program
       (Program
        (SymbolTable 3 {})
        main_program
        []
        [(SubroutineCall 1 _lpython_main_program () [] ())])})
     []))
-
 (def expr2-lpy "examples/expr2.py")
+(def expr2-clj
+  (echo (lpython/get-sample-clj expr2-lpy)))
 
 (deftest lpython-asr-test
-  (is (= expr2-pp
-         (lpython/get-sample-clj expr2-lpy))))
+  (is (= expr2-pp expr2-clj)))
+
+
+;;; ((eval-unit expr2-pp) ΓΠ)
