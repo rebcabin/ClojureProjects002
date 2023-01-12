@@ -1653,7 +1653,10 @@
 ;;                                              |_|
 
 (deftest global-environment-exists-test
-  (is ΓΠ))
+  (is ΓΠ)
+  (is @ΓΠ)
+  (is (is-environment? @ΓΠ))
+  (is (is-global-penv? ΓΠ)))
 
 
 (deftest eval-bindings-test
@@ -1672,7 +1675,7 @@ Environment."
                 :b {:head 'ForTest},
                 :c {:head 'ForTest}},
             :π ΓΠ}
-           (new-env foo ΓΠ)))))
+           @(new-penv foo ΓΠ)))))
 
 
 (deftest eval-program-symbol-test
@@ -1684,11 +1687,14 @@ Environment."
                 [(SubroutineCall 1 _lpython_main_program () [] ())]))
              ΓΠ)]
     (is (= {:head         'Program,
-            :symtab       '(SymbolTable 3 {}),
+            :symtab       {:head 'SymbolTable,
+                           :integer-id 3,
+                           :bindings {},
+                           :env @(new-penv {} ΓΠ)}
             :nym          'main_program,
             :dependencies [],
             :body         ['(SubroutineCall 1 _lpython_main_program () [] ())],
-            :env          ΓΠ}
+            :env          @ΓΠ}
            foo))))
 
 
@@ -1698,9 +1704,6 @@ Environment."
            main_program
            []
            [(SubroutineCall 1 _lpython_main_program () [] ())])})
-
-
-((eval-symbol (:main_program mp)) ΓΠ)
 
 
 (def expr2-pp
@@ -1726,8 +1729,8 @@ Environment."
        .false.
        []
        []
-       .fals:e.),
-      main0
+       .false.),
+      :main0
       (Function
        (SymbolTable
         2
@@ -1775,14 +1778,16 @@ Environment."
        .false.
        []
        []
-       .fals:e.),
-      main_program
+       .false.),
+      :main_program
       (Program
        (SymbolTable 3 {})
        main_program
        []
        [(SubroutineCall 1 _lpython_main_program () [] ())])})
     []))
+
+
 (def expr2-lpy "examples/expr2.py")
 (def expr2-clj
   (echo (lpython/get-sample-clj expr2-lpy)))
@@ -1790,5 +1795,4 @@ Environment."
 (deftest lpython-asr-test
   (is (= expr2-pp expr2-clj)))
 
-
-;;; ((eval-unit expr2-pp) ΓΠ)
+; ((eval-unit expr2-pp) @ΓΠ)

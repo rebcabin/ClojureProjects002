@@ -1,5 +1,6 @@
 (ns asr.asr
-  (:use [asr.utils])
+  (:use [asr.utils]
+        [clojure.set])
   (:require
    [clojure.pprint :refer [pprint]]))
 
@@ -13,34 +14,74 @@
 ;;; User names MUST NOT USE GREEK.
 
 
+;;; For flexibility, all "(eval-...)" functions return a function
+;;; of an Environment. TODO: spec Environment. Such functions can
+;;; be evaluated in any environment later.
+
+
+;;; An Environment is a dictionary. An Environment-atom or
+;;; PEnv (for pointer-to-environment) is a mutable object: an atom
+;;; containing an Environment. It is needed for mutability.
+
+
+(defn is-environment?
+  "Ensure keys φ and π exist. Note it's not sufficient to check the
+  value of π because it's nil for the global environment AND it's
+  nil for an missing the key π because `(:π {:φ (atom 'foo)})` ~~>
+  nil."
+  [thing]
+  (subset? #{:φ, :π} (set (keys thing))))
+
+
+(defn atom?
+  [thing]
+  (instance? clojure.lang.Atom thing))
+
+
+(defn is-penv?
+  [thing]
+  (and (atom? thing)
+       (is-environment? @thing)))
+
+
+(defn is-global-penv?
+  "The global environment is the only one with a nil parent. "
+  [penv]
+  (and (is-penv? penv)
+       (nil? (:π @penv))))
+
+
 (def ΓΠ
-  "Global Perimeter (Environment); has a frame φ : dict and a parent
-  perimeter π : Environment."
-  {:φ {}, :π ::π-nil})
+  "Unique, session-specific penv: Global Γ Perimeter Π; has a
+  frame (:φ is-a dict) and a parent perimeter (:π is-a penv).
+  TODO: spec."
+  (atom {:φ {}, :π nil} :validator is-environment?))
 
 
-(defn is-global [env]
-  (nil? (:π env)))
-
-
-(defn eval-bindings [bindings]
+(defn eval-bindings
+  [bindings]
   (throw (AssertionError. "Forward-reference (incorrect) function called")))
 
 
-(defn new-env
-  [bindings env]
-  {:φ ((eval-bindings bindings) env), :π env})
+(defn new-penv
+  "A new penv has a frame φ and an penv π."
+  [bindings penv]
+  (atom {:φ ((eval-bindings bindings) penv),
+         :π penv}
+        :validator is-environment?))
 
 
-(defn lookup
+(defn lookup-penv
   "Classic recursion; TODO: consider tail-recursion with loop and
   recur."
-  [sym env]
+  [sym penv]
+  (assert (is-penv? penv) "Invalid penv")
+  (assert (instance? clojure.lang.Symbol sym) "Invalid symbol")
   (cond
-    (= env ::π-nil) nil
-    true (let [r (:φ env)]
+    (nil? @penv) nil
+    true (let [r ((:φ @penv) sym)]
            (cond
-             (nil? r) (lookup sym (:π env))
+             (nil? r) (lookup-penv sym (:π @penv))
              true r))))
 
 
@@ -53,16 +94,16 @@
 (defn eval-node
   "sketch"
   [node]
-  (fn [env]
+  (fn [penv]
     (echo node)))
 
 
 (defn eval-nodes
   "sketch"
   [nodes]
-  (fn [env]
+  (fn [penv]
     (map (fn [node]
-           ((eval-node node) env)) nodes)))
+           ((eval-node node) penv)) nodes)))
 
 
 ;;  ___            _         _ _____     _    _
@@ -77,12 +118,12 @@
 
 (defn eval-bindings
   [bindings]
-  (fn [env]
+  (fn [penv]
     (loop [result {}
            remaining bindings]
       (if (seq remaining)               ; idiom for not empty
         (let [[k v] (first remaining)]
-          (recur (into result {k ((eval-symbol v) env)})
+          (recur (into result {k ((eval-symbol v) penv)})
                  (rest remaining)))
         result))))
 
@@ -97,13 +138,13 @@
 (defn eval-symbols
   "sketch"
   [symbols]
-  (fn [env]
-    (map (fn [sym] ((eval-symbol sym) env))
+  (fn [penv]
+    (map (fn [sym] ((eval-symbol sym) penv))
          symbols)))
 
 (defn eval-bool
   [bool]
-  (fn [env]
+  (fn [penv]
     (case bool
       .true.  true
       .false. false)))
@@ -126,61 +167,62 @@
     dependencies
     body
     :as program]]
-  (fn [env]
+  (fn [penv]
     (echo {:head         head          ; 'Program
-           :symtab       symtab        ; 'SymbolTable
+           :symtab       ((eval-symbol symtab) penv)        ; 'SymbolTable
            :nym          nym           ; identifier
            :dependencies dependencies  ; identifier*
            :body         body          ; stmt*
-           :env          env})))       ; Environment
+           :env          @penv         ; Environment
+           })))
 
 (defmethod eval-symbol 'SymbolTable
   [[head
     integer-id
     bindings
     :as symbol-table]]
-  (fn [env]
+  (fn [penv]
     (echo {:head       head
-           :integer-id integer-id               ; int
-           :bindings   bindings                 ; dict
-           :env        (new-env bindings env)}) ; Environment
+           :integer-id integer-id                  ; int
+           :bindings   bindings                    ; dict
+           :env        @(new-penv bindings penv)}) ; Environment
     ))
 
 (defmethod eval-symbol 'ForTest
   [[head]]
-  (fn [env]
+  (fn [penv]
     (echo {:head head})))
 
 (defmethod eval-symbol 'Variable
   [[head
-    parent-symtab
-    nym
+    parent-symtab-id
+    nym                          ; "name" shadows Clojure build-in.
     dependencies
     intent
     symbolic-value
     value
     storage
-    type-                               ; Collides with Clojure built-in.
+    tipe                         ; "type" shadows Clojure built-in.
     abi
     access
     presence
     value-attr      ; bool (.true., .false.)
     :as variable]]
-  (fn [env]
+  (fn [penv]
     (echo {:head           head
-           :symtab         ((eval-symbol parent-symtab)   env)
+           :symtab-id      parent-symtab-id
            :name           nym
            :dependencies   dependencies
-           :intent         ((eval-node    intent)         env)
-           :symbolic-value ((eval-node    symbolic-value) env)
-           :value          ((eval-node    value)          env)
-           :storage        ((eval-node    storage)        env)
-           :type           ((eval-node    type-)          env)
-           :abi            ((eval-node    abi)            env)
-           :access         ((eval-node    access)         env)
-           :presence       ((eval-node    presence)       env)
-           :value-attr     ((eval-node    value-attr)     env)
-           }))  )
+           :intent         ((eval-node    intent)         penv)
+           :symbolic-value ((eval-node    symbolic-value) penv)
+           :value          ((eval-node    value)          penv)
+           :storage        ((eval-node    storage)        penv)
+           :type           ((eval-node    tipe)           penv)
+           :abi            ((eval-node    abi)            penv)
+           :access         ((eval-node    access)         penv)
+           :presence       ((eval-node    presence)       penv)
+           :value-attr     ((eval-node    value-attr)     penv)
+           })))
 
 (defmethod eval-symbol 'Function
   [[head                       ; 'Function
@@ -203,28 +245,76 @@
     restrictions               ; symbol*
     is-restriction             ; bool (.true., .false.)
     :as function]]
-  (fn [env]
+  (fn [penv]
     (echo {:head           head
-           :symtab         ((eval-symbol symtab)          env)
+           :symtab         ((eval-symbol symtab)          penv)
            :name           nym
            :dependencies   dependencies
-           :args           ((eval-nodes   args)           env)
-           :body           ((eval-nodes   body)           env)
-           :return-var     ((eval-node    return-var)     env)
-           :abi            ((eval-node    abi)            env)
-           :access         ((eval-node    access)         env)
-           :deftype        ((eval-node    deftype)        env)
+           :args           ((eval-nodes   args)           penv)
+           :body           ((eval-nodes   body)           penv)
+           :return-var     ((eval-node    return-var)     penv)
+           :abi            ((eval-node    abi)            penv)
+           :access         ((eval-node    access)         penv)
+           :deftype        ((eval-node    deftype)        penv)
            :bindc-name     bindc-name
-           :elemental      ((eval-bool    elemental)      env)
-           :pure           ((eval-bool    pure)           env)
-           :module         ((eval-bool    module)         env)
-           :inline         ((eval-bool    inline)         env)
-           :static         ((eval-bool    static)         env)
-           :type-params    ((eval-nodes   type-params)    env)
-           :restrictions   ((eval-symbols restrictions)   env)
-           :is-restriction ((eval-bool    is-restriction) env)
+           :elemental      ((eval-bool    elemental)      penv)
+           :pure           ((eval-bool    pure)           penv)
+           :module         ((eval-bool    module)         penv)
+           :inline         ((eval-bool    inline)         penv)
+           :static         ((eval-bool    static)         penv)
+           :type-params    ((eval-nodes   type-params)    penv)
+           :restrictions   ((eval-symbols restrictions)   penv)
+           :is-restriction ((eval-bool    is-restriction) penv)
            })))
 
+
+(defmethod eval-symbol 'SubroutineCall
+  [[head
+    symbol-table
+    nym
+    arguments
+    dependencies
+    call-type
+    :as subroutine-call]]
+  (fn [penv]
+    (let [symtab ((eval-symbol symbol-table) penv)
+          args   (map (fn [arg] ((eval-node arg) penv)) arguments)
+          sub    (symtab nym)]
+      (if (not sub)
+        (throw (Exception. (str "Subroutine " nym " not found")))
+        (do (echo {:head           head
+                   :symtab         symtab
+                   :name           nym
+                   :arguments      args
+                   :dependencies   dependencies
+                   :call-type      ((eval-node call-type) penv)
+                   :subroutine     ((eval-symbol sub) penv)})
+            #_(run-subroutine sub args penv))))))
+
+
+(defmethod eval-symbol 'SubroutineCall
+  [[head
+    symtab
+    nym
+    arguments
+    dependencies
+    call-type
+    :as subroutine-call]]
+  (fn [penv]
+    (let [symtable  ((eval-symbol symtab) penv)
+          args      (map (fn [arg] ((eval-node arg) penv)) arguments)
+          sub       (get symtable nym)]
+      (if (not sub)
+        (throw (Exception. (str "Error: Subroutine " nym " not found")))
+        (do (println "Calling subroutine: " nym " with args: " args)
+            #_(run-subroutine subroutine args penv)
+            (echo {:head           head
+                   :symtab         symtab
+                   :name           nym
+                   :arguments      args
+                   :dependencies   dependencies
+                   :call-type      ((eval-node call-type) penv)
+                   :subroutine     ((eval-symbol sub) penv)}))))))
 
 ;;  _   _      _ _
 ;; | | | |_ _ (_) |_
@@ -239,10 +329,12 @@
     :as translation-unit]]
   (assert (= 'TranslationUnit head)
           "head of a translation unit must be the symbol TranslationUnit")
-  (fn [env]
+  (fn [penv]
     (echo {:head         head
-           :global-scope ((eval-symbol global-scope) env) ; TODO: eval-symbol-table?
-           :items        ((eval-nodes items) env)})))
+           :global-scope ((eval-symbol global-scope) penv)
+                                        ; TODO: eval-symbol-table?
+           :items        ((eval-nodes items) penv)})))
+
 
 
 ;;  ____  _   _ ____  ____  _____ _   _ ____  _____ ____

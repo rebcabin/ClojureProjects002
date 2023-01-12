@@ -1,9 +1,10 @@
 (ns asr.lpython
 
   (:use [clojure.java.shell :only [sh     ] ]
-        [clojure.string     :only [replace] ] )
+        )
 
-  (:require [pathetic.core  :as   path ]))
+  (:require [pathetic.core  :as   path ]
+            [clojure.string            ]))
 
 
 ;;   __ _ _                       _
@@ -60,9 +61,12 @@
                           (resolve-sample sample)))))
 
 
+(def clojurizer #"([^\s^\{]+)\:")
+
+
 (defn post-process-asr
   [asr-sh-result]
-  (replace asr-sh-result #"([^s^\{]+):" ":$1"))
+  (clojure.string/replace asr-sh-result clojurizer ":$1"))
 
 
 (defn get-sample-clj
