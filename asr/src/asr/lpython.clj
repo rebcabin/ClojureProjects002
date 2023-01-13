@@ -17,6 +17,15 @@
 (def dir
   "/Users/brian/Documents/GitHub/lpython")
 
+(def asr-asdl-file-relative
+  "src/libasr/asr.asdl")
+
+(def asr-asdl-file
+  (path/resolve dir asr-asdl-file-relative))
+
+(def asr-asdl
+  (slurp asr-asdl-file))
+
 (def executable-relative
   "src/bin/lpython")
 

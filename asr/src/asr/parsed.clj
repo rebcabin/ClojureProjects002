@@ -12,7 +12,7 @@
 
 (def speclets
   "Big vector. Strip off the `module` info, leaving only ASDL-DEFs,
-  i.e., *speclets*.
+  i.e., _speclets_.
   "
   (vec (rest
         ((-> (zip/vector-zip asr-pre-spec)
@@ -178,7 +178,7 @@
 
 
 (defn stuff-from-term-form
-  "Construct a *stuff* from a `term` and a form. Prepend the
+  "Construct a _stuff_ from a `term` and a form. Prepend the
   namespace prefix `asr.autospecs`, without kebab'bing."
   [term form]
   (let [kind (-> form kind-from-form)
@@ -188,13 +188,13 @@
 
 
 (def big-list-of-stuff
-  "A ***stuff*** is a map of `:head`, `:term`, `:kind`, and `:form`
+  "A ___stuff___ is a map of `:head`, `:term`, `:kind`, and `:form`
   for the approximately 227 heads & forms of ASR. A stuff is all
   we need for making clojure.specs from terms, heads, & forms. The
   stuff keywords `:head`, `:term`, `:kind`, and `:form` need not
   be namespaced.
 
-  Example of a *stuff*:
+  Example of a _stuff_:
 
       {:head :asr.autospecs/Source,
        :term :asr.autospecs/abi,
@@ -214,7 +214,7 @@
 
   ## Terms
 
-  ***Terms*** are the things to the left of an equals sign in the
+  ___Terms___ are the things to the left of an equals sign in the
   ASDL grammar (namespace `asr.asr`). For example, in the ASDL
   production
 

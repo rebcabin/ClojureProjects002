@@ -1,6 +1,7 @@
 (ns asr.grammar
-  (:require [instaparse.core :as insta])
-  (:use     [asr.asr]))
+  (:require [instaparse.core :as      insta  ]
+            [asr.asr-snapshot :refer [all-asr]])
+  )
 
 
 ;;              _ _
@@ -24,20 +25,20 @@
 
   The grammar says:
 
-  1. An ASDL spec is a bunch of ***productions*** or ASDL-DEFs
+  1. An ASDL spec is a bunch of ___productions___ or ASDL-DEFs
 
-  2. An ASDL-DEF, aka ***speclet***, is a triple of (a) ***term***
+  2. An ASDL-DEF, aka ___speclet___, is a triple of (a) ___term___
   or ASDL-TERM, (b) an equals sign, and (c) one or more ASDL-FORMs
   separated by vertical bar characters. The meaning of an ASDL-DEF
-  is an *alternation*, a list of alternative ASDL-FORMs.
+  is an _alternation_, a list of alternative ASDL-FORMs.
 
   There are about 28 terms. See all-terms-test in core_test.clj.
   They are things like ::array_index, ::ttype, ::expr, etc.
 
-  3. There are three *kinds* of ASDL-FORM or speclet: a
-  ***composite***, a ***symconst***, or a ***tuple***.
+  3. There are three _kinds_ of ASDL-FORM or speclet: a
+  ___composite___, a ___symconst___, or a ___tuple___.
 
-  4. A *composite* is a ASDL-HEAD ***head*** followed by
+  4. A _composite_ is a ASDL-HEAD ___head___ followed by
   ASDL-ARGSs args. Args are identical in shape to a tuple.
 
   There are about 227 heads, about six of which are asr-tuples
@@ -45,22 +46,22 @@
   ::FileClose, ::TypeParameter, etc. See all-heads-test in
   core_test.clj.
 
-  5. A *symconst* is just an identifier, reckoned as the *head* of
+  5. A _symconst_ is just an identifier, reckoned as the _head_ of
   the symconst.
 
   6. A tuple is a comma-separated list (in round brackets) of
-  pairs of ***type*** and ***variable***.
+  pairs of ___type___ and ___variable___.
 
-  A tuple is anonymous, but we gensym a *head* for them, so that
+  A tuple is anonymous, but we gensym a _head_ for them, so that
   every kind of ASDL-FORM has a head, for convenience.
 
-  7. Types can have *quantitative qualifiers*, aka
-  *multiplicities*: STAR or QUES, meaning that the variable
+  7. Types can have _quantitative qualifiers_, aka
+  _multiplicities_: STAR or QUES, meaning that the variable
   denotes \"zero or more\" and \"at least one\" instance of the
   type respectively. The default quantity is \"exactly once.\"
 
-  The big picture to remember about *terms* and *heads* is that a
-  *speclet* looks like one of the following three:
+  The big picture to remember about _terms_ and _heads_ is that a
+  _speclet_ looks like one of the following three:
 
   1. `term` `=` `composite-`*`head`*`-1` `args` `|`
   `composite-`*`head`*`-2` `args` `|` ...
@@ -70,11 +71,11 @@
 
   3. `term` `=` `tuple` (anonymous gensymmed *head*)
 
-  A *term* corresponds to one or more (a *bunch* of) *heads*, but
+  A _term_ corresponds to one or more (a _bunch_ of) _heads_, but
   each head corresponds to exactly one term.
 
-  A term has exactly one *speclet*. The speclet is the whole line,
-  left-hand side (term) and right-hand side (bunch of *forms*, one
+  A term has exactly one _speclet_. The speclet is the whole line,
+  left-hand side (term) and right-hand side (bunch of _forms_, one
   per head).
 
   All forms in a speclet have the same kind: composite, symconst,
