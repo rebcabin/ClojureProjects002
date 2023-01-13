@@ -2,54 +2,6 @@
   (:require [clojure.pprint  :refer [pprint] ]))
 
 
-;;     __
-;;   __\ \   ___ __ _ __
-;;  |___> > (_-</ _| '  \
-;;     /_/  /__/\__|_|_|_|
-;;
-
-
-(defmulti ->scm type)
-
-(defmethod ->scm (type 'symbol)
-  [item]
-  item)
-
-(defmethod ->scm (type "foo")
-  [item]
-  item)
-
-(defmethod ->scm (type 42)
-  [item]
-  item)
-
-(defmethod ->scm (type 3.14159)
-  [item]
-  item)
-
-(defmethod ->scm (type {:a 1})
-  [item]
-  "Convert Clojure dict to Scheme assoc-list."
-  item
-  (map (fn [p] (list
-                (symbol (first p))
-                (->scm (second p))))
-       (map (partial apply list)
-            (into () item))))
-
-(defmethod ->scm (type '())
-  [item]
-  item)
-
-(defmethod ->scm (type '(1 2 3))
-  [item]
-  (map ->scm item))
-
-(defmethod ->scm (type [1 2 3])
-  [item]
-  (map ->scm item))
-
-
 ;;  _          _                      __  _
 ;; | |_ ___ __| |_ __ ____ _ _ _ ___ /  \/ |
 ;; |  _/ -_|_-<  _|\ V / _` | '_(_-<| () | |

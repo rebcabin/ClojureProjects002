@@ -5,6 +5,7 @@
    [asr.grammar                   ]
    [asr.lpython                   ]
    [clojure.pprint :refer [pprint]]
+   [asr.parsed     :refer [shallow-map-from-speclet]]
    [clojure.zip    :as     zip    ]))
 
 
@@ -134,6 +135,16 @@
 
 (def asr-asdl-hiccup
   (asr.grammar/asdl-parser asr.lpython/asr-asdl))
+
+
+;;; Some of the following gadgets collide with "parsed.clj," which
+;;; works on the snapshot data in "asr_snapshot.clj".
+
+
+(def speclets
+  (vec (rest
+        ((-> (zip/vector-zip asr-asdl-hiccup)
+             zip/down zip/right zip/right) 0))))
 
 
 

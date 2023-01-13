@@ -1,8 +1,6 @@
 (ns asr.core-test
   (:use [asr.core]
-        [asr.asr]
         [asr.data]
-        [asr.parsed]
         [asr.numbers]
         [asr.arithmetic]
         [asr.autospecs]
@@ -11,14 +9,20 @@
         [asr.expr.semsem]
         [asr.utils])
 
-  (:require [clojure.math                  :as    math   ]
-            [clojure.test                  :refer :all   ]
-            [clojure.string                :as    string ]
-            [clojure.spec.alpha            :as    s      ]
-            [clojure.spec.gen.alpha        :as    gen    ]
-            [clojure.test.check.generators :as    tgen   ]
-            [clojure.test.check.properties :as    tprop  ]
-            [asr.lpython                   :as    lpython]))
+  (:require
+   [asr.asr                                     ]
+   [asr.parsed                                  ]
+   [clojure.math                  :as    math   ]
+   [clojure.test                  :refer :all   ]
+   [clojure.string                :as    string ]
+   [clojure.spec.alpha            :as    s      ]
+   [clojure.spec.gen.alpha        :as    gen    ]
+   [clojure.test.check.generators :as    tgen   ]
+   [clojure.test.check.properties :as    tprop  ]
+   [asr.lpython                   :as    lpython]))
+
+(refer 'asr.asr)
+(refer 'asr.parsed :rename {'speclets 'snapshot-speclets})
 
 
 (def ONETEST           1)
@@ -68,12 +72,12 @@
 
   (testing "shallow map from speclet"
 
-    (is (= (asr.parsed/shallow-map-from-speclet (speclets 3))
+    (is (= (asr.parsed/shallow-map-from-speclet (snapshot-speclets 3))
            {:ASDL-FORMS
             '([:ASDL-SYMCONST "Public"] [:ASDL-SYMCONST "Private"]),
             :ASDL-TERM "access"}))
 
-    (is (= (asr.parsed/shallow-map-from-speclet (speclets 0))
+    (is (= (asr.parsed/shallow-map-from-speclet (snapshot-speclets 0))
            {:ASDL-FORMS
             '([:ASDL-COMPOSITE
                [:ASDL-HEAD "TranslationUnit"]
@@ -86,7 +90,7 @@
                  [:ASDL-NYM "items"]]]]),
             :ASDL-TERM "unit"}))
 
-    (is (= (asr.parsed/shallow-map-from-speclet (speclets 22))
+    (is (= (asr.parsed/shallow-map-from-speclet (snapshot-speclets 22))
            {:ASDL-FORMS
             '([:ASDL-TUPLE
                [:ASDL-ARGS
@@ -98,7 +102,7 @@
 
 (deftest hashmap-from-speclet-test
   (testing "hashmap from speclet"
-    (is (= (hashmap-from-speclet (speclets 0))
+    (is (= (hashmap-from-speclet (snapshot-speclets 0))
            {:ASDL-TERM "unit",
             :ASDL-FORMS
             '({:ASDL-COMPOSITE
@@ -111,7 +115,7 @@
                   :MULTIPLICITY :asr.parsed/zero-or-more,
                   :ASDL-NYM "items"})}})}))
 
-    (is (= (hashmap-from-speclet (speclets 3))
+    (is (= (hashmap-from-speclet (snapshot-speclets 3))
            {:ASDL-TERM "access",
             :ASDL-FORMS
             '({:ASDL-SYMCONST "Public"}
@@ -1630,19 +1634,6 @@
   (is (s/valid? :asr.specs/tuple-ttype
                 '(Tuple [(Character 1 []) (Integer 4 [])]))))
 
-
-
-;;  ___  ___ _ __ ___
-;; / __|/ __| '_ ` _ \
-;; \__ \ (__| | | | | |
-;; |___/\___|_| |_| |_|
-
-;; Deprecated 9 Jan 2023.
-
-(deftest ->scm-test
-  (is (= (->scm 'foo) 'foo))
-  (is (= (->scm 9) 9))
-  (is (= (->scm 2.71828) 2.71828)))
 
 
 ;;     _    ____  ____    ___       _                           _
