@@ -60,7 +60,8 @@
 
 (defn eval-bindings
   [bindings]
-  (throw (AssertionError. "Forward-reference (incorrect) function called")))
+  (throw (AssertionError.
+          "Forward-reference: incorrect eval-bindings function called")))
 
 
 (defn new-penv
@@ -71,15 +72,47 @@
         :validator is-environment?))
 
 
+;;; I think we don't ever need to "delete" a penv, but we may need to clear one
+;;; or more bindings.
+
+
+(defn clear-bindings-penv!
+  [penv]
+  (assert (is-penv? penv))
+  (swap! penv (fn [env]
+                {:φ (apply dissoc (:φ @penv) (keys (:φ @penv)))
+                 :π (:π @penv)})))
+
+
+(defn clear-binding-penv!
+  [penv
+   key]
+  (assert (is-penv? penv))
+  (swap! penv (fn [env]
+                {:φ (dissoc (:φ @penv) key)
+                 :π (:π @penv)})))
+
+
+(defn augment-bindings-penv!
+  [bindings penv]
+  (assert (is-penv? penv))
+  (let [oenv (:π @penv)]
+   (swap! penv (fn [env]
+                 {:φ
+                  (into (:φ env)
+                        ((eval-bindings bindings) oenv))
+                  :π oenv}))))
+
+
 (defn lookup-penv
   "Classic recursion; TODO: consider tail-recursion with loop and
   recur."
   [sym penv]
-  (assert (is-penv? penv) "Invalid penv")
+  (assert (or (nil? penv) (is-penv? penv)) "Invalid penv")
   (assert (instance? clojure.lang.Symbol sym) "Invalid symbol")
   (cond
-    (nil? @penv) nil
-    true (let [r ((:φ @penv) sym)]
+    (nil? penv) nil
+    true (let [r ((:φ @penv) (keyword sym))]
            (cond
              (nil? r) (lookup-penv sym (:π @penv))
              true r))))
@@ -95,7 +128,7 @@
   "sketch"
   [node]
   (fn [penv]
-    (echo node)))
+    node))
 
 
 (defn eval-nodes
@@ -189,9 +222,13 @@
     ))
 
 (defmethod eval-symbol 'ForTest
-  [[head]]
+  [[head
+    datum]]
   (fn [penv]
-    (echo {:head head})))
+    (if datum
+      {:head  head,
+       :datum ((eval-node datum) penv)}
+      {:head head})))
 
 (defmethod eval-symbol 'Variable
   [[head

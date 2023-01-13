@@ -1659,6 +1659,50 @@
   (is (is-global-penv? ΓΠ)))
 
 
+(deftest new-penv-bindings-test
+  (let [foo   {:a '(ForTest), :b '(ForTest), :c '(ForTest)}
+        npenv (echo (new-penv foo ΓΠ))
+        bar   ((eval-bindings foo) ΓΠ)]
+    (is (= bar (:φ @npenv)))
+    (is (= ((eval-bindings (dissoc foo :a)) ΓΠ)
+           (:φ (clear-binding-penv! npenv :a))))
+    (is (= {}  (:φ (clear-bindings-penv! npenv))))
+    (is (= {}  (:φ @npenv)))))
+
+
+(deftest new-penv-augment-bindings-test
+  (let [foo    {:a '(ForTest), :b '(ForTest), :c '(ForTest)}
+        npenv  (echo (new-penv foo ΓΠ))
+        bar    ((eval-bindings foo) ΓΠ)
+        nbdgs  {:a '(ForTest 42)}
+        nfoo   (into foo nbdgs)
+        nbdgs2 {:d '(ForTest 43)}
+        nfoo2  (into nfoo nbdgs2)]
+    (is (= bar (:φ @npenv)))
+    (is (= (echo ((eval-bindings nfoo) ΓΠ))
+           (:φ (augment-bindings-penv! nbdgs npenv))))
+    (is (= (echo ((eval-bindings nfoo2) ΓΠ))
+           (:φ (augment-bindings-penv! nbdgs2 npenv))))
+    ))
+
+
+(deftest lookup-penv-test
+  (is (nil? (lookup-penv 'x ΓΠ)))
+  (let [foo    {:a '(ForTest a), :b '(ForTest b), :c '(ForTest c)}
+        npenv0 (new-penv foo  ΓΠ)
+        nbdgs1 {:a '(ForTest a42)}
+        npenv1 (new-penv nbdgs1 npenv0)
+        nbdgs2 {:d '(ForTest d)}
+        npenv2 (new-penv nbdgs2 npenv1)]
+    (is (= {:head 'ForTest, :datum 'a42} (lookup-penv 'a npenv2)))
+    (is (= {:head 'ForTest, :datum 'a  } (lookup-penv 'a npenv0)))
+    (is (= {:head 'ForTest, :datum 'b  } (lookup-penv 'b npenv2)))
+    (is (= {:head 'ForTest, :datum 'c  } (lookup-penv 'c npenv2)))
+    (is (= {:head 'ForTest, :datum 'd  } (lookup-penv 'd npenv2)))
+    (is (nil? (lookup-penv 'e npenv2)))
+    ))
+
+
 (deftest eval-bindings-test
   "A SymbolTable is just a dict; to be usable, it must be a frame π in an
 Environment."
