@@ -1,5 +1,6 @@
 (ns asr.core-test
   (:use [asr.core]
+        [asr.asr]
         [asr.data]
         [asr.numbers]
         [asr.arithmetic]
@@ -10,19 +11,16 @@
         [asr.utils])
 
   (:require
-   [asr.asr                                     ]
-   [asr.parsed                                  ]
-   [clojure.math                  :as    math   ]
-   [clojure.test                  :refer :all   ]
-   [clojure.string                :as    string ]
-   [clojure.spec.alpha            :as    s      ]
-   [clojure.spec.gen.alpha        :as    gen    ]
-   [clojure.test.check.generators :as    tgen   ]
-   [clojure.test.check.properties :as    tprop  ]
-   [asr.lpython                   :as    lpython]))
-
-(refer 'asr.asr)
-(refer 'asr.parsed :rename {'speclets 'snapshot-speclets})
+   [asr.asr                                      ]
+   [asr.parsed                    :as    snapshot]
+   [clojure.math                  :as    math    ]
+   [clojure.test                  :refer :all    ]
+   [clojure.string                :as    string  ]
+   [clojure.spec.alpha            :as    s       ]
+   [clojure.spec.gen.alpha        :as    gen     ]
+   [clojure.test.check.generators :as    tgen    ]
+   [clojure.test.check.properties :as    tprop   ]
+   [asr.lpython                   :as    lpython ]))
 
 
 (def ONETEST           1)
@@ -31,11 +29,23 @@
 (def LONGTESTS      1000) ;; Bigger for inline stresses
 
 
-;;        _   _ _
-;;  _   _| |_(_) |___
-;; | | | | __| | / __|
-;; | |_| | |_| | \__ \
-;;  \__,_|\__|_|_|___/
+;;  ____  _   _    _    ____  ____  _   _  ___ _____
+;; / ___|| \ | |  / \  |  _ \/ ___|| | | |/ _ \_   _|
+;; \___ \|  \| | / _ \ | |_) \___ \| |_| | | | || |
+;;  ___) | |\  |/ ___ \|  __/ ___) |  _  | |_| || |
+;; |____/|_| \_/_/   \_\_|   |____/|_| |_|\___/ |_|
+;;  _____ _____ ____ _____ ____
+;; |_   _| ____/ ___|_   _/ ___|
+;;   | | |  _| \___ \ | | \___ \
+;;   | | | |___ ___) || |  ___) |
+;;   |_| |_____|____/ |_| |____/
+
+
+;;                   _   _ _
+;;  __ _ ____ _ _  _| |_(_) |___
+;; / _` (_-< '_| || |  _| | (_-<
+;; \__,_/__/_|(_)_,_|\__|_|_/__/
+
 
 (deftest kebab-test
   (testing "kebab-case from asr.utils"
@@ -48,12 +58,12 @@
          (asr.utils/nskw-kebab-from :should-fail)))))
 
 
-;;           _           _
-;; __      _| |__   ___ | | ___   ___ _ __   ___  ___
-;; \ \ /\ / / '_ \ / _ \| |/ _ \ / __| '_ \ / _ \/ __|
-;;  \ V  V /| | | | (_) | |  __/ \__ \ |_) |  __/ (__
-;;   \_/\_/ |_| |_|\___/|_|\___| |___/ .__/ \___|\___|
-;;                                   |_|
+;;         _        _
+;; __ __ _| |_  ___| |___   ____ __  ___ __
+;; \ V  V / ' \/ _ \ / -_) (_-< '_ \/ -_) _|
+;;  \_/\_/|_||_\___/_\___| /__/ .__/\___\__|
+;;                            |_|
+
 
 (deftest whole-spec-test
   (testing "whole examples pass trivial spec"
@@ -61,23 +71,23 @@
     (is (s/valid? list? asr.data/test_vars_01))))
 
 
-;;                      _      _
-;;  ___ _ __   ___  ___| | ___| |_
-;; / __| '_ \ / _ \/ __| |/ _ \ __|
-;; \__ \ |_) |  __/ (__| |  __/ |_
-;; |___/ .__/ \___|\___|_|\___|\__|
-;;     |_|
+;;                  _     _
+;;  ____ __  ___ __| |___| |_
+;; (_-< '_ \/ -_) _| / -_)  _|
+;; /__/ .__/\___\__|_\___|\__|
+;;    |_|
+
 
 (deftest shallow-map-from-speclet-test
 
   (testing "shallow map from speclet"
 
-    (is (= (asr.parsed/shallow-map-from-speclet (snapshot-speclets 3))
+    (is (= (asr.parsed/shallow-map-from-speclet (snapshot/speclets 3))
            {:ASDL-FORMS
             '([:ASDL-SYMCONST "Public"] [:ASDL-SYMCONST "Private"]),
             :ASDL-TERM "access"}))
 
-    (is (= (asr.parsed/shallow-map-from-speclet (snapshot-speclets 0))
+    (is (= (asr.parsed/shallow-map-from-speclet (snapshot/speclets 0))
            {:ASDL-FORMS
             '([:ASDL-COMPOSITE
                [:ASDL-HEAD "TranslationUnit"]
@@ -90,7 +100,7 @@
                  [:ASDL-NYM "items"]]]]),
             :ASDL-TERM "unit"}))
 
-    (is (= (asr.parsed/shallow-map-from-speclet (snapshot-speclets 22))
+    (is (= (asr.parsed/shallow-map-from-speclet (snapshot/speclets 22))
            {:ASDL-FORMS
             '([:ASDL-TUPLE
                [:ASDL-ARGS
@@ -102,7 +112,7 @@
 
 (deftest hashmap-from-speclet-test
   (testing "hashmap from speclet"
-    (is (= (hashmap-from-speclet (snapshot-speclets 0))
+    (is (= (asr.parsed/hashmap-from-speclet (snapshot/speclets 0))
            {:ASDL-TERM "unit",
             :ASDL-FORMS
             '({:ASDL-COMPOSITE
@@ -115,23 +125,23 @@
                   :MULTIPLICITY :asr.parsed/zero-or-more,
                   :ASDL-NYM "items"})}})}))
 
-    (is (= (hashmap-from-speclet (snapshot-speclets 3))
+    (is (= (asr.parsed/hashmap-from-speclet (snapshot/speclets 3))
            {:ASDL-TERM "access",
             :ASDL-FORMS
             '({:ASDL-SYMCONST "Public"}
               {:ASDL-SYMCONST "Private"})}))))
 
 
-;;        _ _               _
-;;   __ _| | |   __ _ _   _| |_ ___  ___ _ __   ___  ___ ___
-;;  / _` | | |  / _` | | | | __/ _ \/ __| '_ \ / _ \/ __/ __|
-;; | (_| | | | | (_| | |_| | || (_) \__ \ |_) |  __/ (__\__ \
-;;  \__,_|_|_|  \__,_|\__,_|\__\___/|___/ .__/ \___|\___|___/
-;;                                      |_|
+;;       _ _             _
+;;  __ _| | |  __ _ _  _| |_ ___ ____ __  ___ __ ___
+;; / _` | | | / _` | || |  _/ _ (_-< '_ \/ -_) _(_-<
+;; \__,_|_|_| \__,_|\_,_|\__\___/__/ .__/\___\__/__/
+;;                                 |_|
+
 
 (deftest all-terms-test
   (testing "check all 28 terms"
-    (is (= 28 (->> big-list-of-stuff (map :term) set count)))
+    (is (= 28 (->> snapshot/big-list-of-stuff (map :term) set count)))
     (is (= #{
              :asr.autospecs/abi
              :asr.autospecs/access
@@ -162,13 +172,13 @@
              :asr.autospecs/ttype
              :asr.autospecs/unit
              }
-           (set (map :term big-list-of-stuff))))))
+           (set (map :term snapshot/big-list-of-stuff))))))
 
 
 (deftest all-kinds-test
   (testing "check all 3 kinds"
     (is (= #{:ASDL-SYMCONST :ASDL-COMPOSITE :ASDL-TUPLE}
-           (set (map :kind big-list-of-stuff))))))
+           (set (map :kind snapshot/big-list-of-stuff))))))
 
 
 (defn- not-asr-tuple [kw]
@@ -178,7 +188,7 @@
 (deftest all-heads-test
   (testing "check all 227 heads, minus 6 asr-tuples"
     (is (= (- 227 6)
-           (->> big-list-of-stuff
+           (->> snapshot/big-list-of-stuff
                 (map :head)
                 (filter not-asr-tuple)
                 set
@@ -409,12 +419,12 @@
            (set
             (filter
              not-asr-tuple
-             (map :head big-list-of-stuff)))))))
+             (map :head snapshot/big-list-of-stuff)))))))
 
 
 (deftest install-all-symconst-specs-test
   (testing "install all 72 symconst specs"
-    (is (= 72 (->> symconst-stuffs set count)))
+    (is (= 72 (->> snapshot/symconst-stuffs set count)))
     (is (= #{
              :asr.autospecs/add
              :asr.autospecs/allocatable
@@ -489,7 +499,7 @@
              :asr.autospecs/unspecified
              :asr.autospecs/xor
              }
-           (->> symconst-stuffs
+           (->> snapshot/symconst-stuffs
                 (map asr.autospecs/spec-from-symconst-stuff)
                 (map eval)
                 set)))))
@@ -510,8 +520,8 @@
              :asr.autospecs/intent
              :asr.autospecs/access
              :asr.autospecs/cmpop}
-           (->> symconst-stuffss-by-term
-                (map symconst-spec-for-term)
+           (->> snapshot/symconst-stuffss-by-term
+                (map asr.autospecs/symconst-spec-for-term)
                 (map eval)
                 set)))))
 
@@ -544,7 +554,7 @@
               DictInsert          DoLoop              FileWrite
               GoToTarget          Return              ErrorStop
               DoConcurrentLoop    FileClose           IfArithmetic}
-           (heads-for-composite :asr.autospecs/stmt)))))
+           (asr.autospecs/heads-for-composite :asr.autospecs/stmt)))))
 
 
 (deftest all-heads-for-exprs-test
@@ -578,30 +588,30 @@
               StringItem              StringConcat    SetLen
               ComplexCompare          ArrayBound      ComplexRe
               ComplexBinOp}
-           (heads-for-composite :asr.autospecs/expr)))))
+           (asr.autospecs/heads-for-composite :asr.autospecs/expr)))))
 
 
-;;  _     _         _ _     _       _     _
-;; | |__ (_) __ _  | (_)___| |_    | |__ (_) __ _   _ __ ___   __ _ _ __
-;; | '_ \| |/ _` | | | / __| __|   | '_ \| |/ _` | | '_ ` _ \ / _` | '_ \
-;; | |_) | | (_| | | | \__ \ |_ _  | |_) | | (_| | | | | | | | (_| | |_) |
-;; |_.__/|_|\__, | |_|_|___/\__( ) |_.__/|_|\__, | |_| |_| |_|\__,_| .__/
-;;          |___/              |/           |___/                  |_|
+;;  _    _        _ _    _       _    _
+;; | |__(_)__ _  | (_)__| |_    | |__(_)__ _   _ __  __ _ _ __
+;; | '_ \ / _` | | | (_-<  _|_  | '_ \ / _` | | '  \/ _` | '_ \
+;; |_.__/_\__, | |_|_/__/\__( ) |_.__/_\__, | |_|_|_\__,_| .__/
+;;        |___/             |/         |___/             |_|
+
 
 (deftest count-of-big-list-of-stuff
   (testing "count of big list of stuff"
-    (is (= 227 (count big-list-of-stuff)))))
+    (is (= 227 (count snapshot/big-list-of-stuff)))))
 
 
 (deftest count-of-big-map-of-speclets
   (testing "count of big map of speclets"
-    (is (= 28 (count big-map-of-speclets-from-terms)))))
+    (is (= 28 (count snapshot/big-map-of-speclets-from-terms)))))
 
 
 (deftest count-of-composite-exprs
   (testing "count of composite exprs"
     (is (= 73
-           (->> big-map-of-speclets-from-terms
+           (->> snapshot/big-map-of-speclets-from-terms
                 :asr.autospecs/expr
                 (map :ASDL-COMPOSITE)
                 count)))))
@@ -619,6 +629,7 @@
 ;;  | || ' \  _/ -_) _` / -_) '_| _ \ | ' \ (_) | '_ \
 ;; |___|_||_\__\___\__, \___|_| |___/_|_||_\___/| .__/
 ;;                 |___/                        |_|
+
 
 (let [test-vector '(IntegerBinOp
                     (IntegerBinOp
@@ -675,7 +686,7 @@
     (testing "stuff for IntegerBinOp has expected data"
       (is (= integer-bin-op-stuff
              (filter #(= (:head %) :asr.autospecs/IntegerBinOp)
-                     big-list-of-stuff))))))
+                     snapshot/big-list-of-stuff))))))
 
 
 ;;  _     _                      _   _
@@ -683,6 +694,7 @@
 ;; | | ' \  _/ -_) _` / -_) '_| |  _|  _| || | '_ \/ -_)
 ;; |_|_||_\__\___\__, \___|_|    \__|\__|\_, | .__/\___|
 ;;               |___/                   |__/|_|
+
 
 (deftest integer-ttype-conformance
   (testing "Integer ttype conformance"
@@ -711,6 +723,7 @@
 ;; (_)__ /_  )  __ ___ _ _  __| |_ __ _ _ _| |_
 ;; | ||_ \/ /  / _/ _ \ ' \(_-<  _/ _` | ' \  _|
 ;; |_|___/___| \__\___/_||_/__/\__\__,_|_||_\__|
+
 
 (deftest i32-constant-conformance
   (testing "i32-constant conformance:"
@@ -751,6 +764,7 @@
 ;; | ||_ \/ /  | '_ \ | ' \  / _ \ '_ \ (_-</ -_) '  \| ' \/ _` (_-< '_|
 ;; |_|___/___| |_.__/_|_||_| \___/ .__/ /__/\___|_|_|_|_||_\__,_/__/_|
 ;;                               |_|
+
 
 (deftest i32-bin-op-conformance
   (testing "conformance to structural integer bin-op specs (not correct arithmetic):"
@@ -930,6 +944,7 @@
 ;; |_|_||_\__\___\__, \___|_|   \__, \___|_||_\___|_| \__,_|\__\___/_| /__/
 ;;               |___/          |___/
 
+
 (deftest integer-generators
   (testing "::i8, ::i8nz, ::i16, etc."
     (is (not-any? zero?
@@ -963,6 +978,7 @@
 ;; | | ' \  _/ -_) _` / -_) '_| / -_) \ / _/ -_) '_ \  _| / _ \ ' \(_-<
 ;; |_|_||_\__\___\__, \___|_|   \___/_\_\__\___| .__/\__|_\___/_||_/__/
 ;;               |___/                         |_|
+
 
 (deftest integer-exceptions
   (testing "small integer overflow exceptions, negative and
@@ -1018,6 +1034,7 @@
 ;; |_|_||_\__\___\__, \___|_|    \__|\_, | .__/\___/__/
 ;;               |___/               |__/|_|
 
+
 (deftest integer-types
   (testing "integer types, clojure and java")
   (is clojure.lang.BigInt
@@ -1034,6 +1051,7 @@
 ;; | ||_ \/ /___| '_ \ | ' \___/ _ \ '_ \___(_-</ -_) '  \(_-</ -_) '  \
 ;; |_|___/___|  |_.__/_|_||_|  \___/ .__/   /__/\___|_|_|_/__/\___|_|_|_|
 ;;                                 |_|
+
 
 (deftest i32-bin-op-leaf-semsem-conformance
   (testing "conformance to :asr.core/i32-bin-op-leaf"
@@ -1241,6 +1259,7 @@
 ;; / _` | '_| |  _| ' \| '  \/ -_)  _| / _|
 ;; \__,_|_| |_|\__|_||_|_|_|_\___|\__|_\__|
 
+
 (deftest maybe-fast-unchecked-i32-exp-test
   (testing "fast unchecked exp i32:"
     (testing "unchecked spinning on random-ish values"
@@ -1269,6 +1288,7 @@
 ;;             |__/
 
 ;; Co-cursively calls spec ::i32-bin-op.
+
 
 (deftest maybe-value-i32-semsem-test
   (testing "various nil-punning returns:"
@@ -1371,6 +1391,7 @@
 ;; | / -_) _` |  _| / _/ _ \ || | ' \  _|
 ;; |_\___\__,_|_|   \__\___/\_,_|_||_\__|
 
+
 (deftest i32-bin-op-semsem-leaf-count-test
   (testing "i32 bin op semsem leaf count"
     (is (= 12 (i32-bin-op-semsem-leaf-count
@@ -1438,6 +1459,7 @@
 ;; \__\___/_|_|_| .__/\_,_|\__\___| |_|___/___| |_.__/_|_||_\___/ .__/
 ;;              |_|                                             |_|
 
+
 (let [compute (partial compute-i32-bin-op-value
                        asr-i32-unchecked-binop->clojure-op)]
   (deftest unit-compute-i32-binop
@@ -1469,6 +1491,7 @@
 ;; /__/\__,_|_|_|_| .__/_\___|
 ;;                |_|
 
+
 (let [foo (-> (s/gen :asr.expr.semsem/i32-bin-op)
               (gen/sample NTESTS))]
  (deftest sample-100-test
@@ -1490,14 +1513,17 @@
 ;;  ___) || | | |  | | |_) | |_| | |___
 ;; |____/ |_| |_|  |_|____/ \___/|_____|
 
+
 (deftest expr-01-211000-is-not-a-symbol
   (is (not (s/valid? :asr.autospecs/symbol expr-01-211000))))
+
 
 ;;                _         _   _        _    _
 ;;  ____  _ _ __ | |__  ___| | | |_ __ _| |__| |___
 ;; (_-< || | '  \| '_ \/ _ \ | |  _/ _` | '_ \ / -_)
 ;; /__/\_, |_|_|_|_.__/\___/_|  \__\__,_|_.__/_\___|
 ;;     |__/
+
 
 (deftest two-example-symbol-tables
   (is (s/valid?
@@ -1576,6 +1602,7 @@
 ;; \ V / _` | '_| / _` | '_ \ / -_)
 ;;  \_/\__,_|_| |_\__,_|_.__/_\___|
 
+
 (deftest sample-asr-variable
   (is (s/valid?
        :asr.specs/variable
@@ -1615,6 +1642,7 @@
 ;; | '_ \/ _ \/ _ \ |
 ;; |_.__/\___/\___/_|
 
+
 (deftest bool-spec-test
   (is (s/valid? :asr.specs/bool '.false.))
   (is (s/valid? :asr.specs/bool '.true.))
@@ -1627,6 +1655,7 @@
 ;; |  _| || | '_ \ / -_) |  _|  _| || | '_ \/ -_)
 ;;  \__|\_,_| .__/_\___|  \__|\__|\_, | .__/\___|
 ;;          |_|                   |__/|_|
+
 
 (deftest tuple-ttype-test
   (is (s/valid? :asr.specs/tuple-ttype
@@ -1642,6 +1671,13 @@
 ;;  / ___ \ ___) |  _ <   | || | | | ||  __/ |  | |_) | | |  __/ ||  __/ |
 ;; /_/   \_\____/|_| \_\ |___|_| |_|\__\___|_|  | .__/|_|  \___|\__\___|_|
 ;;                                              |_|
+
+
+;;  ___         _                            _
+;; | __|_ ___ _(_)_ _ ___ _ _  _ __  ___ _ _| |_
+;; | _|| ' \ V / | '_/ _ \ ' \| '  \/ -_) ' \  _|
+;; |___|_||_\_/|_|_| \___/_||_|_|_|_\___|_||_\__|
+
 
 (deftest global-environment-exists-test
   (is ΓΠ)
