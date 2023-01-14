@@ -8,6 +8,10 @@
    [asr.parsed     :refer [shallow-map-from-speclet,
                            hashmap-from-speclet,
                            map-pair-from-speclet-map,
+
+                           kind-from-form,
+                           head-from-kind-form,
+                           stuff-from-term-form,
                            ]]
    [clojure.zip    :as     zip    ]))
 
@@ -150,7 +154,116 @@
              zip/down zip/right zip/right) 0))))
 
 
-(def big-map-of-speclets-from-terms nil)
+(def big-map-of-speclets-from-terms
+  (apply hash-map
+         (mapcat identity ;; flatten one level
+                 (map
+                  (comp map-pair-from-speclet-map
+                        hashmap-from-speclet)
+                  speclets))))
+
+;; spot-check with CIDER C-c C-e in buffer
+
+(count big-map-of-speclets-from-terms)
+(first big-map-of-speclets-from-terms)
+
+
+(def big-list-of-stuff
+  (mapcat
+   identity  ; Flatten once.
+   (map (fn [speclet]
+          (let [[term forms] speclet]
+            (map
+             (partial
+              stuff-from-term-form term)
+             forms)))
+        big-map-of-speclets-from-terms)))
+
+;; spot-check with CIDER C-c C-e in buffer
+
+(count big-list-of-stuff)
+(first big-list-of-stuff)
+
+
+(def symconst-stuffs
+  (filter #(= (:kind %) :ASDL-SYMCONST) big-list-of-stuff))
+
+;; spot-check with CIDER C-c C-e in buffer
+
+(count symconst-stuffs)
+(first symconst-stuffs)
+
+
+(def composite-stuffs
+  (filter #(= (:kind %) :ASDL-COMPOSITE) big-list-of-stuff))
+
+;; spot-check with CIDER C-c C-e in buffer
+
+(count composite-stuffs)
+(first composite-stuffs)
+
+(def raw-composite-heads
+  (->> composite-stuffs
+       (map :head)
+       (map name)  ; strip namespace
+       set
+       ))
+
+(defn get-names [specs]
+  (->> specs
+       asr.autospecs/heads-for-composite
+       (map name)
+       set
+       ))
+
+(def cooked-composite-heads
+  (let [exprs     (get-names :asr.autospecs/expr)
+        stmts     (get-names :asr.autospecs/stmt)
+        ttypes    (get-names :asr.autospecs/ttype)
+        symbols   (get-names :asr.autospecs/symbol)
+        ctexprs   (count exprs)
+        ctstmts   (count stmts)
+        ctttypes  (count ttypes)
+        ctsymbols (count symbols)
+        sum (+ ctexprs ctstmts ctttypes ctsymbols)
+        all (clojure.set/union exprs stmts ttypes symbols)]
+    {:ctexprs ctexprs, :ctstmts ctstmts,
+     :ctttypes ctttypes, :ctsymbols ctsymbols,
+     :sum sum,
+     :subset?
+     (clojure.set/subset?
+      all
+      raw-composite-heads),
+     :raw-all-difference
+     (clojure.set/difference
+      raw-composite-heads
+      all),
+     :all-raw-difference
+     (clojure.set/difference
+      all,
+      raw-composite-heads)}))
+
+(count raw-composite-heads)
+
+(count cooked-composite-heads)
+
+(take 5 raw-composite-heads)
+
+(take 5 cooked-composite-heads)
+
+(clojure.set/subset? cooked-composite-heads raw-composite-heads)
+
+(count (clojure.set/difference raw-composite-heads cooked-composite-heads))
+
+(filter #(= (:head %) :asr.autospecs/TypeStmt) composite-stuffs)
+
+(def tuple-stuffs
+  (filter #(= (:kind %) :ASDL-TUPLE) big-list-of-stuff))
+
+;; spot-check with CIDER C-c C-e in buffer
+
+(count tuple-stuffs)
+(first tuple-stuffs)
 
 
 ;;  _  _         _
