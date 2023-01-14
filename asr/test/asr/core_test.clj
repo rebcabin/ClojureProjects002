@@ -11,7 +11,6 @@
         [asr.utils])
 
   (:require
-   [asr.asr                                      ]
    [asr.parsed                    :as    snapshot]
    [clojure.math                  :as    math    ]
    [clojure.test                  :refer :all    ]
