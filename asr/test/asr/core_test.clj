@@ -1799,6 +1799,8 @@ Environment."
        .false.
        []
        []
+       .false.
+       .false.
        .false.),
       :main0
       (Function
@@ -1848,6 +1850,8 @@ Environment."
        .false.
        []
        []
+       .false.
+       .false.
        .false.),
       :main_program
       (Program
@@ -1863,6 +1867,7 @@ Environment."
   (echo (lpython/get-sample-clj expr2-lpy)))
 
 (deftest lpython-asr-test
-  (is (= expr2-pp expr2-clj)))
+  (testing "This test makes me aware of structural changes in lpython"
+    (is (= expr2-pp expr2-clj))))
 
 ; ((eval-unit expr2-pp) @ΓΠ)

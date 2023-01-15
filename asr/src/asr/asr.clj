@@ -166,6 +166,8 @@
 
 (count big-map-of-speclets-from-terms)
 (first big-map-of-speclets-from-terms)
+(count asr.parsed/big-map-of-speclets-from-terms)
+(first asr.parsed/big-map-of-speclets-from-terms)
 
 
 (def big-list-of-stuff
@@ -183,6 +185,8 @@
 
 (count big-list-of-stuff)
 (first big-list-of-stuff)
+(count asr.parsed/big-list-of-stuff)
+(first asr.parsed/big-list-of-stuff)
 
 
 (def symconst-stuffs
@@ -192,6 +196,8 @@
 
 (count symconst-stuffs)
 (first symconst-stuffs)
+(count asr.parsed/symconst-stuffs)
+(first asr.parsed/symconst-stuffs)
 
 
 (def composite-stuffs
@@ -201,6 +207,9 @@
 
 (count composite-stuffs)
 (first composite-stuffs)
+(count asr.parsed/composite-stuffs)
+(first asr.parsed/composite-stuffs)
+
 
 (def raw-composite-heads
   (->> composite-stuffs
@@ -208,6 +217,17 @@
        (map name)  ; strip namespace
        set
        ))
+(count raw-composite-heads)
+
+
+(def raw-snapshot-composite-heads
+  (->> asr.parsed/composite-stuffs
+       (map :head)
+       (map name)
+       set
+       ))
+(count raw-snapshot-composite-heads)
+
 
 (defn get-names [specs]
   (->> specs
@@ -215,6 +235,85 @@
        (map name)
        set
        ))
+
+
+;;; These are the left-hand sides (terms) of all speclets in a
+;;; current version of ASR.asdl, NOT the snapshot
+
+;;; 001 unit
+;;; 002 symbol
+;;; 003 storage_type
+;;; 004 access
+;;; 005 intent
+;;; 006 deftype
+;;; 007 presence
+;;; 008 abi
+;;; 009 stmt
+;;; 010 expr
+;;; 011 ttype
+;;; 012 restriction_arg
+;;; 013 binop
+;;; 014 logicalbinop
+;;; 015 cmpop
+;;; 016 integerboz
+;;; 017 arraybound
+;;; 018 arryastorage
+;;; 019 cast_kind
+;;; 020 dimension
+;;; 021 alloc_arg
+;;; 022 attribute
+;;; 023 attribute_arg
+;;; 024 call_arg
+;;; 025 tbind
+;;; 026 array_index
+;;; 027 do_loop_head
+;;; 028 case_stmt
+;;; 029 type_stmt
+;;; 030 enumtype
+
+;;; Let's see what the reader finds; it should find 30 "terms."
+;;; The count of speclets equals the number of terms.
+
+(count speclets)
+
+;;; The snapshot has 28 terms. This number does not change as
+;;; ASR.asdl is updated.
+
+(count asr.parsed/speclets)
+
+;;; The following un-commented sets have autospecs:
+
+(get-names :asr.autospecs/unit)
+(get-names :asr.autospecs/symbol)
+#_(get-names :asr.autospecs/storage_type)
+#_(get-names :asr.autospecs/access)
+#_(get-names :asr.autospecs/intent)
+#_(get-names :asr.autospecs/deftype)
+#_(get-names :asr.autospecs/presence)
+#_(get-names :asr.autospecs/abi)
+(get-names :asr.autospecs/stmt)
+(get-names :asr.autospecs/expr)
+(get-names :asr.autospecs/ttype)
+(get-names :asr.autospecs/restriction_arg)
+#_(get-names :asr.autospecs/binop)
+#_(get-names :asr.autospecs/logicalbinop)
+#_(get-names :asr.autospecs/cmpop)
+#_(get-names :asr.autospecs/integerboz)
+#_(get-names :asr.autospecs/arraybound)
+(get-names :asr.autospecs/arryastorage)
+#_(get-names :asr.autospecs/cast_kind)
+#_(get-names :asr.autospecs/dimension)
+#_(get-names :asr.autospecs/alloc_arg)
+(get-names :asr.autospecs/attribute)
+#_(get-names :asr.autospecs/attribute_arg)
+#_(get-names :asr.autospecs/call_arg)
+(get-names :asr.autospecs/tbind)
+#_(get-names :asr.autospecs/array_index)
+#_(get-names :asr.autospecs/do_loop_head)
+(get-names :asr.autospecs/case_stmt)
+(get-names :asr.autospecs/type_stmt)
+(get-names :asr.autospecs/enumtype)
+
 
 (def cooked-composite-heads
   (let [exprs     (get-names :asr.autospecs/expr)
@@ -244,7 +343,7 @@
       raw-composite-heads)}))
 
 (count raw-composite-heads)
-
+cooked-composite-heads
 (count cooked-composite-heads)
 
 (take 5 raw-composite-heads)

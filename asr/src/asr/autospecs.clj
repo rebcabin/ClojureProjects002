@@ -125,6 +125,11 @@
        #_echo))
 
 
+(->> big-map-of-speclets-from-terms
+
+     )
+
+
 ;;; Try (s/exercise ::symbol) and (s/exercise ::expr in the REPL.
 
 (let [heads (heads-for-composite ::symbol)]

@@ -18,7 +18,7 @@
   "/Users/brian/Documents/GitHub/lpython")
 
 (def asr-asdl-file-relative
-  "src/libasr/asr.asdl")
+  "src/libasr/ASR.asdl")
 
 (def asr-asdl-file
   (path/resolve dir asr-asdl-file-relative))

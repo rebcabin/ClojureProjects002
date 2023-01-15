@@ -64,10 +64,12 @@
   _speclet_ looks like one of the following three:
 
   1. `term` `=` `composite-`*`head`*`-1` `args` `|`
-  `composite-`*`head`*`-2` `args` `|` ...
+                `composite-`*`head`*`-2` `args` `|`
+                 ...
 
-  2. `term` `=` `symconst-`*`head`* `|` `symconst-`*`head`* `|`
-  ...
+  2. `term` `=` `symconst-`*`head`* `|`
+                `symconst-`*`head`* `|`
+                 ...
 
   3. `term` `=` `tuple` (anonymous gensymmed *head*)
 
