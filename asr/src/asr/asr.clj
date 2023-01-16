@@ -136,6 +136,13 @@
 ;; |_____|___|  \_/  |_____| /_/   \_\____/|_| \_\
 
 
+;;                  _     _
+;;  ____ __  ___ __| |___| |_ ___
+;; (_-< '_ \/ -_) _| / -_)  _(_-<
+;; /__/ .__/\___\__|_\___|\__/__/
+;;    |_|
+
+
 ;;; Parse the current, live ASR.ASDL, not the snapshot we have
 ;;; hard-coded in "asr_snapshot.clj".
 
@@ -153,7 +160,7 @@
         ((-> (zip/vector-zip asr-asdl-hiccup)
              zip/down zip/right zip/right) 0))))
 
-(count speclets)
+;; (count speclets)
 
 
 (def big-map-of-speclets-from-terms
@@ -300,6 +307,13 @@
     :ASDL-SYMCONST  (columnize-asr-enum term)
     :ASDL-TUPLE     (columnize-asr-tuple term)
     :ASDL-COMPOSITE (columnize-asr-composite-terms term)))
+
+
+;;  _    _        _ _    _          __      _         __  __
+;; | |__(_)__ _  | (_)__| |_   ___ / _|  __| |_ _  _ / _|/ _|
+;; | '_ \ / _` | | | (_-<  _| / _ \  _| (_-<  _| || |  _|  _|
+;; |_.__/_\__, | |_|_/__/\__| \___/_|   /__/\__|\_,_|_| |_|
+;;        |___/
 
 
 (def big-list-of-stuff
@@ -554,6 +568,7 @@
     (map (fn [sym] ((eval-symbol sym) penv))
          symbols)))
 
+
 (defn eval-bool
   [bool]
   (fn [penv]
@@ -588,6 +603,7 @@
            :env          @penv         ; Environment
            })))
 
+
 (defmethod eval-symbol 'SymbolTable
   [[head
     integer-id
@@ -600,6 +616,7 @@
            :env        @(new-penv bindings penv)}) ; Environment
     ))
 
+
 (defmethod eval-symbol 'ForTest
   [[head
     datum]]
@@ -608,6 +625,7 @@
       {:head  head,
        :datum ((eval-node datum) penv)}
       {:head head})))
+
 
 (defmethod eval-symbol 'Variable
   [[head
@@ -639,6 +657,7 @@
            :presence       ((eval-node    presence)       penv)
            :value-attr     ((eval-node    value-attr)     penv)
            })))
+
 
 (defmethod eval-symbol 'Function
   [[head                       ; 'Function
@@ -684,28 +703,7 @@
            })))
 
 
-(defmethod eval-symbol 'SubroutineCall
-  [[head
-    symbol-table
-    nym
-    arguments
-    dependencies
-    call-type
-    :as subroutine-call]]
-  (fn [penv]
-    (let [symtab ((eval-symbol symbol-table) penv)
-          args   (map (fn [arg] ((eval-node arg) penv)) arguments)
-          sub    (symtab nym)]
-      (if (not sub)
-        (throw (Exception. (str "Subroutine " nym " not found")))
-        (do (echo {:head           head
-                   :symtab         symtab
-                   :name           nym
-                   :arguments      args
-                   :dependencies   dependencies
-                   :call-type      ((eval-node call-type) penv)
-                   :subroutine     ((eval-symbol sub) penv)})
-            #_(run-subroutine sub args penv))))))
+;;; The following were automatically written by chatGPT
 
 
 (defmethod eval-symbol 'SubroutineCall
