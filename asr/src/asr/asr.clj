@@ -69,6 +69,11 @@
   (atom {:φ {}, :π nil} :validator is-environment?))
 
 
+(def Γsymtab-registry
+  "Unique, session-specific global registry of symbol tables."
+  (atom {} :validator map?))
+
+
 (defn eval-bindings
   [bindings]
   (throw (AssertionError.
@@ -584,7 +589,9 @@
 ;;      |__/
 
 
-;;; docstrings apparently not allowed in defmethod
+;;; docstrings are apparently not allowed in defmethod. For
+;;; convenience, treat SymbolTable as if it were an ASR symbol.
+;;; SymbolTable is not actually specified in ASR.
 
 
 (defmethod eval-symbol 'Program
@@ -610,11 +617,16 @@
     bindings
     :as symbol-table]]
   (fn [penv]
-    (echo {:head       head
-           :integer-id integer-id                  ; int
-           :bindings   bindings                    ; dict
-           :env        @(new-penv bindings penv)}) ; Environment
-    ))
+    (let [np (new-penv bindings penv)
+          ts {:head       head
+              :integer-id integer-id   ; int
+              :bindings   bindings     ; dict
+              :env        @np          ; Environment
+              }
+          _ (keys @Γsymtab-registry)]  ; inspect in debugger
+      (swap! Γsymtab-registry
+             (fn [old] (into old {integer-id np})))
+      (echo ts))))
 
 
 (defmethod eval-symbol 'ForTest
@@ -703,7 +715,7 @@
            })))
 
 
-;;; The following were automatically written by chatGPT
+;;; The following was automatically written by chatGPT:
 
 
 (defmethod eval-symbol 'SubroutineCall

@@ -1869,7 +1869,7 @@ Environment."
   (testing "This test alerts me to structural changes in lpython"
     (is (= expr2-pp expr2-clj))))
 
-; ((eval-unit expr2-pp) @ΓΠ)
+((eval-unit expr2-pp) ΓΠ)
 
 
 ;;                         _
@@ -1881,7 +1881,7 @@ Environment."
 
 (deftest asr-groupings
   (testing "whether groupings are complete")
-  (is (= (->> asr.asr/asr-groups
+  (is (= (->> asr.asr/asr-groups  ;; roughly (14, 6, 10)
               (map second)
               (map count))
          (->> (group-by
