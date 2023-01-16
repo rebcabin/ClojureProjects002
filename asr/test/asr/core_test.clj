@@ -1663,7 +1663,6 @@
                 '(Tuple [(Character 1 []) (Integer 4 [])]))))
 
 
-
 ;;     _    ____  ____    ___       _                           _
 ;;    / \  / ___||  _ \  |_ _|_ __ | |_ ___ _ __ _ __  _ __ ___| |_ ___ _ __
 ;;   / _ \ \___ \| |_) |  | || '_ \| __/ _ \ '__| '_ \| '__/ _ \ __/ _ \ '__|
@@ -1768,7 +1767,7 @@ Environment."
            foo))))
 
 
-(def mp {:main_program
+#_(def mp {:main_program
          '(Program
            (SymbolTable 3 {})
            main_program
@@ -1867,7 +1866,27 @@ Environment."
   (echo (lpython/get-sample-clj expr2-lpy)))
 
 (deftest lpython-asr-test
-  (testing "This test makes me aware of structural changes in lpython"
+  (testing "This test alerts me to structural changes in lpython"
     (is (= expr2-pp expr2-clj))))
 
 ; ((eval-unit expr2-pp) @ΓΠ)
+
+
+;;                         _
+;;  __ _ _ _ ___ _  _ _ __(_)_ _  __ _ ___
+;; / _` | '_/ _ \ || | '_ \ | ' \/ _` (_-<
+;; \__, |_| \___/\_,_| .__/_|_||_\__, /__/
+;; |___/             |_|         |___/
+
+
+(deftest asr-groupings
+  (testing "whether groupings are complete")
+  (is (= (->> asr.asr/asr-groups
+              (map second)
+              (map count))
+         (->> (group-by
+               :group
+               (map asr.asr/columnize-term
+                    asr.asr/big-map-of-speclets-from-terms))
+              (map second)
+              (map count)))))

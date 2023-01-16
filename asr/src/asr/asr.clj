@@ -173,12 +173,12 @@
 
 
 ;; Three groups, of size approximately 14, 6, 10; the first group
-;; contains SYMCONSTs in subgroups by term, e.g.,
+;; of 14 or so contains SYMCONSTs in subgroups by term, e.g.,
 
 ;; {:group asr-enum,
 ;;  :nym :asr.autospecs/cmpop, :vals (Eq NotEq Lt LtE Gt GtE)}.
 
-;; The second group contains tuples, e.g.,
+;; The second group of 6 or so contains tuples, e.g.,
 
 ;; {:group asr-tuple,
 ;;  :nym :asr.autospecs/array_index,
@@ -190,8 +190,58 @@
 ;;   :asr.parsed/at-most-once
 ;;   :asr.parsed/at-most-once)}
 
-;; The third group contains sum-terms, terms with alternatives, like
-;; expr and stmt
+;; The third group of 10 or so contains terms with alternatives,
+;; like expr and stmt. An example, "symbol" has this
+;; structure (abbreviated to a page's length):
+
+;; {:group asr-composite,
+;;  :nym :asr.autospecs/symbol,
+;;  :heads
+;;  (Program   Module  Function
+;;   ...
+;;   AssociateBlock  Block),
+;;  :params-types
+;;  ((symbol_table identifier identifier stmt)
+;;   (symbol_table identifier identifier bool bool)
+;;   (symbol_table    identifier      identifier      expr
+;;    stmt            expr            abi             access
+;;    deftype         string          bool            bool
+;;    bool            bool            bool            ttype
+;;    symbol          bool            bool            bool)
+;;   ...
+;;   (symbol_table identifier stmt)
+;;   (symbol_table identifier stmt)),
+;;  :params-nyms
+;;  ((symtab name dependencies body)
+;;   (symtab name dependencies loaded_from_mod intrinsic)
+;;   (symtab          name            dependencies    args
+;;    body            return_var      abi             access
+;;    deftype         bindc_name      elemental       pure
+;;    module          inline          static          type_params
+;;    restrictions    is_restriction  deterministic   side_effect_free)
+;;   ...
+;;   (symtab name body)
+;;   (symtab name body)),
+;;  :params-mults
+;;  ((:asr.parsed/once                :asr.parsed/once
+;;    :asr.parsed/zero-or-more        :asr.parsed/zero-or-more)
+;;   (:asr.parsed/once                :asr.parsed/once
+;;    :asr.parsed/zero-or-more        :asr.parsed/once
+;;    :asr.parsed/once)
+;;   (:asr.parsed/once                :asr.parsed/once
+;;    :asr.parsed/zero-or-more        :asr.parsed/zero-or-more
+;;    :asr.parsed/zero-or-more        :asr.parsed/at-most-once
+;;    :asr.parsed/once                :asr.parsed/once
+;;    :asr.parsed/once                :asr.parsed/at-most-once
+;;    :asr.parsed/once                :asr.parsed/once
+;;    :asr.parsed/once                :asr.parsed/once
+;;    :asr.parsed/once                :asr.parsed/zero-or-more
+;;    :asr.parsed/zero-or-more        :asr.parsed/once
+;;    :asr.parsed/once                :asr.parsed/once)
+;;   ...
+;;   (:asr.parsed/once :asr.parsed/once :asr.parsed/zero-or-more)
+;;   (:asr.parsed/once :asr.parsed/once :asr.parsed/zero-or-more))}
+
 
 (def asr-groups
   (group-by
@@ -199,8 +249,6 @@
    ;; ...})} fetch :ASR-SYMCONST
    (comp first keys first second)
    big-map-of-speclets-from-terms))
-
-(->> asr-groups (map second) (map count))
 
 
 (defn columnize-asr-enum [term]
@@ -212,7 +260,6 @@
     (assert (every? #(= :ASDL-SYMCONST (-> % keys first)) enumdicts))
     {:group 'asr-enum, :nym nym, :vals enumvals}))
 
-(map columnize-asr-enum (->> asr-groups :ASDL-SYMCONST))
 
 (defn columnize-asr-tuple [term]
   (let [nym (->> term first)
@@ -225,8 +272,6 @@
     (assert (= 1 (count (->> term second))))
     {:group 'asr-tuple, :nym nym, :head head, :parmtypes parmtypes,
      :parmnyms parmnyms, :parmmults parmmults}))
-
-(map columnize-asr-tuple (->> asr-groups :ASDL-TUPLE))
 
 
 (defn columnize-asr-composite-terms [term]
@@ -248,8 +293,6 @@
      :params-nyms params-nyms
      :params-mults params-mults}))
 
-(map columnize-asr-composite-terms (->> asr-groups :ASDL-COMPOSITE))
-
 
 (defn columnize-term
   [term]
@@ -257,24 +300,6 @@
     :ASDL-SYMCONST  (columnize-asr-enum term)
     :ASDL-TUPLE     (columnize-asr-tuple term)
     :ASDL-COMPOSITE (columnize-asr-composite-terms term)))
-
-(map columnize-term big-map-of-speclets-from-terms)
-
-
-(let [terms (->> big-map-of-speclets-from-terms
-                 (map first)
-                 (map name))]
-  (assert (= (count (set terms))
-             (count big-map-of-speclets-from-terms)
-             (count terms)))
-  (->> big-map-of-speclets-from-terms (take 3)))
-
-;; spot-check with CIDER C-c C-e in buffer
-
-(first big-map-of-speclets-from-terms)
-
-(count asr.parsed/big-map-of-speclets-from-terms)
-(first asr.parsed/big-map-of-speclets-from-terms)
 
 
 (def big-list-of-stuff
@@ -288,60 +313,60 @@
              forms)))
         big-map-of-speclets-from-terms)))
 
-;; spot-check with CIDER C-c C-e in buffer
+;; ;; spot-check with CIDER C-c C-e in buffer
 
-(count big-list-of-stuff)
-(first big-list-of-stuff)
-(count asr.parsed/big-list-of-stuff)
-(first asr.parsed/big-list-of-stuff)
-
-
-(def symconst-stuffs
-  (filter #(= (:kind %) :ASDL-SYMCONST) big-list-of-stuff))
-
-;; spot-check with CIDER C-c C-e in buffer
-
-(count symconst-stuffs)
-(first symconst-stuffs)
-(count asr.parsed/symconst-stuffs)
-(first asr.parsed/symconst-stuffs)
+;; (count big-list-of-stuff)
+;; (first big-list-of-stuff)
+;; (count asr.parsed/big-list-of-stuff)
+;; (first asr.parsed/big-list-of-stuff)
 
 
-(def composite-stuffs
-  (filter #(= (:kind %) :ASDL-COMPOSITE) big-list-of-stuff))
+;; (def symconst-stuffs
+;;   (filter #(= (:kind %) :ASDL-SYMCONST) big-list-of-stuff))
 
-;; spot-check with CIDER C-c C-e in buffer
+;; ;; spot-check with CIDER C-c C-e in buffer
 
-(count composite-stuffs)
-(first composite-stuffs)
-(count asr.parsed/composite-stuffs)
-(first asr.parsed/composite-stuffs)
-
-
-(def raw-composite-heads
-  (->> composite-stuffs
-       (map :head)
-       (map name)  ; strip namespace
-       set
-       ))
-(count raw-composite-heads)
+;; (count symconst-stuffs)
+;; (first symconst-stuffs)
+;; (count asr.parsed/symconst-stuffs)
+;; (first asr.parsed/symconst-stuffs)
 
 
-(def raw-snapshot-composite-heads
-  (->> asr.parsed/composite-stuffs
-       (map :head)
-       (map name)
-       set
-       ))
-(count raw-snapshot-composite-heads)
+;; (def composite-stuffs
+;;   (filter #(= (:kind %) :ASDL-COMPOSITE) big-list-of-stuff))
+
+;; ;; spot-check with CIDER C-c C-e in buffer
+
+;; (count composite-stuffs)
+;; (first composite-stuffs)
+;; (count asr.parsed/composite-stuffs)
+;; (first asr.parsed/composite-stuffs)
 
 
-(defn get-names [specs]
-  (->> specs
-       asr.autospecs/heads-for-composite
-       (map name)
-       set
-       ))
+;; (def raw-composite-heads
+;;   (->> composite-stuffs
+;;        (map :head)
+;;        (map name)  ; strip namespace
+;;        set
+;;        ))
+;; ;; (count raw-composite-heads)
+
+
+;; (def raw-snapshot-composite-heads
+;;   (->> asr.parsed/composite-stuffs
+;;        (map :head)
+;;        (map name)
+;;        set
+;;        ))
+;; ;; (count raw-snapshot-composite-heads)
+
+
+;; (defn get-names [specs]
+;;   (->> specs
+;;        asr.autospecs/heads-for-composite
+;;        (map name)
+;;        set
+;;        ))
 
 
 ;;; These are the left-hand sides (terms) of all speclets in a
@@ -381,95 +406,95 @@
 ;;; Let's see what the reader finds; it should find 30 "terms."
 ;;; The count of speclets equals the number of terms.
 
-(count speclets)
+;; (count speclets)
 
 ;;; The snapshot has 28 terms. This number does not change as
 ;;; ASR.asdl is updated.
 
-(count asr.parsed/speclets)
+;; (count asr.parsed/speclets)
 
-;;; The following un-commented sets have autospecs:
+;; ;;; The following un-commented sets have autospecs:
 
-(get-names :asr.autospecs/unit)
-(get-names :asr.autospecs/symbol)
-#_(get-names :asr.autospecs/storage_type)
-#_(get-names :asr.autospecs/access)
-#_(get-names :asr.autospecs/intent)
-#_(get-names :asr.autospecs/deftype)
-#_(get-names :asr.autospecs/presence)
-#_(get-names :asr.autospecs/abi)
-(get-names :asr.autospecs/stmt)
-(get-names :asr.autospecs/expr)
-(get-names :asr.autospecs/ttype)
-(get-names :asr.autospecs/restriction_arg)
-#_(get-names :asr.autospecs/binop)
-#_(get-names :asr.autospecs/logicalbinop)
-#_(get-names :asr.autospecs/cmpop)
-#_(get-names :asr.autospecs/integerboz)
-#_(get-names :asr.autospecs/arraybound)
-(get-names :asr.autospecs/arryastorage)
-#_(get-names :asr.autospecs/cast_kind)
-#_(get-names :asr.autospecs/dimension)
-#_(get-names :asr.autospecs/alloc_arg)
-(get-names :asr.autospecs/attribute)
-#_(get-names :asr.autospecs/attribute_arg)
-#_(get-names :asr.autospecs/call_arg)
-(get-names :asr.autospecs/tbind)
-#_(get-names :asr.autospecs/array_index)
-#_(get-names :asr.autospecs/do_loop_head)
-(get-names :asr.autospecs/case_stmt)
-(get-names :asr.autospecs/type_stmt)
-(get-names :asr.autospecs/enumtype)
+;; (get-names :asr.autospecs/unit)
+;; (get-names :asr.autospecs/symbol)
+;; #_(get-names :asr.autospecs/storage_type)
+;; #_(get-names :asr.autospecs/access)
+;; #_(get-names :asr.autospecs/intent)
+;; #_(get-names :asr.autospecs/deftype)
+;; #_(get-names :asr.autospecs/presence)
+;; #_(get-names :asr.autospecs/abi)
+;; (get-names :asr.autospecs/stmt)
+;; (get-names :asr.autospecs/expr)
+;; (get-names :asr.autospecs/ttype)
+;; (get-names :asr.autospecs/restriction_arg)
+;; #_(get-names :asr.autospecs/binop)
+;; #_(get-names :asr.autospecs/logicalbinop)
+;; #_(get-names :asr.autospecs/cmpop)
+;; #_(get-names :asr.autospecs/integerboz)
+;; #_(get-names :asr.autospecs/arraybound)
+;; (get-names :asr.autospecs/arryastorage)
+;; #_(get-names :asr.autospecs/cast_kind)
+;; #_(get-names :asr.autospecs/dimension)
+;; #_(get-names :asr.autospecs/alloc_arg)
+;; (get-names :asr.autospecs/attribute)
+;; #_(get-names :asr.autospecs/attribute_arg)
+;; #_(get-names :asr.autospecs/call_arg)
+;; (get-names :asr.autospecs/tbind)
+;; #_(get-names :asr.autospecs/array_index)
+;; #_(get-names :asr.autospecs/do_loop_head)
+;; (get-names :asr.autospecs/case_stmt)
+;; (get-names :asr.autospecs/type_stmt)
+;; (get-names :asr.autospecs/enumtype)
 
 
-(def cooked-composite-heads
-  (let [exprs     (get-names :asr.autospecs/expr)
-        stmts     (get-names :asr.autospecs/stmt)
-        ttypes    (get-names :asr.autospecs/ttype)
-        symbols   (get-names :asr.autospecs/symbol)
-        ctexprs   (count exprs)
-        ctstmts   (count stmts)
-        ctttypes  (count ttypes)
-        ctsymbols (count symbols)
-        sum (+ ctexprs ctstmts ctttypes ctsymbols)
-        all (clojure.set/union exprs stmts ttypes symbols)]
-    {:ctexprs ctexprs, :ctstmts ctstmts,
-     :ctttypes ctttypes, :ctsymbols ctsymbols,
-     :sum sum,
-     :subset?
-     (clojure.set/subset?
-      all
-      raw-composite-heads),
-     :raw-all-difference
-     (clojure.set/difference
-      raw-composite-heads
-      all),
-     :all-raw-difference
-     (clojure.set/difference
-      all,
-      raw-composite-heads)}))
+;; (def cooked-composite-heads
+;;   (let [exprs     (get-names :asr.autospecs/expr)
+;;         stmts     (get-names :asr.autospecs/stmt)
+;;         ttypes    (get-names :asr.autospecs/ttype)
+;;         symbols   (get-names :asr.autospecs/symbol)
+;;         ctexprs   (count exprs)
+;;         ctstmts   (count stmts)
+;;         ctttypes  (count ttypes)
+;;         ctsymbols (count symbols)
+;;         sum (+ ctexprs ctstmts ctttypes ctsymbols)
+;;         all (clojure.set/union exprs stmts ttypes symbols)]
+;;     {:ctexprs ctexprs, :ctstmts ctstmts,
+;;      :ctttypes ctttypes, :ctsymbols ctsymbols,
+;;      :sum sum,
+;;      :subset?
+;;      (clojure.set/subset?
+;;       all
+;;       raw-composite-heads),
+;;      :raw-all-difference
+;;      (clojure.set/difference
+;;       raw-composite-heads
+;;       all),
+;;      :all-raw-difference
+;;      (clojure.set/difference
+;;       all,
+;;       raw-composite-heads)}))
 
-(count raw-composite-heads)
-cooked-composite-heads
-(count cooked-composite-heads)
+;; (count raw-composite-heads)
+;; cooked-composite-heads
+;; (count cooked-composite-heads)
 
-(take 5 raw-composite-heads)
+;; (take 5 raw-composite-heads)
 
-(take 5 cooked-composite-heads)
+;; (take 5 cooked-composite-heads)
 
-(clojure.set/subset? cooked-composite-heads raw-composite-heads)
+;; (clojure.set/subset? cooked-composite-heads raw-composite-heads)
 
-(count (clojure.set/difference raw-composite-heads cooked-composite-heads))
+;; (count (clojure.set/difference raw-composite-heads cooked-composite-heads))
 
-(filter #(= (:head %) :asr.autospecs/TypeStmt) composite-stuffs)
+;; (filter #(= (:head %) :asr.autospecs/TypeStmt) composite-stuffs)
 
-(def tuple-stuffs
-  (filter #(= (:kind %) :ASDL-TUPLE) big-list-of-stuff))
+;; (def tuple-stuffs
+;;   (filter #(= (:kind %) :ASDL-TUPLE) big-list-of-stuff))
 
-;; spot-check with CIDER C-c C-e in buffer
+;; ;; spot-check with CIDER C-c C-e in buffer
 
-(count tuple-stuffs)
-(first tuple-stuffs)
+;; (count tuple-stuffs)
+;; (first tuple-stuffs)
 
 
 ;;  _  _         _
