@@ -15,7 +15,8 @@
 
 
 (def dir
-  "/Users/brian/Documents/GitHub/lpython")
+  (str (System/getProperty "user.home")
+       "/Documents/GitHub/lpython"))
 
 (def asr-asdl-file-relative
   "src/libasr/ASR.asdl")

@@ -129,15 +129,15 @@
              true r))))
 
 
-;;  ____  _____    _    ____       _    ____  ____
-;; |  _ \| ____|  / \  |  _ \     / \  / ___||  _ \
-;; | |_) |  _|   / _ \ | | | |   / _ \ \___ \| |_) |
-;; |  _ <| |___ / ___ \| |_| |  / ___ \ ___) |  _ <
-;; |_| \_\_____/_/   \_\____/  /_/   \_\____/|_| \_\
+;;  _     _____     _______      _    ____  ____
+;; | |   |_ _\ \   / / ____|    / \  / ___||  _ \
+;; | |    | | \ \ / /|  _|     / _ \ \___ \| |_) |
+;; | |___ | |  \ V / | |___   / ___ \ ___) |  _ <
+;; |_____|___|  \_/  |_____| /_/   \_\____/|_| \_\
 
 
-;;; Parse the current ASR.ASDL, not the snapshot we have
-;;; hard-coded.
+;;; Parse the current, live ASR.ASDL, not the snapshot we have
+;;; hard-coded in "asr_snapshot.clj".
 
 
 (def asr-asdl-hiccup
@@ -153,6 +153,8 @@
         ((-> (zip/vector-zip asr-asdl-hiccup)
              zip/down zip/right zip/right) 0))))
 
+(count speclets)
+
 
 (def big-map-of-speclets-from-terms
   (apply hash-map
@@ -162,10 +164,76 @@
                         hashmap-from-speclet)
                   speclets))))
 
+
+;; From something like {asr.autospecs/abi ({:ASR-SYMCONST ...})}
+;; fetch :ASR-SYMCONST
+
+(def asr-groups
+  (group-by
+   (comp first keys first second)
+   big-map-of-speclets-from-terms))
+
+(->> asr-groups (map second) (map count))
+
+
+(defn summarize-asr-enum [term]
+  (let [nym (->> term first)
+        enumdicts (->> term second)
+        enumvals  (->> enumdicts (map vals)
+                       (mapcat identity) (map symbol))]
+    (assert (every? #(= 1 (count %)) enumdicts))
+    (assert (every? #(= :ASDL-SYMCONST (-> % keys first)) enumdicts))
+    {:group 'asr-enum, :nym nym, :vals enumvals}))
+
+(map summarize-asr-enum (->> asr-groups :ASDL-SYMCONST))
+
+(defn summarize-asr-tuple [term]
+  (let [nym (->> term first)
+        stuff (->> term second first)
+        head (->> stuff :ASDL-TUPLE symbol)
+        params (->> stuff :ASDL-ARGS)
+        parmtypes (->> params (map :ASDL-TYPE) (map symbol))
+        parmnyms (->> params (map :ASDL-NYM) (map symbol))
+        parmmults (->> params (map :MULTIPLICITY))]
+    (assert (= 1 (count (->> term second))))
+    {:group 'asr-tuple, :nym nym, :head head, :parmtypes parmtypes,
+     :parmnyms parmnyms, :parmmults parmmults}))
+
+(map summarize-asr-tuple (->> asr-groups :ASDL-TUPLE))
+
+
+(defn summarize-asr-composite-terms [term]
+  (let [nym (->> term first)
+        stuff (->> term second)
+        heads (->> stuff (map :ASDL-COMPOSITE)
+                   (map :ASDL-HEAD) (map symbol))]
+    {:group 'asr-composite, :nym nym, :heads heads}))
+
+(map summarize-asr-composite-terms (->> asr-groups :ASDL-COMPOSITE))
+
+
+(defn summarize-term
+  [term]
+  (case (-> term second first keys first)
+    :ASDL-SYMCONST  (summarize-asr-enum term)
+    :ASDL-TUPLE     'tuple
+    :ASDL-COMPOSITE 'composite))
+
+(map summarize-term big-map-of-speclets-from-terms)
+
+
+(let [terms (->> big-map-of-speclets-from-terms
+                 (map first)
+                 (map name))]
+  (assert (= (count (set terms))
+             (count big-map-of-speclets-from-terms)
+             (count terms)))
+  (->> big-map-of-speclets-from-terms (take 3)))
+
 ;; spot-check with CIDER C-c C-e in buffer
 
-(count big-map-of-speclets-from-terms)
 (first big-map-of-speclets-from-terms)
+
 (count asr.parsed/big-map-of-speclets-from-terms)
 (first asr.parsed/big-map-of-speclets-from-terms)
 
