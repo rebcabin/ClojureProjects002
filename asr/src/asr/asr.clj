@@ -165,18 +165,45 @@
                   speclets))))
 
 
-;; From something like {asr.autospecs/abi ({:ASR-SYMCONST ...})}
-;; fetch :ASR-SYMCONST
+;;    _   ___ ___
+;;   /_\ / __| _ \  __ _ _ _ ___ _  _ _ __ ___
+;;  / _ \\__ \   / / _` | '_/ _ \ || | '_ (_-<
+;; /_/ \_\___/_|_\ \__, |_| \___/\_,_| .__/__/
+;;                 |___/             |_|
+
+
+;; Three groups, of size approximately 14, 6, 10; the first group
+;; contains SYMCONSTs in subgroups by term, e.g.,
+
+;; {:group asr-enum,
+;;  :nym :asr.autospecs/cmpop, :vals (Eq NotEq Lt LtE Gt GtE)}.
+
+;; The second group contains tuples, e.g.,
+
+;; {:group asr-tuple,
+;;  :nym :asr.autospecs/array_index,
+;;  :head asr-tuple14316,
+;;  :parmtypes (expr expr expr),
+;;  :parmnyms (left right step),
+;;  :parmmults
+;;  (:asr.parsed/at-most-once
+;;   :asr.parsed/at-most-once
+;;   :asr.parsed/at-most-once)}
+
+;; The third group contains sum-terms, terms with alternatives, like
+;; expr and stmt
 
 (def asr-groups
   (group-by
+   ;; From something like {asr.autospecs/abi ({:ASR-SYMCONST
+   ;; ...})} fetch :ASR-SYMCONST
    (comp first keys first second)
    big-map-of-speclets-from-terms))
 
 (->> asr-groups (map second) (map count))
 
 
-(defn summarize-asr-enum [term]
+(defn columnize-asr-enum [term]
   (let [nym (->> term first)
         enumdicts (->> term second)
         enumvals  (->> enumdicts (map vals)
@@ -185,9 +212,9 @@
     (assert (every? #(= :ASDL-SYMCONST (-> % keys first)) enumdicts))
     {:group 'asr-enum, :nym nym, :vals enumvals}))
 
-(map summarize-asr-enum (->> asr-groups :ASDL-SYMCONST))
+(map columnize-asr-enum (->> asr-groups :ASDL-SYMCONST))
 
-(defn summarize-asr-tuple [term]
+(defn columnize-asr-tuple [term]
   (let [nym (->> term first)
         stuff (->> term second first)
         head (->> stuff :ASDL-TUPLE symbol)
@@ -199,27 +226,39 @@
     {:group 'asr-tuple, :nym nym, :head head, :parmtypes parmtypes,
      :parmnyms parmnyms, :parmmults parmmults}))
 
-(map summarize-asr-tuple (->> asr-groups :ASDL-TUPLE))
+(map columnize-asr-tuple (->> asr-groups :ASDL-TUPLE))
 
 
-(defn summarize-asr-composite-terms [term]
+(defn columnize-asr-composite-terms [term]
   (let [nym (->> term first)
         stuff (->> term second)
-        heads (->> stuff (map :ASDL-COMPOSITE)
-                   (map :ASDL-HEAD) (map symbol))]
-    {:group 'asr-composite, :nym nym, :heads heads}))
+        compos (->> stuff (map :ASDL-COMPOSITE))
+        heads (->> compos (map :ASDL-HEAD) (map symbol))
+        paramss (->> compos (map :ASDL-ARGS))
+        params-nyms (->> paramss
+                         (map #(map :ASDL-NYM %))
+                         (map #(map symbol %)))
+        params-types (->> paramss
+                          (map #(map :ASDL-TYPE %))
+                          (map #(map symbol %)))
+        params-mults (->> paramss
+                          (map #(map :MULTIPLICITY %)))]
+    {:group 'asr-composite, :nym nym, :heads heads,
+     :params-types params-types
+     :params-nyms params-nyms
+     :params-mults params-mults}))
 
-(map summarize-asr-composite-terms (->> asr-groups :ASDL-COMPOSITE))
+(map columnize-asr-composite-terms (->> asr-groups :ASDL-COMPOSITE))
 
 
-(defn summarize-term
+(defn columnize-term
   [term]
   (case (-> term second first keys first)
-    :ASDL-SYMCONST  (summarize-asr-enum term)
-    :ASDL-TUPLE     'tuple
-    :ASDL-COMPOSITE 'composite))
+    :ASDL-SYMCONST  (columnize-asr-enum term)
+    :ASDL-TUPLE     (columnize-asr-tuple term)
+    :ASDL-COMPOSITE (columnize-asr-composite-terms term)))
 
-(map summarize-term big-map-of-speclets-from-terms)
+(map columnize-term big-map-of-speclets-from-terms)
 
 
 (let [terms (->> big-map-of-speclets-from-terms
