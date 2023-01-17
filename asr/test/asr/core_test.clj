@@ -19,6 +19,7 @@
    [clojure.spec.gen.alpha        :as    gen     ]
    [clojure.test.check.generators :as    tgen    ]
    [clojure.test.check.properties :as    tprop   ]
+   [clojure.walk                  :as    walk    ]
    [asr.lpython                   :as    lpython ]))
 
 
@@ -1729,22 +1730,32 @@
 
 
 (deftest eval-bindings-test
-  "A SymbolTable is just a dict; to be usable, it must be a frame π in an
-Environment."
-  (let [foo {:a '(ForTest), :b '(ForTest), :c '(ForTest)}]
-    (is (= {:a {:head 'ForTest},
-            :b {:head 'ForTest},
-            :c {:head 'ForTest}}
-           ((eval-bindings foo) ΓΠ)))))
+  (testing "that a dict of bindings must be evaluated in a penv."
+    (let [foo {:a '(ForTest), :b '(ForTest), :c '(ForTest)}]
+      (is (= {:a {:head 'ForTest},
+              :b {:head 'ForTest},
+              :c {:head 'ForTest}}
+             ((eval-bindings foo) ΓΠ))))))
 
 
-(deftest eval-new-env-test
-  (let [foo {:a '(ForTest), :b '(ForTest), :c '(ForTest)}]
-    (is (= {:φ {:a {:head 'ForTest},
-                :b {:head 'ForTest},
-                :c {:head 'ForTest}},
-            :π ΓΠ}
-           @(new-penv foo ΓΠ)))))
+(deftest eval-new-penv-test
+  (testing "the chaining of penvs."
+    (let [foo {:a '(ForTest), :b '(ForTest), :c '(ForTest)}]
+      (is (= {:φ {:a {:head 'ForTest},
+                  :b {:head 'ForTest},
+                  :c {:head 'ForTest}},
+              :π ΓΠ}
+             @(new-penv foo ΓΠ))))))
+
+
+(deftest indirect-new-penv-test
+  (testing "that a chain of penvs can be fully indirected"
+    (let [foo {:a '(ForTest), :b '(ForTest), :c '(ForTest)}]
+      (is (= {:φ {:a {:head 'ForTest},
+                  :b {:head 'ForTest},
+                  :c {:head 'ForTest}},
+              :π @ΓΠ}
+             (indirect-penvs (new-penv foo ΓΠ)))))))
 
 
 (deftest eval-program-symbol-test
@@ -1754,17 +1765,24 @@ Environment."
                 main_program
                 []
                 [(SubroutineCall 1 _lpython_main_program () [] ())]))
-             ΓΠ)]
+             ΓΠ)
+        bar (walk/prewalk
+             (fn [form]
+               (cond
+                 (is-penv? form) (indirect-penvs form)
+                 :else form)) foo)
+        ]
     (is (= {:head         'Program,
             :symtab       {:head 'SymbolTable,
                            :integer-id 3,
                            :bindings {},
-                           :env @(new-penv {} ΓΠ)}
+                           :penv (indirect-penvs (new-penv {} ΓΠ))
+                           }
             :nym          'main_program,
             :dependencies [],
             :body         ['(SubroutineCall 1 _lpython_main_program () [] ())],
-            :env          @ΓΠ}
-           foo))))
+            :penv         @ΓΠ}
+           bar))))
 
 
 #_(def mp {:main_program
@@ -1869,7 +1887,8 @@ Environment."
   (testing "This test alerts me to structural changes in lpython"
     (is (= expr2-pp expr2-clj))))
 
-((eval-unit expr2-pp) ΓΠ)
+
+; ((eval-unit expr2-pp) ΓΠ)
 
 
 ;;                         _

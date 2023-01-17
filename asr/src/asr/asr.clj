@@ -13,6 +13,7 @@
                            head-from-kind-form,
                            stuff-from-term-form,
                            ]]
+   [clojure.walk   :as     walk    ]
    [clojure.zip    :as     zip    ]))
 
 
@@ -53,6 +54,15 @@
   [thing]
   (and (clj-atom? thing)
        (is-environment? @thing)))
+
+
+(defn indirect-penvs
+  [penv]
+  (assert (is-penv? penv))
+  (let [{:keys [φ π]} @penv]
+    (cond
+      (nil? π) @penv
+      :else {:φ φ, :π (indirect-penvs π)})))
 
 
 (defn is-global-penv?
@@ -607,7 +617,7 @@
            :nym          nym           ; identifier
            :dependencies dependencies  ; identifier*
            :body         body          ; stmt*
-           :env          @penv         ; Environment
+           :penv         penv         ; Environment
            })))
 
 
@@ -621,7 +631,7 @@
           ts {:head       head
               :integer-id integer-id   ; int
               :bindings   bindings     ; dict
-              :env        @np          ; Environment
+              :penv       np          ; Environment
               }
           _ (keys @Γsymtab-registry)]  ; inspect in debugger
       (swap! Γsymtab-registry
@@ -756,7 +766,9 @@
   (assert (= 'TranslationUnit head)
           "head of a translation unit must be the symbol TranslationUnit")
   (fn [penv]
-    (echo {:head         head
-           :global-scope ((eval-symbol global-scope) penv)
+    (let [tu (echo {:head         head
+                    :global-scope ((eval-symbol global-scope) penv)
                                         ; TODO: eval-symbol-table?
-           :items        ((eval-nodes items) penv)})))
+                    :items        ((eval-nodes items) penv)})
+          main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))])
+    ))
