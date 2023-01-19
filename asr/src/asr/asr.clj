@@ -273,6 +273,30 @@
    big-map-of-speclets-from-terms))
 
 
+;;; There are three groups of
+;;; speclets: :ASDL-SYMCONST, :ASDL-COMPOSITE, and :ASDL-TUPLE.
+;;;
+;;; :ASDL-COMPOSITEs have symbolic _heads_ and parameter-lists in
+;;; round brackets.
+;;;
+;;; :ASDL-TUPLEs are parameter-lists without heads.
+;;;
+;;; :ASDL-SYMCONSTs are heads without parameter lists.
+
+(->> asr-groups (map first))
+;; => (:ASDL-SYMCONST :ASDL-TUPLE :ASDL-COMPOSITE)
+
+;;; SYMCONSTs look like this
+
+(defn flip [f] (fn [x y] (f y x)))
+
+(def  third  (partial (flip nth) 2))
+
+
+
+(->> asr-groups second  second count)
+
+
 (defn columnize-asr-enum [term]
   (let [nym (->> term first)
         enumdicts (->> term second)
@@ -281,6 +305,21 @@
     (assert (every? #(= 1 (count %)) enumdicts))
     (assert (every? #(= :ASDL-SYMCONST (-> % keys first)) enumdicts))
     {:group 'asr-enum, :nym nym, :vals enumvals}))
+
+(->> big-map-of-speclets-from-terms
+     first)
+
+(->> big-map-of-speclets-from-terms
+     first
+     columnize-asr-enum)
+;; => {:group asr-enum,
+;;     :nym :asr.autospecs/abi,
+;;     :vals
+;;     (Source      LFortranModule      GFortranModule      BindC
+;;      Interactive Intrinsic)}
+
+(count big-map-of-speclets-from-terms)
+;; => 30
 
 
 (defn columnize-asr-tuple [term]
@@ -324,6 +363,79 @@
     :ASDL-COMPOSITE (columnize-asr-composite-terms term)))
 
 
+(->> big-map-of-speclets-from-terms
+     (map first))
+;; (abi             call_arg        do_loop_head    restriction_arg
+;;  cmpop           type_stmt       access          storage_type
+;;  intent          case_stmt       enumtype        alloc_arg
+;;  symbol          deftype         arraybound      attribute
+;;  logicalbinop    ttype           cast_kind       stmt
+;;  arraystorage    integerboz      tbind           presence
+;;  expr            unit            binop           attribute_arg
+;;  array_index     dimension )
+
+
+(defn fetch-pair [key map]
+  [key (key map)])
+
+
+(->> big-map-of-speclets-from-terms
+     (fetch-pair :asr.autospecs/expr)
+     columnize-term
+     :heads
+     count)
+;; => 86
+;; 01 IfExp                   ComplexConstructor      NamedExpr
+;; 02 FunctionCall            StructTypeConstructor   EnumTypeConstructor
+;; 03 UnionTypeConstructor    ImpliedDoLoop           IntegerConstant
+;; 04 IntegerBOZ              IntegerBitNot           IntegerUnaryMinus
+;; 05 IntegerCompare          IntegerBinOp            RealConstant
+;; 06 RealUnaryMinus          RealCompare             RealBinOp
+;; 07 ComplexConstant         ComplexUnaryMinus       ComplexCompare
+;; 08 ComplexBinOp            LogicalConstant         LogicalNot
+;; 09 LogicalCompare          LogicalBinOp            TemplateBinOp
+;; 10 ListConstant            ListLen                 ListConcat
+;; 11 ListCompare             SetConstant             SetLen
+;; 12 TupleConstant           TupleLen                TupleCompare
+;; 13 StringConstant          StringConcat            StringRepeat
+;; 14 StringLen               StringItem              StringSection
+;; 15 StringCompare           StringOrd               StringChr
+;; 16 DictConstant            DictLen                 Var
+;; 17 ArrayConstant           ArrayItem               ArraySection
+;; 18 ArraySize               ArrayBound              ArrayTranspose
+;; 19 ArrayMatMul             ArrayPack               ArrayReshape
+;; 20 ArrayMaxloc             BitCast                 StructInstanceMember
+;; 21 StructStaticMember      EnumMember              UnionRef
+;; 22 EnumName                EnumValue               OverloadedCompare
+;; 23 OverloadedBinOp         Cast                    ComplexRe
+;; 24 ComplexIm               DictItem                CLoc
+;; 25 PointerToCPtr           GetPointer              ListItem
+;; 26 TupleItem               ListSection             ListPop
+;; 27 DictPop                 SetPop                  IntegerBitLen
+;; 28 Ichar                   Iachar                  SizeOfType
+;; 29 PointerNullConstant     PointerAssociated)
+
+
+(->> big-map-of-speclets-from-terms
+     (fetch-pair :asr.autospecs/stmt)
+     columnize-term
+     :heads
+     count)
+;; => 44
+;; 01 Allocate            Assign              Assignment          Associate
+;; 02 Cycle               ExplicitDeallocate  ImplicitDeallocate  DoConcurrentLoop
+;; 03 DoLoop              ErrorStop           Exit                ForAllSingle
+;; 04 GoTo                GoToTarget          If                  IfArithmetic
+;; 05 Print               FileOpen            FileClose           FileRead
+;; 06 FileBackspace       FileRewind          FileInquire         FileWrite
+;; 07 Return              Select              Stop                Assert
+;; 08 SubroutineCall      Where               WhileLoop           Nullify
+;; 09 Flush               ListAppend          AssociateBlockCall  SelectType
+;; 10 CPtrToPointer       BlockCall           SetInsert           SetRemove
+;; 11 ListInsert          ListRemove          ListClear           DictInsert
+
+
+
 ;;  _    _        _ _    _          __      _         __  __
 ;; | |__(_)__ _  | (_)__| |_   ___ / _|  __| |_ _  _ / _|/ _|
 ;; | '_ \ / _` | | | (_-<  _| / _ \  _| (_-<  _| || |  _|  _|
@@ -333,7 +445,7 @@
 
 (def big-list-of-stuff
   (mapcat
-   identity  ; Flatten once.
+   identity                             ; Flatten once.
    (map (fn [speclet]
           (let [[term forms] speclet]
             (map
