@@ -15,94 +15,176 @@
 
 (def asdl-grammar
 
-  "We'll parse the ASDL spec for ASR into Clojure vectors and
-  hashmaps, then generate clojure.specs for terms and forms from
-  the vectors and hashmaps.
+  "Parse the ASDL spec for ASR into Clojure vectors and hashmaps,
+  then generate clojure.specs for terms and forms from the vectors
+  and hashmaps. Also promote these collections into forms
+  convenient for interpreters (see asr.clj).
 
-  The only thing less-than-obvious in the following grammar are
+  The only things less-than-obvious in the following grammar are
   angle brackets. They mean \"don't bother reporting this term.\"
   Cuts down on clutter in the output.
 
   The grammar says:
 
-  1. An ASDL spec is a bunch of ___productions___ or ASDL-DEFs
+  1. An ASDL spec is a bunch of ___productions___ or ASDL-DEFs.
 
-  2. An ASDL-DEF, aka ___speclet___, is a triple of (a) ___term___
-  or ASDL-TERM, (b) an equals sign, and (c) one or more ASDL-FORMs
-  separated by vertical bar characters. The meaning of an ASDL-DEF
-  is an _alternation_, a list of alternative ASDL-FORMs.
+  2. An ASDL-DEF, aka ___speclet___, is a triple of
 
-  There are 28 terms in the constant ASR snapshot we use for
-  testing, 30 terms in a recent drop of live ASR. See
-  all-terms-test in core_test.clj. Terms are left-hand sides of
-  productions. They are things like array_index, ttype, expr, etc.
+    (a) ___term___ or ASDL-TERM
 
-  3. There are three _groups_ of ASDL-FORM or speclet: a
-  ___composite___, a ___symconst___, or a ___tuple___. These are
-  not groups in the sense of abstract algebra; they're just
-  collections of names. In a recent drop of ASR, there are
+    (b) an equals sign
 
-    a. 10 composites -- expr, stmt, ttype, symbol, etc.
+    (c) one or more (a _bunch_ of) ASDL-FORMs, ___forms___, for
+  short, or _alternatives_.
 
-    b. 6 tuples -- call_arg, do_loop_head, dimension, etc.
+  For example,
 
-    c. 14 symconsts -- abi, cmpop, binop, presence, etc.
+          production         (grammar lingo)
+            speclet          (ASR lingo)
+     __________^___________
+    |                      |
+      term        forms      (one or more)
+     __^__      _____^_____
+    |     |    |           |
+     symbol  =  Program(...)
+             |  Module(...)
+             |  Functin(...)
+                ...
 
-  4. A _composite_ is an ASDL-HEAD ___head___ followed by
-  ASDL-ARGSs args (really formal parameters!). The \"symbol\" term
-  of composites, for example has about 14 heads: Program, Module,
-  Function, etc. The \"expr\" term of composites has about 86
-  heads: IfExp, ComplexConstructor, NamedExpr, etc.
+  The left-hand side of (the equals sign in) a speclet is a term.
+  The right-hand side of (the equals sign in) a speclet is an
+  _alternation of forms_, just as one might say \"a murder of
+  crows,\" \"a parliament of owls,\" or a \"lamentation of
+  swans.\"
 
-  Args (parameters) of a composite are identical in shape to a
-  tuple.
-
-  There are about 227 heads, about six of which are asr-tuples
-  with gensymmed names. They are things like GetPointer,
-  FileClose, TypeParameter, etc. See all-heads-test in
+  There are 28 speclets in the constant ASR snapshot for testing,
+  and 30 terms in a recent drop of live ASR. See all-terms-test in
   core_test.clj.
 
-  5. A _symconst_ is just a singleton identifier, reckoned as the
-  _head_ of the symconst.
+  3. There are three ___groups___ of speclets: ___composite
+  speclets___, ___symconst speclets___, and ___tuple speclets___.
+  These are not algebraic groups; they're just
+  collections (see [this SO post for the difference between a
+  _collection_ and a _sequence_ in
+  Clojure](https://stackoverflow.com/questions/19850730/whats-the-difference-between-a-sequence-and-a-collection-in-clojure).
 
-  6. A tuple is a comma-separated list (in round brackets) of
-  pairs of ___type___ and ___variable___.
+  In a recent drop of ASR, there are
 
-  A tuple is anonymous, but we gensym a _head_ for them, so that
-  every kind of ASDL-FORM has a head, for convenience.
+    (a) 10 composite speclets -- expr, stmt, ttype, symbol, etc.
 
-  7. Types can have _quantitative qualifiers_, aka
-  _multiplicities_: STAR or QUES, meaning that the variable
-  denotes \"zero or more\" and \"at least one\" instance of the
-  type respectively. The default quantity is \"exactly once.\"
+    (b) 6 tuple speclets -- call_arg, do_loop_head, dimension, etc.
+
+    (c) 14 symconst speclets -- abi, cmpop, binop, presence, etc.
+
+  4. A _composite speclet_ is an alternation of _composite forms_.
+  Each composite form is an ASDL-HEAD or ___head___ followed by
+  ASDL-ARGSs, really FORMAL PARAMETERS! [See ASR Issue 1446]
+  (https://github.com/lcompilers/lpython/issues/1446).
+
+  Example of one of the composite forms of the composite speclet
+  \"symbol:\"
+
+                          composite form
+     ____________________________^____________________________
+    |                                                         |
+                     (same shape as a tuple form)
+     head             parameters, parameter list
+     __^__  ________________________^_________________________
+    |     ||                                                  |
+    Program(symbol_table s, ident nym, ident* deps, stmt* body)
+
+  The \"symbol\" composite speclet has about 14 composite forms
+  with heads Program, Module, Function, etc. The \"expr\"
+  composite has about 86 heads: IfExp, ComplexConstructor,
+  NamedExpr, etc.
+
+  Parameters (ASDL-ARGS) of a composite form are identical in
+  shape to a _tuple form_, e.g.,
+
+    ...(symbol_table s, ident nym, ident* deps, stmt* body)
+
+  5. The _symconst_ group contains symconst speclets like
+
+                symconst speclet
+     __________________^___________________
+    |                                      |
+     term           symconst forms
+     _^_    _______________^_______________
+    |   |  |                               |
+    cmpop = Eq | NotEq | Lt | LtE | Gt | GtE
+
+  where the _symconst forms_ are singleton identifiers, without
+  parameter lists in round brackets. These forms are the _heads_
+  of the symconst forms -- the symconst speclet above has _term_
+  cmpop and its forms have _heads_ Eq, NotEq, etc.
+
+  6. A tuple is a singleton form: a comma-separated list (in round
+  brackets) of pairs of ___type___ and ___variable___, like this
+  one:
+
+                       tuple speclet
+     ________________________^________________________
+    |                                                 |
+        term                   tuple form
+     ____^____     _________________^_________________
+    |         |   |                                   |
+    array_index = (expr? left, expr? right, expr? step)
+
+  identical in shape to the parameter list of a composite term.
+
+  A tuple form is anonymous, but we gensym a _head_ for it,
+  something like asr_234789, so that all of symconst, composite,
+  and tuple forms all have heads.
+
+  There are about 227 heads across all the groups, about six of
+  which are heads of tuple forms with gensymmed heads. The tuple
+  speclets are things like array_index, attribute_arg, alloc_arg,
+  etc. See all-heads-test in core_test.clj.
+
+  7. _parameter lists_ in composite forms and _tuple forms_ have
+  the same shapes: pairs of ___types___ and identifiers. A _type_
+  can have a _quantitative qualifier_, aka _multiplicity_: STAR or
+  QUES, meaning that the variable denotes \"zero or more\" and
+  \"at least one\" instance of the type, respectively. For
+  instance, in the parameter list of the following composite form,
+
+    Program(symbol_table s, ident nym, ident* deps, stmt* body)
+
+  \"deps\" and \"body\" have STAR multiplicities.
+
+  The default multiplicity, with no STAR or QUES, is \"exactly
+  once.\"
+
+  SUMMARY:
 
   The big picture to remember about _terms_ and _heads_ is that a
   _speclet_ looks like one of the following three:
 
-  1. `term` `=` `composite-`*`head`*`-1` `args` `|`
-                `composite-`*`head`*`-2` `args` `|`
-                 ...
+    (a) `term` `=` `composite-`*`head`*`-1` `args`
+               `|` `composite-`*`head`*`-2` `args`
+               `|` ...
 
-  2. `term` `=` `symconst-`*`head`* `|`
-                `symconst-`*`head`* `|`
-                 ...
+    (b) `term` `=` `symconst-`*`head`*
+               `|` `symconst-`*`head`*
+               `|`  ...
 
-  3. `term` `=` `tuple` (anonymous gensymmed *head*)
+    (c) `term` `=` `tuple` (anonymous gensymmed *head*)
 
-  A _term_ corresponds to one or more (a _bunch_ of) _heads_, but
+  A _term_ corresponds to a _bunch_ (one or more) _heads_, but
   each head corresponds to exactly one term.
 
-  A term has exactly one _speclet_. The speclet is the whole line,
-  left-hand side (term) and right-hand side (bunch of _forms_, one
-  per head).
+  A term has exactly one _speclet_. The speclet is the term and
+  the whole alternation of forms:, left-hand side (term) and
+  right-hand side (alternation of forms), one form per head.
 
-  All forms in a speclet have the same kind: composite, symconst,
-  or tuple. There won't be a mixture of composites and symconsts,
-  for instance, on the right-hand side of any term.
+  All forms in a speclet are of the same group: composite,
+  symconst, or tuple. There won't be a mixture of composites and
+  symconsts, for instance, in the forms -- the right-hand side --
+  of any speclet.
 
-  In addition to the 3 kinds, it turns out there are about 28
+  In addition to the 3 groups, it turns out there are about 28
   terms and speclets, and 227 heads, forms, and clojure.specs when
-  we're done. The number grows slowly as we add features to ASR.
+  we're done. The number grows as we add features to ASR.
   "
 
   "MODULE         = SPC* <'module'> SPC* IDENT LBRACE SPEC RBRACE

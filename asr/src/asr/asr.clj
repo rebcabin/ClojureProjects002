@@ -152,6 +152,9 @@
 ;; |_____|___|  \_/  |_____| /_/   \_\____/|_| \_\
 
 
+;;; See grammar.clj for deeper documentation on terminology, here.
+
+
 ;;                  _     _
 ;;  ____ __  ___ __| |___| |_ ___
 ;; (_-< '_ \/ -_) _| / -_)  _(_-<
@@ -159,8 +162,8 @@
 ;;    |_|
 
 
-;;; Parse the current, live ASR.ASDL, not the snapshot we have
-;;; hard-coded in "asr_snapshot.clj".
+;;; Parse the current, live ASR.ASDL, not the snapshot hard-coded
+;;; in "asr_snapshot.clj".
 
 
 (def asr-asdl-hiccup
@@ -188,7 +191,8 @@
 ;; => 30
 
 
-;;; But the CODE in asr.parsed works on the live ASR:
+;;; But the CODE in asr.parsed works on both the snapshot and on
+;;; the live ASR:
 
 
 (def big-map-of-speclets-from-terms
@@ -198,6 +202,10 @@
                   (comp map-pair-from-speclet-map
                         hashmap-from-speclet)
                   speclets))))
+
+
+;;; Inspect the count of speclets by pretty-printing to a
+;;; comment (C-c C-f C-v C-c e):
 
 
 (count big-map-of-speclets-from-terms)
@@ -211,8 +219,9 @@
 ;;                 |___/             |_|
 
 
-;; Three groups, of size approximately 14, 6, 10; the first group
-;; of 14 or so contains SYMCONSTs in subgroups by term, e.g.,
+;; There are three groups of size approximately 14, 6, 10; the
+;; first group of 14 or so contains SYMCONSTs in subgroups by
+;; term, e.g.,
 
 ;; {:group asr-enum,
 ;;  :nym :asr.autospecs/cmpop, :vals (Eq NotEq Lt LtE Gt GtE)}.
@@ -229,9 +238,9 @@
 ;;   :asr.parsed/at-most-once
 ;;   :asr.parsed/at-most-once)}
 
-;; The third group of 10 or so contains terms with alternatives,
-;; like expr and stmt. An example, "symbol" has this
-;; structure (abbreviated to a page's length):
+;; The third group of 10 or so composite terms like expr and stmt.
+;; An example, "symbol" has this structure (abbreviated to a
+;; page's length):
 
 ;; {:group asr-composite,
 ;;  :nym :asr.autospecs/symbol,
@@ -288,6 +297,16 @@
    ;; ...})} fetch :ASR-SYMCONST
    (comp first keys first second)
    big-map-of-speclets-from-terms))
+
+
+;; (group-by
+;;  (fn [speclet]
+;;    (->> speclet
+;;         second
+;;         first
+;;         keys
+;;         first)
+;;    ))
 
 
 ;;; There are three groups of
