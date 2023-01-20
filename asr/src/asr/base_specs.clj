@@ -13,10 +13,12 @@ installed in asr.specs.")
 ;; / _` |  _/ _ \ '  \(_-<
 ;; \__,_|\__\___/_|_|_/__/
 
+
 (s/def :asr.specs/int   int?)
 (s/def :asr.specs/float float?)
-(s/def :asr.specs/bool  (s/or :clj-bool boolean?
-                     :asr-bool #(or (= % '.true.) (= % '.false.))))
+(s/def :asr.specs/bool
+  (s/or :clj-bool boolean?
+        :asr-bool #(or (= % '.true.) (= % '.false.))))
 
 
 ;;  _    _         _   _  __ _

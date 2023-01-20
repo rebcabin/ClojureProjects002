@@ -5,7 +5,8 @@
    [asr.grammar                   ]
    [asr.lpython                   ]
    [clojure.pprint :refer [pprint]]
-   [asr.parsed     :refer [shallow-map-from-speclet,
+   [asr.parsed     :refer [
+                           shallow-map-from-speclet,
                            hashmap-from-speclet,
                            map-pair-from-speclet-map,
 
@@ -167,7 +168,8 @@
 
 
 ;;; Some of the following gadgets collide with "parsed.clj," which
-;;; works on the snapshot data in "asr_snapshot.clj".
+;;; works on the snapshot data in "asr_snapshot.clj". Use explicit
+;;; namespaces, e.g. asr.parsed/speclets:
 
 
 (def speclets
@@ -175,7 +177,18 @@
         ((-> (zip/vector-zip asr-asdl-hiccup)
              zip/down zip/right zip/right) 0))))
 
-;; (count speclets)
+
+;;; The snapshot has fewer speclets:
+
+
+(count asr.parsed/speclets)
+;; => 28
+
+(count speclets)
+;; => 30
+
+
+;;; But the CODE in asr.parsed works on the live ASR:
 
 
 (def big-map-of-speclets-from-terms
@@ -185,6 +198,10 @@
                   (comp map-pair-from-speclet-map
                         hashmap-from-speclet)
                   speclets))))
+
+
+(count big-map-of-speclets-from-terms)
+;; => 30
 
 
 ;;    _   ___ ___
@@ -274,27 +291,163 @@
 
 
 ;;; There are three groups of
-;;; speclets: :ASDL-SYMCONST, :ASDL-COMPOSITE, and :ASDL-TUPLE.
+;;; speclets: :ASDL-SYMCONST, :ASDL-TUPLE, and :ASDL-COMPOSITE.
+;;;
+;;; :ASDL-SYMCONSTs are heads without parameter lists.
+;;;
+;;; :ASDL-TUPLEs are parameter-lists with gensymmed heads.
 ;;;
 ;;; :ASDL-COMPOSITEs have symbolic _heads_ and parameter-lists in
 ;;; round brackets.
-;;;
-;;; :ASDL-TUPLEs are parameter-lists without heads.
-;;;
-;;; :ASDL-SYMCONSTs are heads without parameter lists.
+
 
 (->> asr-groups (map first))
 ;; => (:ASDL-SYMCONST :ASDL-TUPLE :ASDL-COMPOSITE)
 
-;;; SYMCONSTs look like this
+
+;;; Fourteen symconsts:
+
+
+(defn check-first [keyword sigil]
+  (assert (= keyword (first sigil)))
+  sigil)
+
+
+(defn get-symconsts
+  "Symconsts are the first group of productions in ASR."
+  []
+  (->> asr-groups
+       ;; The first group is the group of symconsts:
+       first
+       ;; The first of the group must be ASR-SYMCONST:
+       (check-first :ASDL-SYMCONST)
+       ;; the actual term keyword in namespace asr.autospecs
+       second))
+
+
+(->> (get-symconsts) count)
+;; => 14
+
+
+;;; List out the left-hand and right-hand sides of the symconst
+;;; productions.
+
+
+;;; For readability, strip the asr.autospecs namespace; convert to
+;;; string and then to symbol:
+
+
+(defn symbolize-terms
+  [group]
+  (->> group
+       ;; the actual terms -- left-hand sides of productions
+       (map first)
+       ;; Convert to string without the namespace (always asr.autospecs).
+       (map name)
+       ;; Convert to symbol to rid the double quotes.
+       (map symbol)))
+
+
+(->> (get-symconsts) symbolize-terms)
+;;  abi                 cmpop               access
+;;  storage_type        intent              enumtype
+;;  deftype             arraybound          logicalbinop
+;;  cast_kind           arraystorage        integerboz
+;;  presence            binop
+
+
+(defn check-count [count- sigil]
+  (assert (= count- (count sigil)))
+  sigil)
+
+
+(defn symbolize-heads
+  [group-key group]
+  (->> group
+       ;; Get the right-hand sides of the productions:
+       (map second)
+       ;; Now we must double-map, because each right-hand side is a collection.
+       ;; Check that each right-hand side is a singleton map:
+       (map (fn [rhss] (map #(check-count 1 %)) rhss))
+       ;; Check that the key-word of each rhs is the expected group:
+       (map (fn [prod] (map #(check-first group-key %)) prod))
+       ;; Get the actual values from the right-hand sides:
+       (map #(map vals %))
+       ;; Flatten once because vals makes an extra collection
+       (map #(mapcat identity %))
+       ;; Rid the double quotes:
+       (map #(map symbol %))))
+
+
+(->> (get-symconsts)
+     (symbolize-heads :ASDL-SYMCONST))
+;; => ((Source          LFortranModule      GFortranModule
+;;      BindC           Interactive         Intrinsic)
+;;     (Eq NotEq Lt LtE Gt GtE)
+;;     (Public Private)
+;;     (Default Save Parameter Allocatable)
+;;     (Local In Out InOut ReturnVar Unspecified)
+;;     (IntegerConsecutiveFromZero   IntegerUnique
+;;      IntegerNotUnique             NonInteger)
+;;     (Implementation Interface)
+;;     (LBound UBound)
+;;     (And Or Xor NEqv Eqv)
+;;     (RealToInteger           IntegerToReal         LogicalToReal
+;;      RealToReal              IntegerToInteger      RealToComplex
+;;      IntegerToComplex        IntegerToLogical      RealToLogical
+;;      CharacterToLogical      CharacterToInteger    CharacterToList
+;;      ComplexToLogical        ComplexToComplex      ComplexToReal
+;;      ComplexToInteger        LogicalToInteger      RealToCharacter
+;;      IntegerToCharacter      LogicalToCharacter)
+;;     (RowMajor ColMajor)
+;;     (Binary Hex Octal)
+;;     (Required Optional)
+;;     (Add Sub Mul Div Pow BitAnd BitOr BitXor BitLShift BitRShift))
+
+
+;;; tuples
+
+
+(defn get-tuples [])
+
+
+(->> asr-groups second second count)
+;; => 6
+
+
+(->> asr-groups second second (map first) (map name) (map symbol))
+;;  call_arg            do_loop_head        alloc_arg
+;;  attribute_arg       array_index         dimension
+
+
+;;; Ten composites:
+
+
+;;; Third doesn't work on maps, though First and Second do.
+;;; Convert asr-groups to a vec.
+
 
 (defn flip [f] (fn [x y] (f y x)))
+
 
 (def  third  (partial (flip nth) 2))
 
 
+(->> asr-groups vec third second count)
+;; => 10
 
-(->> asr-groups second  second count)
+
+;;; The biggies are symbol, expr, and stmt; fetch their heads below:
+
+
+(->> asr-groups vec third second (map first) (map name) (map symbol))
+;;  restriction_arg     type_stmt           case_stmt
+;;  symbol              attribute           ttype
+;;  stmt                tbind               expr
+;;  unit
+
+
+;;; To make it easier to fetch data, columnize these terms:
 
 
 (defn columnize-asr-enum [term]
@@ -306,8 +459,17 @@
     (assert (every? #(= :ASDL-SYMCONST (-> % keys first)) enumdicts))
     {:group 'asr-enum, :nym nym, :vals enumvals}))
 
+
 (->> big-map-of-speclets-from-terms
      first)
+;; => [:asr.autospecs/abi
+;;     ({:ASDL-SYMCONST "Source"}
+;;      {:ASDL-SYMCONST "LFortranModule"}
+;;      {:ASDL-SYMCONST "GFortranModule"}
+;;      {:ASDL-SYMCONST "BindC"}
+;;      {:ASDL-SYMCONST "Interactive"}
+;;      {:ASDL-SYMCONST "Intrinsic"})]
+
 
 (->> big-map-of-speclets-from-terms
      first
@@ -317,9 +479,6 @@
 ;;     :vals
 ;;     (Source      LFortranModule      GFortranModule      BindC
 ;;      Interactive Intrinsic)}
-
-(count big-map-of-speclets-from-terms)
-;; => 30
 
 
 (defn columnize-asr-tuple [term]
@@ -363,20 +522,41 @@
     :ASDL-COMPOSITE (columnize-asr-composite-terms term)))
 
 
+;;; Here are all 30 terms:
+
+
 (->> big-map-of-speclets-from-terms
      (map first))
-;; (abi             call_arg        do_loop_head    restriction_arg
-;;  cmpop           type_stmt       access          storage_type
-;;  intent          case_stmt       enumtype        alloc_arg
-;;  symbol          deftype         arraybound      attribute
-;;  logicalbinop    ttype           cast_kind       stmt
-;;  arraystorage    integerboz      tbind           presence
-;;  expr            unit            binop           attribute_arg
-;;  array_index     dimension )
+;; 01  abi             call_arg        do_loop_head    restriction_arg
+;; 02  cmpop           type_stmt       access          storage_type
+;; 03  intent          case_stmt       enumtype        alloc_arg
+;; 04  symbol          deftype         arraybound      attribute
+;; 05  logicalbinop    ttype           cast_kind       stmt
+;; 06  arraystorage    integerboz      tbind           presence
+;; 07  expr            unit            binop           attribute_arg
+;; 08  array_index     dimension
+
+
+;;; For the 14 composites, fetch the heads out of the columnized
+;;; data (the ___columns___):
 
 
 (defn fetch-pair [key map]
   [key (key map)])
+
+(keyword "asr.autospecs" "symbol")
+
+(->> big-map-of-speclets-from-terms
+     (fetch-pair :asr.autospecs/symbol)
+     columnize-term
+     :heads
+     count)
+;; => 14
+;;  Program             Module              Function
+;;  GenericProcedure    CustomOperator      ExternalSymbol
+;;  StructType          EnumType            UnionType
+;;  Variable            ClassType           ClassProcedure
+;;  AssociateBlock      Block
 
 
 (->> big-map-of-speclets-from-terms
@@ -704,11 +884,13 @@
       .false. false)))
 
 
-;;  ___            _         _
-;; / __|_  _ _ __ | |__  ___| |
-;; \__ \ || | '  \| '_ \/ _ \ |
-;; |___/\_, |_|_|_|_.__/\___/_|
-;;      |__/
+;;               _                       _         _
+;;  _____ ____ _| |  ___   ____  _ _ __ | |__  ___| |
+;; / -_) V / _` | | |___| (_-< || | '  \| '_ \/ _ \ |
+;; \___|\_/\__,_|_|       /__/\_, |_|_|_|_.__/\___/_|
+;;                            |__/
+
+;;; That's probably not a great name for this thing.
 
 
 ;;; docstrings are apparently not allowed in defmethod. For
@@ -864,6 +1046,22 @@
                    :call-type      ((eval-node call-type) penv)
                    :subroutine     ((eval-symbol sub) penv)}))))))
 
+;;                        _
+;;  _ _ _  _ _ _    ___  | |_ ___ _ _ _ __
+;; | '_| || | ' \  |___| |  _/ -_) '_| '  \
+;; |_|  \_,_|_||_|        \__\___|_| |_|_|_|
+
+
+
+(defmulti run-term :head)
+
+
+(defmethod run-term 'Program
+  [program]
+  (let [penv (-> program :symtab :penv)]
+    true))
+
+
 ;;  _   _      _ _
 ;; | | | |_ _ (_) |_
 ;; | |_| | ' \| |  _|
@@ -876,11 +1074,13 @@
     items
     :as translation-unit]]
   (assert (= 'TranslationUnit head)
-          "head of a translation unit must be the symbol TranslationUnit")
+          "head of a translation unit must be the symbol
+          TranslationUnit")
   (fn [penv]
-    (let [tu (echo {:head         head
-                    :global-scope ((eval-symbol global-scope) penv)
+    (let [tu (echo
+              {:head         head
+               :global-scope ((eval-symbol global-scope) penv)
                                         ; TODO: eval-symbol-table?
-                    :items        ((eval-nodes items) penv)})
+               :items        ((eval-nodes items) penv)})
           main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))])
     ))

@@ -32,22 +32,38 @@
   separated by vertical bar characters. The meaning of an ASDL-DEF
   is an _alternation_, a list of alternative ASDL-FORMs.
 
-  There are about 28 terms. See all-terms-test in core_test.clj.
-  They are things like ::array_index, ::ttype, ::expr, etc.
+  There are 28 terms in the constant ASR snapshot we use for
+  testing, 30 terms in a recent drop of live ASR. See
+  all-terms-test in core_test.clj. Terms are left-hand sides of
+  productions. They are things like array_index, ttype, expr, etc.
 
-  3. There are three _kinds_ of ASDL-FORM or speclet: a
-  ___composite___, a ___symconst___, or a ___tuple___.
+  3. There are three _groups_ of ASDL-FORM or speclet: a
+  ___composite___, a ___symconst___, or a ___tuple___. These are
+  not groups in the sense of abstract algebra; they're just
+  collections of names. In a recent drop of ASR, there are
 
-  4. A _composite_ is a ASDL-HEAD ___head___ followed by
-  ASDL-ARGSs args. Args are identical in shape to a tuple.
+    a. 10 composites -- expr, stmt, ttype, symbol, etc.
+
+    b. 6 tuples -- call_arg, do_loop_head, dimension, etc.
+
+    c. 14 symconsts -- abi, cmpop, binop, presence, etc.
+
+  4. A _composite_ is an ASDL-HEAD ___head___ followed by
+  ASDL-ARGSs args (really formal parameters!). The \"symbol\" term
+  of composites, for example has about 14 heads: Program, Module,
+  Function, etc. The \"expr\" term of composites has about 86
+  heads: IfExp, ComplexConstructor, NamedExpr, etc.
+
+  Args (parameters) of a composite are identical in shape to a
+  tuple.
 
   There are about 227 heads, about six of which are asr-tuples
-  with gensymmed names. They are things like ::GetPointer,
-  ::FileClose, ::TypeParameter, etc. See all-heads-test in
+  with gensymmed names. They are things like GetPointer,
+  FileClose, TypeParameter, etc. See all-heads-test in
   core_test.clj.
 
-  5. A _symconst_ is just an identifier, reckoned as the _head_ of
-  the symconst.
+  5. A _symconst_ is just a singleton identifier, reckoned as the
+  _head_ of the symconst.
 
   6. A tuple is a comma-separated list (in round brackets) of
   pairs of ___type___ and ___variable___.

@@ -1785,12 +1785,28 @@
            bar))))
 
 
-#_(def mp {:main_program
+(def mp {:main_program
          '(Program
            (SymbolTable 3 {})
            main_program
            []
            [(SubroutineCall 1 _lpython_main_program () [] ())])})
+
+
+((eval-symbol (:main_program mp)) ΓΠ)
+;; => {:head Program,
+;;     :symtab
+;;     {:head SymbolTable,
+;;      :integer-id 3,
+;;      :bindings {},
+;;      :penv #<Atom@48d64fbe: {:φ {}, :π #<Atom@7738f742: {:φ {}, :π nil}>}>},
+;;     :nym main_program,
+;;     :dependencies [],
+;;     :body [(SubroutineCall 1 _lpython_main_program () [] ())],
+;;     :penv #<Atom@7738f742: {:φ {}, :π nil}>}
+
+
+(run-term ((eval-symbol (:main_program mp)) ΓΠ))
 
 
 (def expr2-pp
@@ -1882,6 +1898,7 @@
 (def expr2-lpy "examples/expr2.py")
 (def expr2-clj
   (echo (lpython/get-sample-clj expr2-lpy)))
+
 
 (deftest lpython-asr-test
   (testing "This test alerts me to structural changes in lpython"

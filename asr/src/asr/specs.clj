@@ -10,6 +10,9 @@
             [clojure.test.check.generators :as tgen]))
 
 
+;;; Hand-written specs for things that we don't want autospcc'ed.
+
+
 ;;  _    _         _   _  __ _
 ;; (_)__| |___ _ _| |_(_)/ _(_)___ _ _
 ;; | / _` / -_) ' \  _| |  _| / -_) '_|
@@ -26,8 +29,10 @@
 ;; / _` | | '  \/ -_) ' \(_-< / _ \ ' \(_-<
 ;; \__,_|_|_|_|_\___|_||_/__/_\___/_||_/__/
 
+
 (s/def ::dimensions
-  (s/coll-of (s/or :nat-int nat-int?, :bigint :asr.numbers/bignat)
+  (s/coll-of (s/or :nat-int nat-int?,
+                   :bigint :asr.numbers/bignat)
              :min-count 0,
              :max-count 2,
              :into []))
@@ -52,6 +57,7 @@
 ;; /__/\_, |_|_|_|_.__/\___/_|  \__\__,_|_.__/_\___|
 ;;     |__/
 
+
 ;;; No generator, yet. Just a validator.
 
 (s/def ::symbol-table
@@ -66,6 +72,9 @@
 ;; |  _|  _| || | '_ \/ -_)
 ;;  \__|\__|\_, | .__/\___|
 ;;          |__/|_|
+
+;;; A set acts like a function that tests membership.
+
 
 (s/def ::integer-kind    #{1 2 4 8})
 (s/def ::real-kind       #{4 8})
@@ -92,11 +101,13 @@
 ;;     (Integer 2 [108])
 ;;     (Integer 8 []))
 
+
 (s/def ::real-ttype
   (s/cat
    :head #{'Real}
    :kind ::real-kind
    :dims ::dimensions))
+
 
 (s/def ::complex-ttype
   (s/cat
@@ -104,17 +115,20 @@
    :kind ::complex-kind
    :dims ::dimensions))
 
+
 (s/def ::character-ttype
   (s/cat
    :head #{'Character}
    :kind ::character-kind
    :dims ::dimensions))
 
+
 (s/def ::logical-ttype
   (s/cat
    :head #{'Logical}
    :kind ::logical-kind
    :dims ::dimensions))
+
 
 ;;; Defective ansatz; backpatch later to break recursive cycle.
 ;;; But, at this point, we need something defined for ttype so
@@ -142,15 +156,18 @@
 ;;     (Complex 4 [])
 ;;     (Complex 8 []))
 
+
 (s/def ::set-ttype
   (s/cat
    :head  #{'Set}
    :ttype ::ttype))
 
+
 (s/def ::list-ttype
   (s/cat
    :head  #{'List}
    :ttype ::ttype))
+
 
 (s/def ::tuple-ttype
   (s/with-gen
@@ -198,6 +215,7 @@
 ;;       (Character 1 [10])]))
 
 ;;; Filling this out as we go along
+
 
 (s/def ::ttype
   (s/or :integer   ::integer-ttype
@@ -330,18 +348,22 @@
 
 ;;; private, reusable, composable mini-specs:
 
+
 (s/def ::-members
   (s/or :vector-of (s/* ::identifier)
         :empty     empty?))
+
 
 ;; Don't check a symbol against empty first; order matters!
 ;; NOTE: An identifier will check against :derived-type first
 ;; and never make it to class-type.
 
+
 (s/def ::-parent
   (s/or :parent (s/or :derived-type ::identifier
                       :class-type   ::identifier)
         :empty empty?))
+
 
 ;;                   __        ___      __        _             __
 ;;   ___ __ ____ _  / /  ___  / (_) ___/ /__ ____(_)  _____ ___/ /
@@ -372,6 +394,7 @@
 ;;; the value of the variable.
 ;;; https://github.com/lcompilers/lpython/issues/1224
 
+
 (s/def ::derived-type
   (s/with-gen
     (s/cat
@@ -395,6 +418,7 @@
         (tgen/one-of [(tgen/return ())
                       (s/gen ::identifier)]) ; parent
         )))))
+
 
 #_(map second (s/exercise ::derived-type 4))
 ;; => ({:head DerivedType,
@@ -433,11 +457,13 @@
 ;; \_,_/\__/_/ /_/|___/\__/\_,_/  \__/\__/\_, / .__/\__/
 ;;                                       /___/_/
 
+
 (s/def ::derived-ttype
   (s/cat
    :head         #{'Derived}
    :derived-type ::derived-type
    :dims         ::dimensions))
+
 
 #_(s/exercise ::derived-ttype 1)
 ;; =>  [(Derived
@@ -478,6 +504,7 @@
 ;;   ttype        type,
 ;;   symbol?      parent)
 
+
 (s/def ::enum-type
   (s/with-gen
     (s/cat
@@ -504,6 +531,7 @@
         (tgen/one-of [(tgen/return ())
                       (s/gen ::identifier)]) ; parent
         )))))
+
 
 #_(map second (s/exercise ::derived-type 4))
 ;; => ({:head DerivedType,
@@ -542,11 +570,13 @@
 ;; \__/_//_/\_,_/_/_/_/  \__/\__/\_, / .__/\__/
 ;;                              /___/_/
 
+
 (s/def ::enum-ttype
   (s/cat
    :head       #{'Enum}
    :enum-type  ::enum-type
    :dims       ::dimensions))
+
 
 #_(s/exercise ::enum-ttype 1)
 ;; => ([(Enum
@@ -603,6 +633,7 @@
 ;;;   abi abi,
 ;;;   access access)
 
+
 (s/def ::class-type
   (s/cat
    :head    #{'ClassType}
@@ -618,6 +649,7 @@
 ;; \__/_/\_,_/___/___/  \__/\__/\_, / .__/\__/
 ;;                             /___/_/
 
+
 (s/def ::class-ttype
   (s/cat
    :head       #{'Class}
@@ -630,6 +662,7 @@
 ;; / _  / / __/ __/ / __/ __/ // / _ \/ -_)
 ;; \_,_/_/\__/\__/  \__/\__/\_, / .__/\__/
 ;;                         /___/_/
+
 
 (s/def ::dict-ttype
   (s/cat
@@ -660,9 +693,22 @@
 ;; \__/ .__/\__/_/    \__/\__/\_, / .__/\__/
 ;;   /_/                     /___/_/
 
+
 (s/def ::cptr-ttype
   (s/cat
    :head #{'CPtr}))
+
+
+;;                __      _     __  _
+;;   _______ ___ / /_____(_)___/ /_(_)__  ___
+;;  / __/ -_|_-</ __/ __/ / __/ __/ / _ \/ _ \
+;; /_/  \__/___/\__/_/ /_/\__/\__/_/\___/_//_/
+
+
+(s/def ::restriction
+  (s/cat
+   :head #{'Restrction}
+   :rt   :asr.autospecs/trait))
 
 
 ;;   __                                               __
@@ -676,10 +722,6 @@
 ;; \__/\__/\_, / .__/\__/
 ;;        /___/_/
 
-(s/def ::restriction
-  (s/cat
-   :head #{'Restrction}
-   :rt   :asr.autospecs/trait))
 
 (s/def ::type-parameter-ttype
   (s/cat
@@ -687,6 +729,7 @@
    :dims ::dimensions
    :rt   (s/* ::restriction)
    ))
+
 
 (s/exercise ::type-parameter-ttype 4)
 ;; => ([(TypeParameter [0])
@@ -712,6 +755,7 @@
 ;;; This is everything, up to but not including symbol_table. This
 ;;; still has the placeholder for symbol_table.
 
+
 (s/def ::ttype
   (s/or :integer        ::integer-ttype
         :real           ::real-ttype
@@ -729,6 +773,7 @@
         :cptr           ::cptr-ttype
         :type-parameter ::type-parameter-ttype
         ))
+
 
 ;;; Here's the old, inadequate stuff:
 
@@ -822,6 +867,7 @@
 ;;   presence     presence,
 ;;   bool         value_attr,
 
+
 (s/def ::variable
   (s/with-gen
     (s/cat
@@ -863,8 +909,10 @@
                       (tgen/return '.false.)])
         )))))
 
+
 ;; FIXME: Cannot exercise ::variable too deeply lest stack
 ;; overflow. However, we can iterate over it.
+
 
 #_(for [_ (range 4)]
  (s/exercise ::variable 1))
