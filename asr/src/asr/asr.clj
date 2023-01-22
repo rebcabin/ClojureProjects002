@@ -1,6 +1,9 @@
 (ns asr.asr
   (:use [asr.utils]
         [clojure.set])
+
+  ;;; TODO: Consider https://github.com/rebcabin/odin
+
   (:require
    [asr.grammar                   ]
    [asr.lpython                   ]
@@ -81,7 +84,8 @@
 
 
 (def Γsymtab-registry
-  "Unique, session-specific global registry of symbol tables."
+  "Unique, session-specific, integer-indexed, global registry of
+  symbol tables."
   (atom {} :validator map?))
 
 
@@ -132,8 +136,6 @@
 
 
 (defn lookup-penv
-  "Classic recursion; TODO: consider tail-recursion with loop and
-  recur."
   [sym penv]
   (assert (or (nil? penv) (is-penv? penv)) "Invalid penv")
   (assert (instance? clojure.lang.Symbol sym) "Invalid symbol")
@@ -141,7 +143,7 @@
     (nil? penv) nil
     true (let [r ((:φ @penv) (keyword sym))]
            (cond
-             (nil? r) (lookup-penv sym (:π @penv))
+             (nil? r) (recur sym (:π @penv))
              true r))))
 
 
@@ -292,21 +294,18 @@
 
 
 (def asr-groups
+  "Exploit the fact that all forms in a speclet (term + alternative
+  forms) have the same group key, :ASDL-SYMCONST, :ASDL-TUPLE,
+  or :ASDL-COMPOSITE. See grammar.clj."
   (group-by
-   ;; From something like {asr.autospecs/abi ({:ASR-SYMCONST
-   ;; ...})} fetch :ASR-SYMCONST
-   (comp first keys first second)
+   (fn [speclet]   ; e.g.,
+     (->> speclet  ; [:asr.autospecs/abi ({:ASDL-SYMCONST "Source"} ...)]
+          second   ; ({:ASDL-SYMCONST "Source"} ...)
+          first    ; {:ASDL-SYMCONST "Source"}
+          keys     ; (:ASDL-SYMCONST)
+          first)   ; :ASDL-SYMCONST
+     )
    big-map-of-speclets-from-terms))
-
-
-;; (group-by
-;;  (fn [speclet]
-;;    (->> speclet
-;;         second
-;;         first
-;;         keys
-;;         first)
-;;    ))
 
 
 ;;; There are three groups of
@@ -320,14 +319,33 @@
 ;;; round brackets.
 
 
+;;; The group-by produces a list with three elements:
+
+
+(->> asr-groups count)
+;; => 3
+
+
+;;; The elements are the group keys:
+
+
 (->> asr-groups (map first))
 ;; => (:ASDL-SYMCONST :ASDL-TUPLE :ASDL-COMPOSITE)
+
+
+;;   _______                                    __
+;;  <  / / /  ___ __ ____ _  _______  ___  ___ / /____
+;;  / /_  _/ (_-</ // /  ' \/ __/ _ \/ _ \(_-</ __(_-<
+;; /_/ /_/  /___/\_, /_/_/_/\__/\___/_//_/___/\__/___/
+;;              /___/
 
 
 ;;; Fourteen symconsts:
 
 
-(defn check-first [keyword sigil]
+(defn check-first
+  "Check that the first element of sigil is the given keyword."
+  [keyword sigil]
   (assert (= keyword (first sigil)))
   sigil)
 
@@ -348,8 +366,8 @@
 ;; => 14
 
 
-;;; List out the left-hand and right-hand sides of the symconst
-;;; productions.
+;;; List out the terms and forms alternation -- left-hand and right-hand sides
+;;; -- of the fourteen symconst productions.
 
 
 ;;; For readability, strip the asr.autospecs namespace; convert to
@@ -362,9 +380,13 @@
        ;; the actual terms -- left-hand sides of productions
        (map first)
        ;; Convert to string without the namespace (always asr.autospecs).
+       ;; TODO: check that!
        (map name)
        ;; Convert to symbol to rid the double quotes.
        (map symbol)))
+
+
+;; Here are the terms (left-hand sides) of all ASR-SYMCONSTs.
 
 
 (->> (get-symconsts) symbolize-terms)
@@ -375,7 +397,8 @@
 ;;  presence            binop
 
 
-(defn check-count [count- sigil]
+(defn check-count
+  [count- sigil]
   (assert (= count- (count sigil)))
   sigil)
 
@@ -392,7 +415,7 @@
        (map (fn [prod] (map #(check-first group-key %)) prod))
        ;; Get the actual values from the right-hand sides:
        (map #(map vals %))
-       ;; Flatten once because vals makes an extra collection
+       ;; Flatten once because "vals" makes an extra collection:
        (map #(mapcat identity %))
        ;; Rid the double quotes:
        (map #(map symbol %))))
@@ -424,19 +447,46 @@
 ;;     (Add Sub Mul Div Pow BitAnd BitOr BitXor BitLShift BitRShift))
 
 
+;;   ____   __            __
+;;  / __/  / /___ _____  / /__ ___
+;; / _ \  / __/ // / _ \/ / -_|_-<
+;; \___/  \__/\_,_/ .__/_/\__/___/
+;;               /_/
+
+
 ;;; tuples
 
 
-(defn get-tuples [])
+(defn get-tuples []
+  (->> asr-groups
+       ;; The second group is the group of symconsts:
+       second
+       ;; The first of the group must be ASR-SYMCONST:
+       (check-first :ASDL-TUPLE)
+       ;; the actual term keyword in namespace asr.autospecs
+       second))
 
 
-(->> asr-groups second second count)
+(->> (get-tuples) count)
 ;; => 6
 
 
-(->> asr-groups second second (map first) (map name) (map symbol))
+;; Here are the terms (left-hand sides) of all ASR-TUPLES.
+
+
+(->> (get-tuples) symbolize-terms)
 ;;  call_arg            do_loop_head        alloc_arg
 ;;  attribute_arg       array_index         dimension
+
+
+(->> (get-tuples) (symbolize-heads :ASDL-TUPLE))
+
+
+;;   ______                                 _ __
+;;  <  / _ \  _______  __ _  ___  ___  ___ (_) /____ ___
+;;  / / // / / __/ _ \/  ' \/ _ \/ _ \(_-</ / __/ -_|_-<
+;; /_/\___/  \__/\___/_/_/_/ .__/\___/___/_/\__/\__/___/
+;;                        /_/
 
 
 ;;; Ten composites:

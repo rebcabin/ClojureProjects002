@@ -133,8 +133,8 @@
   identical in shape to the parameter list of a composite term.
 
   A tuple form is anonymous, but we gensym a _head_ for it,
-  something like asr_234789, so that all of symconst, composite,
-  and tuple forms all have heads.
+  something like asr_234789, so that symconst, composite, and
+  tuple forms all have heads.
 
   There are about 227 heads across all the groups, about six of
   which are heads of tuple forms with gensymmed heads. The tuple
@@ -168,7 +168,7 @@
                `|` `symconst-`*`head`*
                `|`  ...
 
-    (c) `term` `=` `tuple` (anonymous gensymmed *head*)
+    (c) `term` `=` `tuple` (anonymous gensymmed head)
 
   A _term_ corresponds to a _bunch_ (one or more) _heads_, but
   each head corresponds to exactly one term.
@@ -178,13 +178,23 @@
   right-hand side (alternation of forms), one form per head.
 
   All forms in a speclet are of the same group: composite,
-  symconst, or tuple. There won't be a mixture of composites and
-  symconsts, for instance, in the forms -- the right-hand side --
-  of any speclet.
+  symconst, or tuple. There won't be a mixture of composite forms
+  and symconst forms, for instance, in the right-hand side of
+  any speclet.
+
+  The following mnemonic slogans may be helpful:
+
+  :ASDL-SYMCONSTs are heads without parameter lists.
+
+  :ASDL-TUPLEs are parameter-lists with gensymmed heads.
+
+  :ASDL-COMPOSITEs have symbolic heads and parameter-lists in
+  round brackets.
 
   In addition to the 3 groups, it turns out there are about 28
   terms and speclets, and 227 heads, forms, and clojure.specs when
-  we're done. The number grows as we add features to ASR.
+  we're done in the testing snapshot of ASR. The numbers grow as
+  features are added to ASR.
   "
 
   "MODULE         = SPC* <'module'> SPC* IDENT LBRACE SPEC RBRACE
