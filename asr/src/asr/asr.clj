@@ -350,6 +350,11 @@
   sigil)
 
 
+(defn check-firsts
+  [keyword sigils]
+  (map #(check-first keyword %) sigils))
+
+
 (defn get-symconsts
   "Symconsts are the first group of productions in ASR."
   []
@@ -403,26 +408,27 @@
   sigil)
 
 
-(defn symbolize-heads
+(defn check-counts
+  [count- sigils]
+  (map #(check-count count- %) sigils))
+
+
+(defn symbolize-symconst-heads
+  "The ->> macro does not debug cleanly on this construction, so we
+  back off to a 'let.'"
   [group-key group]
-  (->> group
-       ;; Get the right-hand sides of the productions:
-       (map second)
-       ;; Now we must double-map, because each right-hand side is a collection.
-       ;; Check that each right-hand side is a singleton map:
-       (map (fn [rhss] (map #(check-count 1 %)) rhss))
-       ;; Check that the key-word of each rhs is the expected group:
-       (map (fn [prod] (map #(check-first group-key %)) prod))
-       ;; Get the actual values from the right-hand sides:
-       (map #(map vals %))
-       ;; Flatten once because "vals" makes an extra collection:
-       (map #(mapcat identity %))
-       ;; Rid the double quotes:
-       (map #(map symbol %))))
+  (let [forms  (map second group)
+        _      (map (partial check-counts 1) forms)
+        _      (map (partial check-firsts group-key)
+                    (map first forms))
+        vals-  (map #(map vals %) forms)
+        flats- (map #(mapcat identity %) vals-)
+        syms-  (map #(map symbol %) flats-)]
+    syms-))
 
 
 (->> (get-symconsts)
-     (symbolize-heads :ASDL-SYMCONST))
+     (symbolize-symconst-heads :ASDL-SYMCONST))
 ;; => ((Source          LFortranModule      GFortranModule
 ;;      BindC           Interactive         Intrinsic)
 ;;     (Eq NotEq Lt LtE Gt GtE)
@@ -479,7 +485,26 @@
 ;;  attribute_arg       array_index         dimension
 
 
-(->> (get-tuples) (symbolize-heads :ASDL-TUPLE))
+(defn symbolize-tuple-heads
+  [group-key group]
+  (let [forms  (map second group)
+        _      (map (partial check-counts 2) forms)
+        _      (map (partial check-first group-key)
+                    (->> forms (map first) (map first)))
+        vals-  (map #(map vals %) forms)
+        flats- (map #(mapcat identity %) vals-)
+        flats1 (map first flats-)
+        syms-  (map symbol flats1)]
+    syms-))
+
+
+(->> (get-tuples) (symbolize-tuple-heads :ASDL-TUPLE))
+;; => (asr-tuple12765
+;;     asr-tuple12766
+;;     asr-tuple12767
+;;     asr-tuple12768
+;;     asr-tuple12769
+;;     asr-tuple12770)
 
 
 ;;   ______                                 _ __
