@@ -476,10 +476,10 @@
 (defn symbolize-symconst-heads
   "The ->> macro does not debug cleanly on this construction, so we
   back off to a 'let.'"
-  [group-key group]
+  [group]
   (let [forms  (map second group)
         _      (map (partial check-counts 1) forms)
-        _      (map (partial check-firsts group-key)
+        _      (map (partial check-firsts :ASDL-SYMCONST)
                     (map first forms))
         vals-  (map (partial map :ASDL-SYMCONST) forms)
         syms-  (map (partial map symbol) vals-)]
@@ -487,7 +487,7 @@
 
 
 (->> (get-symconsts)
-     (symbolize-symconst-heads :ASDL-SYMCONST))
+     (symbolize-symconst-heads))
 ;; => ((Source          LFortranModule      GFortranModule
 ;;      BindC           Interactive         Intrinsic)
 ;;     (Eq NotEq Lt LtE Gt GtE)
@@ -510,6 +510,16 @@
 ;;     (Binary Hex Octal)
 ;;     (Required Optional)
 ;;     (Add Sub Mul Div Pow BitAnd BitOr BitXor BitLShift BitRShift))
+
+
+;;; Count them all
+
+
+(->> (get-symconsts)
+     (symbolize-symconst-heads)
+     (mapcat identity)
+     count)
+;; => 74
 
 
 ;;   ____   __            __
@@ -608,11 +618,11 @@
 
 
 (defn symbolize-tuple-heads
-  [group-key group]
+  [group]
   (let [forms  (map second group)
         _      ((partial check-counts 1) forms)
         _      (map (partial check-counts 2) forms)
-        _      (map (partial check-first group-key)
+        _      (map (partial check-first :ASDL-TUPLE)
                     (->> forms (map first) (map first)))
         vals-  (map (partial map :ASDL-TUPLE) forms)
         flats1 (map first vals-)
@@ -620,7 +630,7 @@
     syms-))
 
 
-(->> (get-tuples) (symbolize-tuple-heads :ASDL-TUPLE))
+(->> (get-tuples) (symbolize-tuple-heads))
 ;; => (asr-tuple12765
 ;;     asr-tuple12766
 ;;     asr-tuple12767
@@ -707,7 +717,7 @@
 
 
 (defn symbolize-composite-heads
-  [group-key group]
+  [group]
   (let [forms   (map second (get-composites))
         valss-  (map #(map :ASDL-COMPOSITE %) forms)
         headss- (map #(map :ASDL-HEAD %) valss-)
@@ -715,7 +725,7 @@
     symss-))
 
 
-(symbolize-composite-heads :ASDL-COMPOSITE (get-composites))
+(symbolize-composite-heads (get-composites))
 ;; => ((RestrictionArg)
 ;;     (TypeStmt)
 ;;     (CaseStmt CaseStmt_Range)
@@ -786,7 +796,7 @@
 (let [ccs (get-composites)
       terms (->> ccs symbolize-terms)
       head-counts
-      (->> (symbolize-composite-heads :ASDL-COMPOSITE ccs)
+      (->> (symbolize-composite-heads ccs)
            (map count))]
   (interleave terms head-counts))
 ;; => (restriction_arg  1
@@ -897,7 +907,7 @@
 ;; 08  array_index     dimension
 
 
-;;; For the 14 composites, fetch the heads out of the columnized
+;;; For the 14 symconsts, fetch the heads out of the columnized
 ;;; data (the ___columns___):
 
 
@@ -974,6 +984,10 @@
 ;; 11 ListInsert          ListRemove          ListClear           DictInsert
 
 
+(->> big-map-of-speclets-from-terms
+     (fetch-pair :asr.autospecs/call_arg)
+     columnize-term)
+
 
 ;;  _    _        _ _    _          __      _         __  __
 ;; | |__(_)__ _  | (_)__| |_   ___ / _|  __| |_ _  _ / _|/ _|
@@ -993,34 +1007,119 @@
              forms)))
         big-map-of-speclets-from-terms)))
 
-;; ;; spot-check with CIDER C-c C-e in buffer
 
-;; (count big-list-of-stuff)
-;; (first big-list-of-stuff)
-;; (count asr.parsed/big-list-of-stuff)
-;; (first asr.parsed/big-list-of-stuff)
+;;; Spot-check with CIDER C-c C-e in buffer:
 
 
-;; (def symconst-stuffs
-;;   (filter #(= (:kind %) :ASDL-SYMCONST) big-list-of-stuff))
-
-;; ;; spot-check with CIDER C-c C-e in buffer
-
-;; (count symconst-stuffs)
-;; (first symconst-stuffs)
-;; (count asr.parsed/symconst-stuffs)
-;; (first asr.parsed/symconst-stuffs)
+(count big-list-of-stuff)
+;; => 248
 
 
-;; (def composite-stuffs
-;;   (filter #(= (:kind %) :ASDL-COMPOSITE) big-list-of-stuff))
+(first big-list-of-stuff)
+;; => {:head :asr.autospecs/Source,
+;;     :term :asr.autospecs/abi,
+;;     :kind :ASDL-SYMCONST,
+;;     :form {:ASDL-SYMCONST "Source"}}
 
-;; ;; spot-check with CIDER C-c C-e in buffer
 
+;;; Compare against the testing snapshot:
+
+
+(count asr.parsed/big-list-of-stuff)
+;; => 227
+
+
+(first asr.parsed/big-list-of-stuff)
+;; => {:head :asr.autospecs/Source,
+;;     :term :asr.autospecs/abi,
+;;     :kind :ASDL-SYMCONST,
+;;     :form {:ASDL-SYMCONST "Source"}}
+
+
+(def tuple-stuffs
+  (filter #(= (:kind %) :ASDL-TUPLE) big-list-of-stuff))
+
+
+(def symconst-stuffs
+  (filter #(= (:kind %) :ASDL-SYMCONST) big-list-of-stuff))
+
+
+;;; Spot-check with CIDER C-c C-e in buffer.
+
+
+(count symconst-stuffs)
+;; => 74
+
+
+(first symconst-stuffs)
+;; => {:head :asr.autospecs/Source,
+;;     :term :asr.autospecs/abi,
+;;     :kind :ASDL-SYMCONST,
+;;     :form {:ASDL-SYMCONST "Source"}}
+
+
+(count asr.parsed/symconst-stuffs)
+;; => 72
+
+
+(first asr.parsed/symconst-stuffs)
+;; => {:head :asr.autospecs/Source,
+;;     :term :asr.autospecs/abi,
+;;     :kind :ASDL-SYMCONST,
+;;     :form {:ASDL-SYMCONST "Source"}}
+
+
+(def composite-stuffs
+  (filter #(= (:kind %) :ASDL-COMPOSITE) big-list-of-stuff))
+
+;;; Spot-check with CIDER C-c C-e in buffer
+
+
+;;; These are promoted to ../../tests/asr/core_test.clj
 ;; (count composite-stuffs)
-;; (first composite-stuffs)
-;; (count asr.parsed/composite-stuffs)
-;; (first asr.parsed/composite-stuffs)
+;; ;; => 168
+;; (let [ccs (get-composites)
+;;       head-counts
+;;       (->> ccs (symbolize-composite-heads)
+;;            (map count))]
+;;   (apply + head-counts))
+;; ;; => 168
+
+
+(first composite-stuffs)
+;; => {:head :asr.autospecs/RestrictionArg,
+;;     :term :asr.autospecs/restriction_arg,
+;;     :kind :ASDL-COMPOSITE,
+;;     :form
+;;     {:ASDL-COMPOSITE
+;;      {:ASDL-HEAD "RestrictionArg",
+;;       :ASDL-ARGS
+;;       ({:ASDL-TYPE "identifier",
+;;         :MULTIPLICITY :asr.parsed/once,
+;;         :ASDL-NYM "restriction_name"}
+;;        {:ASDL-TYPE "symbol",
+;;         :MULTIPLICITY :asr.parsed/once,
+;;         :ASDL-NYM "restriction_func"})}}}
+
+
+(count asr.parsed/composite-stuffs)
+;; => 149
+
+
+(first asr.parsed/composite-stuffs)
+;; => {:head :asr.autospecs/CaseStmt,
+;;     :term :asr.autospecs/case_stmt,
+;;     :kind :ASDL-COMPOSITE,
+;;     :form
+;;     {:ASDL-COMPOSITE
+;;      {:ASDL-HEAD "CaseStmt",
+;;       :ASDL-ARGS
+;;       ({:ASDL-TYPE "expr",
+;;         :MULTIPLICITY :asr.parsed/zero-or-more,
+;;         :ASDL-NYM "test"}
+;;        {:ASDL-TYPE "stmt",
+;;         :MULTIPLICITY :asr.parsed/zero-or-more,
+;;         :ASDL-NYM "body"})}}}
 
 
 ;; (def raw-composite-heads

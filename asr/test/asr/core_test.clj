@@ -1917,6 +1917,7 @@
 
 (deftest asr-groupings
   (testing "whether groupings are complete")
+
   (is (= (->> asr.asr/asr-groups  ;; roughly (14, 6, 10)
               (map second)
               (map count))
@@ -1926,3 +1927,24 @@
                     asr.asr/big-map-of-speclets-from-terms))
               (map second)
               (map count)))))
+
+
+(deftest asr-group-substructure
+  (testing "multiple, independent ways of counting terms and forms")
+
+  (is (= (count asr.asr/composite-stuffs)
+         (apply +
+                (->> (asr.asr/get-composites)
+                     (asr.asr/symbolize-composite-heads)
+                     (map count)))))
+
+  (is (= (count asr.asr/symconst-stuffs)
+         (apply +
+                (->> (asr.asr/get-symconsts)
+                     (asr.asr/symbolize-symconst-heads)
+                     (map count)))))
+
+  (is (= (count asr.asr/tuple-stuffs)
+         (->> (asr.asr/get-tuples)
+              (asr.asr/symbolize-tuple-heads)
+              count))))
