@@ -810,7 +810,7 @@
 ;;; To make it easier to fetch data, columnize these terms:
 
 
-(defn columnize-asr-enum [term]
+(defn columnize-symconst [term]
   (let [nym (->> term first)
         enumdicts (->> term second)
         enumvals  (->> enumdicts (map vals)
@@ -833,7 +833,7 @@
 
 (->> big-map-of-speclets-from-terms
      first
-     columnize-asr-enum)
+     columnize-symconst)
 ;; => {:group asr-enum,
 ;;     :nym :asr.autospecs/abi,
 ;;     :vals
@@ -841,7 +841,7 @@
 ;;      Interactive Intrinsic)}
 
 
-(defn columnize-asr-tuple [term]
+(defn columnize-tuple [term]
   (let [nym (->> term first)
         stuff (->> term second first)
         head (->> stuff :ASDL-TUPLE symbol)
@@ -854,7 +854,7 @@
      :parmnyms parmnyms, :parmmults parmmults}))
 
 
-(defn columnize-asr-composite-terms [term]
+(defn columnize-composite [term]
   (let [nym (->> term first)
         stuff (->> term second)
         compos (->> stuff (map :ASDL-COMPOSITE))
@@ -877,9 +877,9 @@
 (defn columnize-term
   [term]
   (case (-> term second first keys first)
-    :ASDL-SYMCONST  (columnize-asr-enum term)
-    :ASDL-TUPLE     (columnize-asr-tuple term)
-    :ASDL-COMPOSITE (columnize-asr-composite-terms term)))
+    :ASDL-SYMCONST  (columnize-symconst term)
+    :ASDL-TUPLE     (columnize-tuple term)
+    :ASDL-COMPOSITE (columnize-composite term)))
 
 
 ;;; Here are all 30 terms:
@@ -904,7 +904,6 @@
 (defn fetch-pair [key map]
   [key (key map)])
 
-(keyword "asr.autospecs" "symbol")
 
 (->> big-map-of-speclets-from-terms
      (fetch-pair :asr.autospecs/symbol)
