@@ -319,7 +319,7 @@
 ;;; round brackets.
 
 
-;;; The group-by produces a list with three elements:
+;;; The group-by above produces a list with three elements:
 
 
 (->> asr-groups count)
@@ -333,14 +333,7 @@
 ;; => (:ASDL-SYMCONST :ASDL-TUPLE :ASDL-COMPOSITE)
 
 
-;;   _______                                    __
-;;  <  / / /  ___ __ ____ _  _______  ___  ___ / /____
-;;  / /_  _/ (_-</ // /  ' \/ __/ _ \/ _ \(_-</ __(_-<
-;; /_/ /_/  /___/\_, /_/_/_/\__/\___/_//_/___/\__/___/
-;;              /___/
-
-
-;;; Fourteen symconsts:
+;;; some support routines, same for all the groups
 
 
 (defn check-first
@@ -353,6 +346,46 @@
 (defn check-firsts
   [keyword sigils]
   (map #(check-first keyword %) sigils))
+
+
+(defn check-count
+  [count- sigil]
+  (assert (= count- (count sigil)))
+  sigil)
+
+
+(defn check-counts
+  [count- sigils]
+  (map #(check-count count- %) sigils))
+
+
+;;; For readability, strip the asr.autospecs namespace; convert to
+;;; string (via "name") and then to symbol:
+
+
+(defn symbolize-terms
+  [group]
+  (->> group
+       ;; the actual terms -- left-hand sides of productions
+       (map first)
+       ;; Convert to string without the namespace (always asr.autospecs).
+       ;; TODO: check that!
+       (map name)
+       ;; Convert to symbol to rid the double quotes.
+       (map symbol)))
+
+
+;;   _______                                    __
+;;  <  / / /  ___ __ ____ _  _______  ___  ___ / /____
+;;  / /_  _/ (_-</ // /  ' \/ __/ _ \/ _ \(_-</ __(_-<
+;; /_/ /_/  /___/\_, /_/_/_/\__/\___/_//_/___/\__/___/
+;;              /___/
+
+
+;;; Fourteen symconsts:
+
+
+;;; Get all the symconsts and check their count:
 
 
 (defn get-symconsts
@@ -371,27 +404,9 @@
 ;; => 14
 
 
-;;; List out the terms and forms alternation -- left-hand and right-hand sides
-;;; -- of the fourteen symconst productions.
-
-
-;;; For readability, strip the asr.autospecs namespace; convert to
-;;; string and then to symbol:
-
-
-(defn symbolize-terms
-  [group]
-  (->> group
-       ;; the actual terms -- left-hand sides of productions
-       (map first)
-       ;; Convert to string without the namespace (always asr.autospecs).
-       ;; TODO: check that!
-       (map name)
-       ;; Convert to symbol to rid the double quotes.
-       (map symbol)))
-
-
-;; Here are the terms (left-hand sides) of all ASR-SYMCONSTs.
+;;; List out the terms and forms alternation -- left-hand and
+;;; right-hand sides -- of the fourteen symconst productions. Here
+;;; are the terms (left-hand sides) of all ASR-SYMCONSTs:
 
 
 (->> (get-symconsts) symbolize-terms)
@@ -402,15 +417,60 @@
 ;;  presence            binop
 
 
-(defn check-count
-  [count- sigil]
-  (assert (= count- (count sigil)))
-  sigil)
+;;; Go over the development of the extraction of heads so as to
+;;; identify an abstraction for the data structure.
 
 
-(defn check-counts
-  [count- sigils]
-  (map #(check-count count- %) sigils))
+;;; Here are the forms of the first symconst, as an example:
+
+
+(->> (get-symconsts) (map second) first)
+;; => ({:ASDL-SYMCONST "Source"}
+;;     {:ASDL-SYMCONST "LFortranModule"}
+;;     {:ASDL-SYMCONST "GFortranModule"}
+;;     {:ASDL-SYMCONST "BindC"}
+;;     {:ASDL-SYMCONST "Interactive"}
+;;     {:ASDL-SYMCONST "Intrinsic"})
+
+
+;;; See that each form is a singleton with identical group-key.
+;;; Check that for the example:
+
+
+(let [forms         (map second (get-symconsts))
+      a-form        (first forms)
+      count-checked ((partial check-counts 1) a-form)
+      key-checked   ((partial check-firsts :ASDL-SYMCONST)
+                     (map first count-checked))
+      ]
+  key-checked
+  )
+;; => ([:ASDL-SYMCONST "Source"]
+;;     [:ASDL-SYMCONST "LFortranModule"]
+;;     [:ASDL-SYMCONST "GFortranModule"]
+;;     [:ASDL-SYMCONST "BindC"]
+;;     [:ASDL-SYMCONST "Interactive"]
+;;     [:ASDL-SYMCONST "Intrinsic"])
+
+
+;;; Note it's turned into a vector of pairs. Ditch the results and
+;;; fetch the vals and symbolize them to rid the double quotes:
+
+
+(let [forms         (map second (get-symconsts))
+      a-form        (first forms)
+      _             ((partial check-counts 1) a-form)
+      _             ((partial check-firsts :ASDL-SYMCONST)
+                     (map first a-form))
+      vals-         (map :ASDL-SYMCONST a-form)
+      syms-         (map symbol vals-)]
+  syms-)
+;; => (Source LFortranModule GFortranModule BindC Interactive Intrinsic)
+
+
+;;; Now do likewise for every ASDL-SYMCONST in the groups with one
+;;; extra level of mapping (use the debugger to see the
+;;; intermediate values):
 
 
 (defn symbolize-symconst-heads
@@ -421,9 +481,8 @@
         _      (map (partial check-counts 1) forms)
         _      (map (partial check-firsts group-key)
                     (map first forms))
-        vals-  (map #(map vals %) forms)
-        flats- (map #(mapcat identity %) vals-)
-        syms-  (map #(map symbol %) flats-)]
+        vals-  (map (partial map :ASDL-SYMCONST) forms)
+        syms-  (map (partial map symbol) vals-)]
     syms-))
 
 
@@ -460,10 +519,12 @@
 ;;               /_/
 
 
-;;; tuples
+;;; six tuples
 
 
-(defn get-tuples []
+(defn get-tuples
+  "Tuples are the second group of productions in ASR."
+  []
   (->> asr-groups
        ;; The second group is the group of symconsts:
        second
@@ -485,15 +546,76 @@
 ;;  attribute_arg       array_index         dimension
 
 
+;;; Go over the development of the extraction of heads so as to
+;;  identify an abstraction for the data structure.
+
+
+;;; Here are the forms of the first tuple, as an example:
+
+
+(let [forms  (map second (get-tuples))
+      a-form (first forms)]
+  a-form)
+;; => ({:ASDL-TUPLE "asr-tuple12765",
+;;      :ASDL-ARGS
+;;      ({:ASDL-TYPE "expr",
+;;        :MULTIPLICITY :asr.parsed/at-most-once,
+;;        :ASDL-NYM "value"})})
+
+
+;;; See that it's a singleton of a doubleton; check this; also
+;;; check that the keyword is :ASDL-TUPLE:
+
+
+(let [forms  (map second (get-tuples))
+      a-form (first forms)
+      _      ((partial check-count 1) a-form)
+      _      ((partial check-counts 2) a-form)
+      _      ((partial check-first :ASDL-TUPLE)
+              (->> a-form first first))]
+  a-form)
+;; => ({:ASDL-TUPLE "asr-tuple12765",
+;;      :ASDL-ARGS
+;;      ({:ASDL-TYPE "expr",
+;;        :MULTIPLICITY :asr.parsed/at-most-once,
+;;        :ASDL-NYM "value"})})
+
+
+;;; Now get the vals, check singleton, flatten and symbolize:
+
+
+(let [forms  (map second (get-tuples))
+      a-form (first forms)
+      _      ((partial check-count 1) a-form)
+      _      ((partial check-counts 2) a-form)
+      _      ((partial check-first :ASDL-TUPLE)
+              (->> a-form first first))
+      vals-  (map :ASDL-TUPLE a-form)
+      flat1  (first vals-)
+      sym    (symbol flat1)]
+  sym)
+;; => asr-tuple12765
+
+;;; Note that the "head" is a gensymmed (made-up) symbol. See
+;;; grammar.clj.
+
+
+;;; As before with symconsts, add one level of "map" to get all
+;;; the heads. Note "check-counts 1" instead of "check-count 1" to
+;;; effect the extra level of mapping. Unlike symconsts and
+;;; composites, there is only one level of list for all the tuple
+;;; heads.
+
+
 (defn symbolize-tuple-heads
   [group-key group]
   (let [forms  (map second group)
+        _      ((partial check-counts 1) forms)
         _      (map (partial check-counts 2) forms)
         _      (map (partial check-first group-key)
                     (->> forms (map first) (map first)))
-        vals-  (map #(map vals %) forms)
-        flats- (map #(mapcat identity %) vals-)
-        flats1 (map first flats-)
+        vals-  (map (partial map :ASDL-TUPLE) forms)
+        flats1 (map first vals-)
         syms-  (map symbol flats1)]
     syms-))
 
@@ -518,7 +640,6 @@
 
 
 ;;; Third doesn't work on maps, though First and Second do.
-;;; Convert asr-groups to a vec.
 
 
 (defn flip [f] (fn [x y] (f y x)))
@@ -527,18 +648,163 @@
 (def  third  (partial (flip nth) 2))
 
 
-(->> asr-groups vec third second count)
+;;; Convert asr-groups to a vec so "third" will work on it:
+
+
+(defn get-composites
+  "Composites are the third group of productions in ASR."
+  []
+  (->> asr-groups
+       vec
+       third
+       (check-first :ASDL-COMPOSITE)
+       second))
+
+
+(->> (get-composites) count)
 ;; => 10
 
 
-;;; The biggies are symbol, expr, and stmt; fetch their heads below:
+;; Here are the terms (left-hand sides) of all ASR-COMPOSITEs.
 
 
-(->> asr-groups vec third second (map first) (map name) (map symbol))
+(->> (get-composites) symbolize-terms)
 ;;  restriction_arg     type_stmt           case_stmt
 ;;  symbol              attribute           ttype
 ;;  stmt                tbind               expr
 ;;  unit
+
+
+;;; For a little variation, let's analyze the second
+;;; composite (this should always work because there should always
+;;; be more than one composite). Note that asserts are not always
+;;; thrown, here, but you can catch them by stepping with the
+;;; debugger (TODO: reason unknown).
+
+
+(map second (get-composites))
+
+
+;;; Though the structure of a composite is more rich than the
+;;; structures of the other groups (symconsts and tuples),
+;;; extracting the heads is easier. Here is how to get the heads
+;;; of one composite:
+
+
+(let [forms  (map second (get-composites))
+      a-form (nth forms 2)
+      _      (map (partial check-firsts :ASDL-COMPOSITE)
+                  a-form)
+      vals-  (map :ASDL-COMPOSITE a-form)
+      heads- (map :ASDL-HEAD vals-)
+      syms-  (map symbol heads-)
+      ]
+  syms-)
+;; => (CaseStmt CaseStmt_Range)
+
+
+;;; As before insert one more level of mapping to get them all:
+
+
+(defn symbolize-composite-heads
+  [group-key group]
+  (let [forms   (map second (get-composites))
+        valss-  (map #(map :ASDL-COMPOSITE %) forms)
+        headss- (map #(map :ASDL-HEAD %) valss-)
+        symss-  (map #(map symbol %) headss-)]
+    symss-))
+
+
+(symbolize-composite-heads :ASDL-COMPOSITE (get-composites))
+;; => ((RestrictionArg)
+;;     (TypeStmt)
+;;     (CaseStmt CaseStmt_Range)
+;;     (Program             Module              Function
+;;      GenericProcedure    CustomOperator      ExternalSymbol
+;;      StructType          EnumType            UnionType
+;;      Variable            ClassType           ClassProcedure
+;;      AssociateBlock      Block)
+;;     (Attribute)
+;;     (Integer             Real                Complex
+;;      Character           Logical             Set
+;;      List                Tuple               Struct
+;;      Enum                Union               Class
+;;      Dict                Pointer             Const
+;;      CPtr                TypeParameter)
+;;     (Allocate            Assign              Assignment
+;;      Associate           Cycle               ExplicitDeallocate
+;;      ImplicitDeallocate  DoConcurrentLoop    DoLoop
+;;      ErrorStop           Exit                ForAllSingle
+;;      GoTo                GoToTarget          If
+;;      IfArithmetic        Print               FileOpen
+;;      FileClose           FileRead            FileBackspace
+;;      FileRewind          FileInquire         FileWrite
+;;      Return              Select              Stop
+;;      Assert              SubroutineCall      Where
+;;      WhileLoop           Nullify             Flush
+;;      ListAppend          AssociateBlockCall  SelectType
+;;      CPtrToPointer       BlockCall           SetInsert
+;;      SetRemove           ListInsert          ListRemove
+;;      ListClear           DictInsert)
+;;     (Bind)
+;;     (IfExp               ComplexConstructor  NamedExpr
+;;      FunctionCall        StructTypeConstructor
+;;      EnumTypeConstructor UnionTypeConstructor
+;;      ImpliedDoLoop       IntegerConstant     IntegerBOZ
+;;      IntegerBitNot       IntegerUnaryMinus   IntegerCompare
+;;      IntegerBinOp        RealConstant        RealUnaryMinus
+;;      RealCompare         RealBinOp           ComplexConstant
+;;      ComplexUnaryMinus   ComplexCompare      ComplexBinOp
+;;      LogicalConstant     LogicalNot          LogicalCompare
+;;      LogicalBinOp        TemplateBinOp       ListConstant
+;;      ListLen             ListConcat          ListCompare
+;;      SetConstant         SetLen              TupleConstant
+;;      TupleLen            TupleCompare        StringConstant
+;;      StringConcat        StringRepeat        StringLen
+;;      StringItem          StringSection       StringCompare
+;;      StringOrd           StringChr           DictConstant
+;;      DictLen             Var                 ArrayConstant
+;;      ArrayItem           ArraySection        ArraySize
+;;      ArrayBound          ArrayTranspose      ArrayMatMul
+;;      ArrayPack           ArrayReshape        ArrayMaxloc
+;;      BitCast             StructInstanceMember
+;;      StructStaticMember  EnumMember          UnionRef
+;;      EnumName            EnumValue           OverloadedCompare
+;;      OverloadedBinOp     Cast                ComplexRe
+;;      ComplexIm           DictItem            CLoc
+;;      PointerToCPtr;      GetPointer          ListItem
+;;      TupleItem           ListSection         ListPop
+;;      DictPop             SetPop              IntegerBitLen
+;;      Ichar               Iachar              SizeOfType
+;;      PointerNullConstant PointerAssociated)
+;;     (TranslationUnit))
+
+
+;;; It's interesting to count them all:
+
+
+(let [ccs (get-composites)
+      terms (->> ccs symbolize-terms)
+      head-counts
+      (->> (symbolize-composite-heads :ASDL-COMPOSITE ccs)
+           (map count))]
+  (interleave terms head-counts))
+;; => (restriction_arg  1
+;;     type_stmt        1
+;;     case_stmt        2
+;;     symbol          14
+;;     attribute        1
+;;     ttype           17
+;;     stmt            44
+;;     tbind            1
+;;     expr            86
+;;     unit             1)
+
+
+;;         _                 _
+;;  __ ___| |_  _ _ __  _ _ (_)______
+;; / _/ _ \ | || | '  \| ' \| |_ / -_)
+;; \__\___/_|\_,_|_|_|_|_||_|_/__\___|
 
 
 ;;; To make it easier to fetch data, columnize these terms:
