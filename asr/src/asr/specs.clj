@@ -85,7 +85,7 @@
 (s/def ::integer-ttype
   (s/cat
    :head #{'Integer}
-   :kind ::integer-kind
+   :grup ::integer-kind
    :dims ::dimensions))
 
 #_
@@ -105,28 +105,28 @@
 (s/def ::real-ttype
   (s/cat
    :head #{'Real}
-   :kind ::real-kind
+   :grup ::real-kind
    :dims ::dimensions))
 
 
 (s/def ::complex-ttype
   (s/cat
    :head #{'Complex}
-   :kind ::complex-kind
+   :grup ::complex-kind
    :dims ::dimensions))
 
 
 (s/def ::character-ttype
   (s/cat
    :head #{'Character}
-   :kind ::character-kind
+   :grup ::character-kind
    :dims ::dimensions))
 
 
 (s/def ::logical-ttype
   (s/cat
    :head #{'Logical}
-   :kind ::logical-kind
+   :grup ::logical-kind
    :dims ::dimensions))
 
 
@@ -232,34 +232,34 @@
 (s/exercise ::ttype)
 ;; => ([(Logical 4 [35 8])
 ;;      [:logical
-;;       {:head Logical, :kind 4, :dims [[:bigint 35] [:bigint 8]]}]]
+;;       {:head Logical, :grup 4, :dims [[:bigint 35] [:bigint 8]]}]]
 ;;     [(Character 1 [0 1])
 ;;      [:character
 ;;       {:head Character,
-;;        :kind 1,
+;;        :grup 1,
 ;;        :dims [[:nat-int 0] [:nat-int 1]]}]]
 ;;     [(Real 8 [1 83])
 ;;      [:real
-;;       {:head Real, :kind 8, :dims [[:nat-int 1] [:bigint 83]]}]]
+;;       {:head Real, :grup 8, :dims [[:nat-int 1] [:bigint 83]]}]]
 ;;     [(Set (Logical 1 [0 1605884]))
 ;;      [:set
 ;;       {:head Set,
 ;;        :ttype
 ;;        [:logical
 ;;         {:head Logical,
-;;          :kind 1,
+;;          :grup 1,
 ;;          :dims [[:bigint 0] [:bigint 1605884]]}]}]]
 ;;     [(Set (Real 4 [2]))
 ;;      [:set
 ;;       {:head Set,
-;;        :ttype [:real {:head Real, :kind 4, :dims [[:nat-int 2]]}]}]]
+;;        :ttype [:real {:head Real, :grup 4, :dims [[:nat-int 2]]}]}]]
 ;;     [(Character 1 [2 0])
 ;;      [:character
 ;;       {:head Character,
-;;        :kind 1,
+;;        :grup 1,
 ;;        :dims [[:nat-int 2] [:nat-int 0]]}]]
 ;;     [(Integer 4 [2361])
-;;      [:integer {:head Integer, :kind 4, :dims [[:bigint 2361]]}]]
+;;      [:integer {:head Integer, :grup 4, :dims [[:bigint 2361]]}]]
 ;;     [(Tuple
 ;;       [(List (Set (Integer 1 [])))
 ;;        (Character 1 [1 14447796685686])])
@@ -273,10 +273,10 @@
 ;;            [:set
 ;;             {:head Set,
 ;;              :ttype
-;;              [:integer {:head Integer, :kind 1, :dims []}]}]}]
+;;              [:integer {:head Integer, :grup 1, :dims []}]}]}]
 ;;          [:character
 ;;           {:head Character,
-;;            :kind 1,
+;;            :grup 1,
 ;;            :dims [[:nat-int 1] [:bigint 14447796685686]]}]]]}]]
 ;;     [(Tuple
 ;;       [(Integer 1 [19])
@@ -294,8 +294,8 @@
 ;;       {:head Tuple,
 ;;        :type
 ;;        [:vector-of
-;;         [[:integer {:head Integer, :kind 1, :dims [[:bigint 19]]}]
-;;          [:logical {:head Logical, :kind 1, :dims []}]
+;;         [[:integer {:head Integer, :grup 1, :dims [[:bigint 19]]}]
+;;          [:logical {:head Logical, :grup 1, :dims []}]
 ;;          [:tuple
 ;;           {:head Tuple,
 ;;            :type
@@ -308,36 +308,36 @@
 ;;                  :ttype
 ;;                  [:complex
 ;;                   {:head Complex,
-;;                    :kind 4,
+;;                    :grup 4,
 ;;                    :dims [[:nat-int 24]]}]}]}]
 ;;              [:character
 ;;               {:head Character,
-;;                :kind 1,
+;;                :grup 1,
 ;;                :dims [[:nat-int 114] [:nat-int 1]]}]
 ;;              [:character
 ;;               {:head Character,
-;;                :kind 1,
+;;                :grup 1,
 ;;                :dims [[:bigint 16180267365] [:nat-int 6]]}]
 ;;              [:character
 ;;               {:head Character,
-;;                :kind 1,
+;;                :grup 1,
 ;;                :dims [[:nat-int 2] [:bigint 42959100]]}]
-;;              [:real {:head Real, :kind 4, :dims []}]]]}]
+;;              [:real {:head Real, :grup 4, :dims []}]]]}]
 ;;          [:list
 ;;           {:head List,
 ;;            :ttype
-;;            [:real {:head Real, :kind 4, :dims [[:nat-int 3]]}]}]
+;;            [:real {:head Real, :grup 4, :dims [[:nat-int 3]]}]}]
 ;;          [:set
 ;;           {:head Set,
-;;            :ttype [:real {:head Real, :kind 8, :dims []}]}]
+;;            :ttype [:real {:head Real, :grup 8, :dims []}]}]
 ;;          [:set
 ;;           {:head Set,
 ;;            :ttype
 ;;            [:complex
 ;;             {:head Complex,
-;;              :kind 8,
+;;              :grup 8,
 ;;              :dims [[:nat-int 23] [:bigint 2072723744791]]}]}]]]}]]
-;;     [(Complex 8 []) [:complex {:head Complex, :kind 8, :dims []}]])
+;;     [(Complex 8 []) [:complex {:head Complex, :grup 8, :dims []}]])
 
 
 ;;                                     __   __
@@ -820,7 +820,7 @@
 ;;          :key-type
 ;;          [:dict
 ;;           {:head Dict,
-;;            :key-type [:integer {:head Integer, :kind 2, :dims []}],
+;;            :key-type [:integer {:head Integer, :grup 2, :dims []}],
 ;;            :value-type
 ;;            [:derived
 ;;             {:head Derived,

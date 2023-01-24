@@ -178,7 +178,7 @@
 (deftest all-kinds-test
   (testing "check all 3 kinds"
     (is (= #{:ASDL-SYMCONST :ASDL-COMPOSITE :ASDL-TUPLE}
-           (set (map :kind snapshot/big-list-of-stuff))))))
+           (set (map :grup snapshot/big-list-of-stuff))))))
 
 
 (defn- not-asr-tuple [kw]
@@ -665,7 +665,7 @@
 (let [integer-bin-op-stuff
       '({:head :asr.autospecs/IntegerBinOp,
          :term :asr.autospecs/expr,
-         :kind :ASDL-COMPOSITE,
+         :grup :ASDL-COMPOSITE,
          :form
          {:ASDL-COMPOSITE
           {:ASDL-HEAD "IntegerBinOp",
@@ -1036,14 +1036,14 @@
 
 
 (deftest integer-types
-  (testing "integer types, clojure and java")
-  (is clojure.lang.BigInt
-      (type (+' 1 Long/MAX_VALUE)))
-  ;; long and short forms for the java.language types
-  (is java.lang.Byte    (type Byte/MAX_VALUE))
-  (is java.lang.Short   (type Short/MAX_VALUE))
-  (is java.lang.Integer (type Integer/MAX_VALUE))
-  (is java.lang.Long    (type Long/MAX_VALUE)))
+  (testing "integer types, clojure and java"
+    (is clojure.lang.BigInt
+        (type (+' 1 Long/MAX_VALUE)))
+    ;; long and short forms for the java.language types
+    (is java.lang.Byte    (type Byte/MAX_VALUE))
+    (is java.lang.Short   (type Short/MAX_VALUE))
+    (is java.lang.Integer (type Integer/MAX_VALUE))
+    (is java.lang.Long    (type Long/MAX_VALUE))))
 
 
 ;;  _ _______    _    _
@@ -1759,30 +1759,32 @@
 
 
 (deftest eval-program-symbol-test
-  (let [foo ((eval-symbol
-              '(Program
-                (SymbolTable 3 {})
-                main_program
-                []
-                [(SubroutineCall 1 _lpython_main_program () [] ())]))
-             ΓΠ)
-        bar (walk/prewalk
-             (fn [form]
-               (cond
-                 (is-penv? form) (indirect-penvs form)
-                 :else form)) foo)
-        ]
-    (is (= {:head         'Program,
-            :symtab       {:head 'SymbolTable,
-                           :integer-id 3,
-                           :bindings {},
-                           :penv (indirect-penvs (new-penv {} ΓΠ))
-                           }
-            :nym          'main_program,
-            :dependencies [],
-            :body         ['(SubroutineCall 1 _lpython_main_program () [] ())],
-            :penv         @ΓΠ}
-           bar))))
+  (testing "clojure.walk/walk on an ASR tree"
+    (let [foo ((eval-symbol
+                '(Program
+                  (SymbolTable 3 {})
+                  main_program
+                  []
+                  [(SubroutineCall 1 _lpython_main_program () [] ())]))
+               ΓΠ)
+          bar (walk/prewalk
+               (fn [form]
+                 (cond
+                   (is-penv? form) (indirect-penvs form)
+                   :else form))
+               foo)
+          ]
+      (is (= {:head         'Program,
+              :symtab       {:head 'SymbolTable,
+                             :integer-id 3,
+                             :bindings {},
+                             :penv (indirect-penvs (new-penv {} ΓΠ))
+                             }
+              :nym          'main_program,
+              :dependencies [],
+              :body         ['(SubroutineCall 1 _lpython_main_program () [] ())],
+              :penv         @ΓΠ}
+             bar)))))
 
 
 (def mp {:main_program
@@ -1916,35 +1918,41 @@
 
 
 (deftest asr-groupings
-  (testing "whether groupings are complete")
+  (testing "whether groupings are complete"
 
-  (is (= (->> asr.asr/asr-groups  ;; roughly (14, 6, 10)
-              (map second)
-              (map count))
-         (->> (group-by
-               :group
-               (map asr.asr/columnize-term
-                    asr.asr/big-map-of-speclets-from-terms))
-              (map second)
-              (map count)))))
+    (is (= (->> asr.asr/asr-groups  ;; roughly (14, 6, 10)
+                (map second)
+                (map count))
+           (->> (group-by
+                 :group
+                 (map asr.asr/columnize-term
+                      asr.asr/big-map-of-speclets-from-terms))
+                (map second)
+                (map count))))))
 
 
 (deftest asr-group-substructure
-  (testing "multiple, independent ways of counting terms and forms")
+  (testing "multiple, independent ways of counting terms and forms"
 
-  (is (= (count asr.asr/composite-stuffs)
-         (apply +
-                (->> (asr.asr/get-composites)
-                     (asr.asr/symbolize-composite-heads)
-                     (map count)))))
+    (is (= (count asr.asr/composite-stuffs)
+           (apply +
+                  (->> (asr.asr/get-composites)
+                       (asr.asr/symbolize-composite-heads)
+                       (map count)))))
 
-  (is (= (count asr.asr/symconst-stuffs)
-         (apply +
-                (->> (asr.asr/get-symconsts)
-                     (asr.asr/symbolize-symconst-heads)
-                     (map count)))))
+    (is (= (count asr.asr/symconst-stuffs)
+           (apply +
+                  (->> (asr.asr/get-symconsts)
+                       (asr.asr/symbolize-symconst-heads)
+                       (map count)))))
 
-  (is (= (count asr.asr/tuple-stuffs)
-         (->> (asr.asr/get-tuples)
-              (asr.asr/symbolize-tuple-heads)
-              count))))
+    (is (= (count asr.asr/tuple-stuffs)
+           (->> (asr.asr/get-tuples)
+                (asr.asr/symbolize-tuple-heads)
+                count)))))
+
+
+(deftest no-duplicated-heads
+  (is (=
+       (count asr.asr/big-list-of-stuff)
+       (count (map :head asr.asr/big-list-of-stuff)))))

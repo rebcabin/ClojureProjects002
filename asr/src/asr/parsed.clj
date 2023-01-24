@@ -184,21 +184,21 @@
   (let [kind (-> form kind-from-form)
         ghead (head-from-kind-form kind form)
         kwh (keyword "asr.autospecs" ghead)] ;; no kebab'bing
-    {:head kwh,:term term,:kind kind,:form,form}))
+    {:head kwh,:term term,:grup kind,:form,form}))
 
 
 (def big-list-of-stuff
-  "A ___stuff___ is a map of `:head`, `:term`, `:kind`, and `:form`
+  "A ___stuff___ is a map of `:head`, `:term`, `:grup`, and `:form`
   for the approximately 227 heads & forms of ASR. A stuff is all
   we need for making clojure.specs from terms, heads, & forms. The
-  stuff keywords `:head`, `:term`, `:kind`, and `:form` need not
+  stuff keywords `:head`, `:term`, `:grup`, and `:form` need not
   be namespaced.
 
   Example of a _stuff_:
 
       {:head :asr.autospecs/Source,
        :term :asr.autospecs/abi,
-       :kind :ASDL-SYMCONST,
+       :grup :ASDL-SYMCONST,
        :form {:ASDL-SYMCONST \"Source\"}}
 
   This big list of stuff is like a big, flat, denormalized
@@ -210,7 +210,7 @@
   like function declarations with a head and args in parentheses;
   `ASDL-SYMCONST`, which are symbolic constants, and `ASDL-TUPLE`,
   which look like headless arg lists. The kinds are distinguished
-  by the `:kind` field.
+  by the `:grup` field.
 
   ## Terms
 
@@ -241,7 +241,7 @@
 
       {:head :asr.autospecs/CaseStmt,
        :term :asr.autospecs/case_stmt,
-       :kind :ASDL-COMPOSITE,
+       :grup :ASDL-COMPOSITE,
        :form
        {:ASDL-COMPOSITE
         {:ASDL-HEAD \"CaseStmt\",
@@ -258,7 +258,7 @@
 
       {:head :asr.autospecs/Source,
        :term :asr.autospecs/abi,
-       :kind :ASDL-SYMCONST,
+       :grup :ASDL-SYMCONST,
        :form {:ASDL-SYMCONST \"Source\"}}
 
   For all tuples, the head is gensymmed. Example:
@@ -271,7 +271,7 @@
 
       {:head :asr.autospecs/asr-tuple2595,
        :term :asr.autospecs/call_arg,
-       :kind :ASDL-TUPLE,
+       :grup :ASDL-TUPLE,
        :form
        {:ASDL-TUPLE \"asr-tuple2595\",
         :ASDL-ARGS
@@ -318,7 +318,7 @@
   depend on other clojure.specs. There are about 72
   symconsts (more as ASR grows):
   "
-  (filter #(= (:kind %) :ASDL-SYMCONST) big-list-of-stuff))
+  (filter #(= (:grup %) :ASDL-SYMCONST) big-list-of-stuff))
 
 
 ;;                            _ _              _         __  __
@@ -328,7 +328,7 @@
 ;;              |_|
 
 (def composite-stuffs
-  (filter #(= (:kind %) :ASDL-COMPOSITE) big-list-of-stuff))
+  (filter #(= (:grup %) :ASDL-COMPOSITE) big-list-of-stuff))
 
 
 ;;                               _        _         __  __         _

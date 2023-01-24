@@ -155,23 +155,23 @@
   The default multiplicity, with no STAR or QUES, is \"exactly
   once.\"
 
-  SUMMARY:
+  TL;DR SUMMARY:
 
   The big picture to remember about _terms_ and _heads_ is that a
   _speclet_ looks like one of the following three:
 
-    (a) `term` `=` `composite-`*`head`*`-1` `args`
+    (a) `term` `=` `composite-`*`head`*`-1` `args`  ;; forms
                `|` `composite-`*`head`*`-2` `args`
                `|` ...
 
-    (b) `term` `=` `symconst-`*`head`*
+    (b) `term` `=` `symconst-`*`head`*              ;; forms
                `|` `symconst-`*`head`*
                `|`  ...
 
-    (c) `term` `=` `tuple` (anonymous gensymmed head)
+    (c) `term` `=` `tuple`  ;; one form, anonymous gensymmed head
 
-  A _term_ corresponds to a _bunch_ (one or more) _heads_, but
-  each head corresponds to exactly one term.
+  A _term_ corresponds to a _bunch_ (one or more) _forms_ with
+  _heads_, but each head corresponds to exactly one term.
 
   A term has exactly one _speclet_. The speclet is the term and
   the whole alternation of forms:, left-hand side (term) and

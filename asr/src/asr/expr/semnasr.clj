@@ -16,7 +16,7 @@
 (s/def ::integer-ttype
   (s/spec              ; means "nestable" not "spliceable" in other "regex" specs
    (s/cat :head        #{'Integer}
-          :kind        #{1 2 4 8} ;; i8, i16, i32, i64
+          :grup        #{1 2 4 8} ;; i8, i16, i32, i64
           :dimensionss (s/+ :asr.specs/dimensions))))
 
 #_
@@ -52,15 +52,15 @@
 (s/def ::integer-scalar-ttype
   (s/spec
    (s/cat :head        #{'Integer}
-          :kind        #{1 2 4 8}
+          :grup        #{1 2 4 8}
           :dimensionss #{[]})))
 
 #_
 (-> ::integer-scalar-ttype (s/exercise 4))
-;; => ([(Integer 2 []) {:head Integer, :kind 2, :dimensionss []}]
-;;     [(Integer 4 []) {:head Integer, :kind 4, :dimensionss []}]
-;;     [(Integer 1 []) {:head Integer, :kind 1, :dimensionss []}]
-;;     [(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}])
+;; => ([(Integer 2 []) {:head Integer, :grup 2, :dimensionss []}]
+;;     [(Integer 4 []) {:head Integer, :grup 4, :dimensionss []}]
+;;     [(Integer 1 []) {:head Integer, :grup 1, :dimensionss []}]
+;;     [(Integer 8 []) {:head Integer, :grup 8, :dimensionss []}])
 
 
 ;; Particular ones so we can match the "kind," i8 thru i64, by
@@ -70,31 +70,31 @@
   (s/def ::i8-scalar-ttype
     (s/spec ; nestable
      (s/cat :head        #{'Integer}
-            :kind        #{1}
+            :grup        #{1}
             :dimensionss #{[]})))
 
   (s/def ::i16-scalar-ttype
     (s/spec ; nestable
      (s/cat :head        #{'Integer}
-            :kind        #{2}
+            :grup        #{2}
             :dimensionss #{[]})))
 
   (s/def ::i32-scalar-ttype
     (s/spec ; nestable
      (s/cat :head        #{'Integer}
-            :kind        #{4}
+            :grup        #{4}
             :dimensionss #{[]})))
 
   (s/def ::i64-scalar-ttype
     (s/spec ; nestable
      (s/cat :head        #{'Integer}
-            :kind        #{8}
+            :grup        #{8}
             :dimensionss #{[]}))))
 
 #_
 (-> ::i64-scalar-ttype (s/exercise 2))
-;; => ([(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}]
-;;     [(Integer 8 []) {:head Integer, :kind 8, :dimensionss []}])
+;; => ([(Integer 8 []) {:head Integer, :grup 8, :dimensionss []}]
+;;     [(Integer 8 []) {:head Integer, :grup 8, :dimensionss []}])
 
 ;; TEACHING NOTE: With nesting. Because every spec is wrapped in
 ;; s/spec, results are nested under s/alt.
@@ -107,10 +107,10 @@
     (s/exercise 2))
 ;; => ([[(Integer 2 [])]
 ;;      [:asr.core/i8-scalar-ttype
-;;       {:head Integer, :kind 2, :dimensionss []}]]
+;;       {:head Integer, :grup 2, :dimensionss []}]]
 ;;     [[(Integer 8 [])]
 ;;      [:asr.core/i32-scalar-ttype
-;;       {:head Integer, :kind 8, :dimensionss []}]])
+;;       {:head Integer, :grup 8, :dimensionss []}]])
 
 ;; TEACHING NOTE: Without nesting. Results are not nested under
 ;; s/or.
@@ -121,8 +121,8 @@
           :4 ::i32-scalar-ttype
           :8 ::i64-scalar-ttype)
     (s/exercise 2))
-;; => ([(Integer 8 []) [:8 {:head Integer, :kind 8, :dimensionss []}]]
-;;     [(Integer 1 []) [:1 {:head Integer, :kind 1, :dimensionss []}]])
+;; => ([(Integer 8 []) [:8 {:head Integer, :grup 8, :dimensionss []}]]
+;;     [(Integer 1 []) [:1 {:head Integer, :grup 1, :dimensionss []}]])
 
 
 ;;  _     _                                     _            _
@@ -170,12 +170,12 @@
 ;;      [:i16
 ;;       {:head IntegerConstant,
 ;;        :value 0,
-;;        :ttype {:head Integer, :kind 2, :dimensionss []}}]]
+;;        :ttype {:head Integer, :grup 2, :dimensionss []}}]]
 ;;     [(IntegerConstant -1 (Integer 4 []))
 ;;      [:i32
 ;;       {:head IntegerConstant,
 ;;        :value -1,
-;;        :ttype {:head Integer, :kind 4, :dimensionss []}}]])
+;;        :ttype {:head Integer, :grup 4, :dimensionss []}}]])
 
 
 (do
@@ -217,22 +217,22 @@
 ;;      [:i16
 ;;       {:head IntegerConstant,
 ;;        :value 1,
-;;        :ttype {:head Integer, :kind 2, :dimensionss []}}]]
+;;        :ttype {:head Integer, :grup 2, :dimensionss []}}]]
 ;;     [(IntegerConstant -1 (Integer 8 []))
 ;;      [:i64
 ;;       {:head IntegerConstant,
 ;;        :value -1,
-;;        :ttype {:head Integer, :kind 8, :dimensionss []}}]]
+;;        :ttype {:head Integer, :grup 8, :dimensionss []}}]]
 ;;     [(IntegerConstant -1 (Integer 8 []))
 ;;      [:i64
 ;;       {:head IntegerConstant,
 ;;        :value -1,
-;;        :ttype {:head Integer, :kind 8, :dimensionss []}}]]
+;;        :ttype {:head Integer, :grup 8, :dimensionss []}}]]
 ;;     [(IntegerConstant -1 (Integer 1 []))
 ;;      [:i8
 ;;       {:head IntegerConstant,
 ;;        :value -1,
-;;        :ttype {:head Integer, :kind 1, :dimensionss []}}]])
+;;        :ttype {:head Integer, :grup 1, :dimensionss []}}]])
 
 
 ;;  _     _                      _    _

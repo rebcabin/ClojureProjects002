@@ -75,7 +75,7 @@
              (map (fn [stuff]
                     (let [head
                           (head-from-kind-form
-                           (:kind stuff) (:form stuff))]
+                           (:grup stuff) (:form stuff))]
                       (-> head symbol)))))]
     `(s/def ~term-nskw (set (quote ~ss1)))))
 
@@ -216,7 +216,7 @@
   gensymmed.
   "
   (->> big-list-of-stuff
-       (filter #(= (:kind %) :ASDL-TUPLE))))
+       (filter #(= (:grup %) :ASDL-TUPLE))))
 
 
 (def tuple-stuffss-by-term

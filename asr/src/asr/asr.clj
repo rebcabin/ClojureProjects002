@@ -18,7 +18,8 @@
                            stuff-from-term-form,
                            ]]
    [clojure.walk   :as     walk    ]
-   [clojure.zip    :as     zip    ]))
+   [clojure.zip    :as     zip    ]
+   [clojure.spec.alpha :as s]))
 
 
 ;;  ___         _                            _
@@ -1005,6 +1006,16 @@
         big-map-of-speclets-from-terms)))
 
 
+(def lookup-stuff-by-head
+  (into {} (map (fn [stuff]
+                  [(symbol (name (:head stuff)))
+                   stuff])
+                big-list-of-stuff)))
+
+
+
+
+
 ;;; Spot-check with CIDER C-c C-e in buffer:
 
 
@@ -1015,7 +1026,7 @@
 #_(first big-list-of-stuff)
 ;; => {:head :asr.autospecs/Source,
 ;;     :term :asr.autospecs/abi,
-;;     :kind :ASDL-SYMCONST,
+;;     :grup :ASDL-SYMCONST,
 ;;     :form {:ASDL-SYMCONST "Source"}}
 
 
@@ -1029,16 +1040,16 @@
 #_(first asr.parsed/big-list-of-stuff)
 ;; => {:head :asr.autospecs/Source,
 ;;     :term :asr.autospecs/abi,
-;;     :kind :ASDL-SYMCONST,
+;;     :grup :ASDL-SYMCONST,
 ;;     :form {:ASDL-SYMCONST "Source"}}
 
 
 (def tuple-stuffs
-  (filter #(= (:kind %) :ASDL-TUPLE) big-list-of-stuff))
+  (filter #(= (:grup %) :ASDL-TUPLE) big-list-of-stuff))
 
 
 (def symconst-stuffs
-  (filter #(= (:kind %) :ASDL-SYMCONST) big-list-of-stuff))
+  (filter #(= (:grup %) :ASDL-SYMCONST) big-list-of-stuff))
 
 
 ;;; Spot-check with CIDER C-c C-e in buffer.
@@ -1051,7 +1062,7 @@
 ;; (first symconst-stuffs)
 ;; => {:head :asr.autospecs/Source,
 ;;     :term :asr.autospecs/abi,
-;;     :kind :ASDL-SYMCONST,
+;;     :grup :ASDL-SYMCONST,
 ;;     :form {:ASDL-SYMCONST "Source"}}
 
 
@@ -1062,12 +1073,12 @@
 ;; (first asr.parsed/symconst-stuffs)
 ;; => {:head :asr.autospecs/Source,
 ;;     :term :asr.autospecs/abi,
-;;     :kind :ASDL-SYMCONST,
+;;     :grup :ASDL-SYMCONST,
 ;;     :form {:ASDL-SYMCONST "Source"}}
 
 
 (def composite-stuffs
-  (filter #(= (:kind %) :ASDL-COMPOSITE) big-list-of-stuff))
+  (filter #(= (:grup %) :ASDL-COMPOSITE) big-list-of-stuff))
 
 ;;; Spot-check with CIDER C-c C-e in buffer
 
@@ -1086,7 +1097,7 @@
 #_(first composite-stuffs)
 ;; => {:head :asr.autospecs/RestrictionArg,
 ;;     :term :asr.autospecs/restriction_arg,
-;;     :kind :ASDL-COMPOSITE,
+;;     :grup :ASDL-COMPOSITE,
 ;;     :form
 ;;     {:ASDL-COMPOSITE
 ;;      {:ASDL-HEAD "RestrictionArg",
@@ -1106,7 +1117,7 @@
 #_(first asr.parsed/composite-stuffs)
 ;; => {:head :asr.autospecs/CaseStmt,
 ;;     :term :asr.autospecs/case_stmt,
-;;     :kind :ASDL-COMPOSITE,
+;;     :grup :ASDL-COMPOSITE,
 ;;     :form
 ;;     {:ASDL-COMPOSITE
 ;;      {:ASDL-HEAD "CaseStmt",
@@ -1265,7 +1276,7 @@
 ;; (filter #(= (:head %) :asr.autospecs/TypeStmt) composite-stuffs)
 
 ;; (def tuple-stuffs
-;;   (filter #(= (:kind %) :ASDL-TUPLE) big-list-of-stuff))
+;;   (filter #(= (:grup %) :ASDL-TUPLE) big-list-of-stuff))
 
 ;; ;; spot-check with CIDER C-c C-e in buffer
 
@@ -1500,6 +1511,7 @@
                    :dependencies   dependencies
                    :call-type      ((eval-node call-type) penv)
                    :subroutine     ((eval-symbol sub) penv)}))))))
+
 
 ;;                        _
 ;;  _ _ _  _ _ _    ___  | |_ ___ _ _ _ __
