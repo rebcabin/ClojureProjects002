@@ -84,7 +84,7 @@
   (atom {:φ {}, :π nil} :validator is-environment?))
 
 
-(def Γsymtab-registry
+(def ΓΣ
   "Unique, session-specific, integer-indexed, global registry of
   symbol tables."
   (atom {} :validator map?))
@@ -1013,7 +1013,20 @@
                 big-list-of-stuff)))
 
 
-
+('TranslationUnit lookup-stuff-by-head)
+;; => {:head :asr.autospecs/TranslationUnit,
+;;     :term :asr.autospecs/unit,
+;;     :grup :ASDL-COMPOSITE,
+;;     :form
+;;     {:ASDL-COMPOSITE
+;;      {:ASDL-HEAD "TranslationUnit",
+;;       :ASDL-ARGS
+;;       ({:ASDL-TYPE "symbol_table",
+;;         :MULTIPLICITY :asr.parsed/once,
+;;         :ASDL-NYM "global_scope"}
+;;        {:ASDL-TYPE "node",
+;;         :MULTIPLICITY :asr.parsed/zero-or-more,
+;;         :ASDL-NYM "items"})}}}
 
 
 ;;; Spot-check with CIDER C-c C-e in buffer:
@@ -1372,13 +1385,13 @@
     body
     :as program]]
   (fn [penv]
-    (echo {:head         head          ; 'Program
-           :symtab       ((eval-symbol symtab) penv)        ; 'SymbolTable
-           :nym          nym           ; identifier
-           :dependencies dependencies  ; identifier*
-           :body         body          ; stmt*
-           :penv         penv         ; Environment
-           })))
+    {:head         head          ; 'Program
+     :symtab       ((eval-symbol symtab) penv)        ; 'SymbolTable
+     :nym          nym           ; identifier
+     :dependencies dependencies  ; identifier*
+     :body         body          ; stmt*
+     :penv         penv         ; Environment
+     }))
 
 
 (defmethod eval-symbol 'SymbolTable
@@ -1393,10 +1406,9 @@
               :bindings   bindings     ; dict
               :penv       np          ; Environment
               }
-          _ (keys @Γsymtab-registry)]  ; inspect in debugger
-      (swap! Γsymtab-registry
-             (fn [old] (into old {integer-id np})))
-      (echo ts))))
+          _ (identity (keys @ΓΣ))]  ; inspect in debugger
+      (swap! ΓΣ (fn [old] (into old {integer-id np})))
+      ts)))
 
 
 (defmethod eval-symbol 'ForTest
@@ -1425,20 +1437,20 @@
     value-attr      ; bool (.true., .false.)
     :as variable]]
   (fn [penv]
-    (echo {:head           head
-           :symtab-id      parent-symtab-id
-           :name           nym
-           :dependencies   dependencies
-           :intent         ((eval-node    intent)         penv)
-           :symbolic-value ((eval-node    symbolic-value) penv)
-           :value          ((eval-node    value)          penv)
-           :storage        ((eval-node    storage)        penv)
-           :type           ((eval-node    tipe)           penv)
-           :abi            ((eval-node    abi)            penv)
-           :access         ((eval-node    access)         penv)
-           :presence       ((eval-node    presence)       penv)
-           :value-attr     ((eval-node    value-attr)     penv)
-           })))
+    {:head           head
+     :symtab-id      parent-symtab-id
+     :name           nym
+     :dependencies   dependencies
+     :intent         ((eval-node    intent)         penv)
+     :symbolic-value ((eval-node    symbolic-value) penv)
+     :value          ((eval-node    value)          penv)
+     :storage        ((eval-node    storage)        penv)
+     :type           ((eval-node    tipe)           penv)
+     :abi            ((eval-node    abi)            penv)
+     :access         ((eval-node    access)         penv)
+     :presence       ((eval-node    presence)       penv)
+     :value-attr     ((eval-node    value-attr)     penv)
+     }))
 
 
 (defmethod eval-symbol 'Function
@@ -1463,26 +1475,26 @@
     is-restriction             ; bool (.true., .false.)
     :as function]]
   (fn [penv]
-    (echo {:head           head
-           :symtab         ((eval-symbol symtab)          penv)
-           :name           nym
-           :dependencies   dependencies
-           :args           ((eval-nodes   args)           penv)
-           :body           ((eval-nodes   body)           penv)
-           :return-var     ((eval-node    return-var)     penv)
-           :abi            ((eval-node    abi)            penv)
-           :access         ((eval-node    access)         penv)
-           :deftype        ((eval-node    deftype)        penv)
-           :bindc-name     bindc-name
-           :elemental      ((eval-bool    elemental)      penv)
-           :pure           ((eval-bool    pure)           penv)
-           :module         ((eval-bool    module)         penv)
-           :inline         ((eval-bool    inline)         penv)
-           :static         ((eval-bool    static)         penv)
-           :type-params    ((eval-nodes   type-params)    penv)
-           :restrictions   ((eval-symbols restrictions)   penv)
-           :is-restriction ((eval-bool    is-restriction) penv)
-           })))
+    {:head           head
+     :symtab         ((eval-symbol symtab)          penv)
+     :name           nym
+     :dependencies   dependencies
+     :args           ((eval-nodes   args)           penv)
+     :body           ((eval-nodes   body)           penv)
+     :return-var     ((eval-node    return-var)     penv)
+     :abi            ((eval-node    abi)            penv)
+     :access         ((eval-node    access)         penv)
+     :deftype        ((eval-node    deftype)        penv)
+     :bindc-name     bindc-name
+     :elemental      ((eval-bool    elemental)      penv)
+     :pure           ((eval-bool    pure)           penv)
+     :module         ((eval-bool    module)         penv)
+     :inline         ((eval-bool    inline)         penv)
+     :static         ((eval-bool    static)         penv)
+     :type-params    ((eval-nodes   type-params)    penv)
+     :restrictions   ((eval-symbols restrictions)   penv)
+     :is-restriction ((eval-bool    is-restriction) penv)
+     }))
 
 
 ;;; The following was automatically written by chatGPT:
@@ -1504,13 +1516,13 @@
         (throw (Exception. (str "Error: Subroutine " nym " not found")))
         (do (println "Calling subroutine: " nym " with args: " args)
             #_(run-subroutine subroutine args penv)
-            (echo {:head           head
-                   :symtab         symtab
-                   :name           nym
-                   :arguments      args
-                   :dependencies   dependencies
-                   :call-type      ((eval-node call-type) penv)
-                   :subroutine     ((eval-symbol sub) penv)}))))))
+            {:head           head
+             :symtab         symtab
+             :name           nym
+             :arguments      args
+             :dependencies   dependencies
+             :call-type      ((eval-node call-type) penv)
+             :subroutine     ((eval-symbol sub) penv)})))))
 
 
 ;;                        _
@@ -1544,10 +1556,10 @@
           "head of a translation unit must be the symbol
           TranslationUnit")
   (fn [penv]
-    (let [tu (echo
-              {:head         head
-               :global-scope ((eval-symbol global-scope) penv)
+    #_(assert (s/valid? :asr.autospecs/TranslationUnit translation-unit))
+    (let [tu {:head         head
+              :global-scope ((eval-symbol global-scope) penv)
                                         ; TODO: eval-symbol-table?
-               :items        ((eval-nodes items) penv)})
+              :items        ((eval-nodes items) penv)}
           main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))])
     ))

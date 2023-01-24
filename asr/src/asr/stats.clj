@@ -144,9 +144,6 @@
         cht  (->> is (concat (list [ilx ihx, ily ihy]
                                    (count gs)))            #_echo)]
     (chart-out cht)))
-;; => Syntax error compiling at (/Users/brian/Documents/GitHub/ClojureProjects002/asr/src/asr/stats.clj:137:14).
-;;    Unable to resolve symbol: echo in this context
-
 ;; => ["20   .   .   .   .   .   .   .   .   .   .   .   ."
 ;;     "19   @   .   .   .   .   .   .   .   .   .   .   ."
 ;;     "18   @   .   .   .   .   .   .   .   .   .   .   ."

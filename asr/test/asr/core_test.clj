@@ -1687,7 +1687,7 @@
 
 (deftest new-penv-bindings-test
   (let [foo   {:a '(ForTest), :b '(ForTest), :c '(ForTest)}
-        npenv (echo (new-penv foo ΓΠ))
+        npenv (new-penv foo ΓΠ)
         bar   ((eval-bindings foo) ΓΠ)]
     (is (= bar (:φ @npenv)))
     (is (= ((eval-bindings (dissoc foo :a)) ΓΠ)
@@ -1698,16 +1698,16 @@
 
 (deftest new-penv-augment-bindings-test
   (let [foo    {:a '(ForTest), :b '(ForTest), :c '(ForTest)}
-        npenv  (echo (new-penv foo ΓΠ))
+        npenv  (new-penv foo ΓΠ)
         bar    ((eval-bindings foo) ΓΠ)
         nbdgs  {:a '(ForTest 42)}
         nfoo   (into foo nbdgs)
         nbdgs2 {:d '(ForTest 43)}
         nfoo2  (into nfoo nbdgs2)]
     (is (= bar (:φ @npenv)))
-    (is (= (echo ((eval-bindings nfoo) ΓΠ))
+    (is (= ((eval-bindings nfoo) ΓΠ)
            (:φ (augment-bindings-penv! nbdgs npenv))))
-    (is (= (echo ((eval-bindings nfoo2) ΓΠ))
+    (is (= ((eval-bindings nfoo2) ΓΠ)
            (:φ (augment-bindings-penv! nbdgs2 npenv))))
     ))
 
@@ -1899,7 +1899,7 @@
 
 (def expr2-lpy "examples/expr2.py")
 (def expr2-clj
-  (echo (lpython/get-sample-clj expr2-lpy)))
+  (lpython/get-sample-clj expr2-lpy))
 
 
 (deftest lpython-asr-test
@@ -1907,14 +1907,16 @@
     (is (= expr2-pp expr2-clj))))
 
 
-; ((eval-unit expr2-pp) ΓΠ)
+((eval-unit expr2-pp) ΓΠ)
+;; => nil
+;; => nil
 
 
 ;;                         _
 ;;  __ _ _ _ ___ _  _ _ __(_)_ _  __ _ ___
 ;; / _` | '_/ _ \ || | '_ \ | ' \/ _` (_-<
 ;; \__, |_| \___/\_,_| .__/_|_||_\__, /__/
-;; |___/             |_|         |___/
+;; |___/             |_|         |___
 
 
 (deftest asr-groupings

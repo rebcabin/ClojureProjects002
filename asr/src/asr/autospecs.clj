@@ -267,13 +267,15 @@
        (filter #(= term (-> % :term)))
        (map tuple-head-spec-from-stuff)
        (map eval)
-       echo)
+       doall
+       #_echo)
 
   (->> tuple-stuffss-by-term
        (filter #(= term (-> % first :term)))
        (map tuple-term-spec-from-stuffs)
        (map eval)
-       echo))
+       doall
+       #_echo))
 
 
 ;;                     __                                           _ _
@@ -340,48 +342,48 @@
   "Side-effecting automated items for the spec registry. W.I.P."
   []
 
-  (println "symconst head specs: ")
+  #_(println "symconst head specs: ")
 
   ;; These are lazy, so you have to do something to them to force
   ;; them. "count" and "echo" suffice.
 
-(->> symconst-stuffs
+  (->> symconst-stuffs
        (map spec-from-symconst-stuff)
        (map eval)
        count
-       echo)
+       #_echo)
 
-  (println "symconst term specs: ")
+  #_(println "symconst term specs: ")
 
   (->> symconst-stuffss-by-term
        (map symconst-spec-for-term)
        (map eval)
        count
-       echo)
+       #_echo)
 
 ;;; We need a cycle-breaking spec for dimension to bootstrap the
 ;;; following constructions.
 
-  (println "cycle-breaking with :asr.autospecs/dimension")
+  #_(println "cycle-breaking with :asr.autospecs/dimension")
 
   (do-one-tuple-spec-head-and-term! ::dimension)
 
-  (println "tuple heads and terms are 1-to-1, unlike symconsts an composites.")
-  (println "tuple head specs: ")
+  #_(println "tuple heads and terms are 1-to-1, unlike symconsts an composites.")
+  #_(println "tuple head specs: ")
 
   (->> tuple-stuffs
        (map tuple-head-spec-from-stuff)
        (map eval)
        count
-       echo)
+       #_echo)
 
-  (println "tuple term specs: ")
+  #_(println "tuple term specs: ")
 
   (->> tuple-stuffss-by-term
        (map tuple-term-spec-from-stuffs)
        (map eval)
        count
-       echo)
+       #_echo)
 
   ;; ttype
   ;;     = Integer(int kind, dimension* dims)

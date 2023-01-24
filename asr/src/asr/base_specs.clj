@@ -4,7 +4,7 @@
             [clojure.test.check.generators :as tgen]))
 
 
-(println "CYCLE BREAKING base-specs (identifier, bool, int, float, etc.)
+#_(println "CYCLE BREAKING base-specs (identifier, bool, int, float, etc.)
 installed in asr.specs.")
 
 
