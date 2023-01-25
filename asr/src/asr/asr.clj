@@ -1542,6 +1542,8 @@
     type-params                ; ttype*
     restrictions               ; symbol*
     is-restriction             ; bool (.true., .false.)
+    determinisic               ; bool (.true., .false.)
+    side-effect-free           ; bool (.true., .false.)
     :as function]]
   (fn [penv]
     {:head           head
@@ -1594,6 +1596,28 @@
              :dependencies   dependencies
              :call-type      ((eval-node call-type) penv)
              :subroutine     ((eval-symbol sub) penv)})))))
+
+
+(defmethod eval-symbol 'TranslationUnit
+  [[head
+    global-scope
+    items
+    :as translation-unit]]
+  (assert (= 'TranslationUnit head)
+          "head of a translation unit must be the symbol
+          TranslationUnit")
+  (fn [penv]
+    #_(assert (s/valid? :asr.autospecs/TranslationUnit translation-unit))
+    (let [tu {:head         head
+              :term         (term-from-head-sym head)
+              :global-scope ((eval-symbol global-scope) penv)
+                                        ; TODO: eval-symbol-table?
+              :items        ((eval-nodes items) penv)}
+          main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))]
+      tu
+      ;; (when main-prog
+      ;;   (run-program main-prog))
+      )))
 
 
 ;;                                     _        _
@@ -1871,31 +1895,3 @@
 ;;       :body [(SubroutineCall 1 _lpython_main_program () [] ())],
 ;;       :penv #<Atom@110d2d14: {:φ {}, :π nil}>}},
 ;;     :π #<Atom@110d2d14: {:φ {}, :π nil}>}>}
-
-
-;;  _   _      _ _
-;; | | | |_ _ (_) |_
-;; | |_| | ' \| |  _|
-;;  \___/|_||_|_|\__|
-
-
-(defn eval-unit
-  "The symbol table of a translation unit is one below the global
-  scope ΓΠ, which contains only built-ins."
-  [[head
-    global-scope
-    items
-    :as translation-unit]]
-  (assert (= 'TranslationUnit head)
-          "head of a translation unit must be the symbol
-          TranslationUnit")
-  (fn [penv]
-    #_(assert (s/valid? :asr.autospecs/TranslationUnit translation-unit))
-    (let [tu {:head         head
-              :global-scope ((eval-symbol global-scope) penv)
-                                        ; TODO: eval-symbol-table?
-              :items        ((eval-nodes items) penv)}
-          main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))]
-      (when main-prog
-        (run-program main-prog)))
-    ))

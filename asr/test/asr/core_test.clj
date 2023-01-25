@@ -1758,15 +1758,17 @@
              (indirect-penvs (new-penv foo ΓΠ)))))))
 
 
+(def mp {:main_program
+         '(Program
+           (SymbolTable 3 {})
+           main_program
+           []
+           [(SubroutineCall 1 _lpython_main_program () [] ())])})
+
+
 (deftest eval-program-symbol-test
   (testing "clojure.walk/walk on an ASR tree"
-    (let [foo ((eval-symbol
-                '(Program
-                  (SymbolTable 3 {})
-                  main_program
-                  []
-                  [(SubroutineCall 1 _lpython_main_program () [] ())]))
-               ΓΠ)
+    (let [foo ((eval-symbol (:main_program mp)) ΓΠ)
           bar (walk/prewalk
                (fn [form]
                  (cond
@@ -1776,8 +1778,8 @@
           ]
       (is (= {:head         'Program,
               :term         'symbol
-              :symtab       {:head 'SymbolTable,
-                             :term 'symbol,
+              :symtab       {:head 'SymbolTable,  ; unique special case ...
+                             :term 'symbol,       ; ... of a symbol
                              :integer-id 3,
                              :bindings {},
                              :penv (indirect-penvs (new-penv {} ΓΠ))
@@ -1789,25 +1791,30 @@
              bar)))))
 
 
-(def mp {:main_program
-         '(Program
-           (SymbolTable 3 {})
-           main_program
-           []
-           [(SubroutineCall 1 _lpython_main_program () [] ())])})
-
-
 ((eval-symbol (:main_program mp)) ΓΠ)
 ;; => {:head Program,
+;;     :term symbol,
 ;;     :symtab
 ;;     {:head SymbolTable,
+;;      :term symbol,
 ;;      :integer-id 3,
 ;;      :bindings {},
-;;      :penv #<Atom@48d64fbe: {:φ {}, :π #<Atom@7738f742: {:φ {}, :π nil}>}>},
+;;      :penv #<Atom@7f51a683: {:φ {}, :π #<Atom@6bb8d033: {:φ {}, :π nil}>}>},
 ;;     :nym main_program,
 ;;     :dependencies [],
 ;;     :body [(SubroutineCall 1 _lpython_main_program () [] ())],
-;;     :penv #<Atom@7738f742: {:φ {}, :π nil}>}
+;;     :penv #<Atom@6bb8d033: {:φ {}, :π nil}>}
+
+
+;; expr2.py
+
+
+;; def main0():
+;;     x: i32
+;;     x = (2+3)*5
+;;     print(x)
+;;
+;; main0()
 
 
 (def expr2-pp
@@ -1817,30 +1824,28 @@
      {:_lpython_main_program
       (Function
        (SymbolTable 4 {})
-       _lpython_main_program
-       [main0]
-       []
-       [(SubroutineCall 1 main0 () [] ())]
-       ()
-       Source
-       Public
-       Implementation
-       ()
-       .false.
-       .false.
-       .false.
-       .false.
-       .false.
-       []
-       []
-       .false.
-       .false.
-       .false.),
+       _lpython_main_program               ; nym
+       [main0]                             ; dependencies
+       []                                  ; args (TODO: !!! params !!!)
+       [(SubroutineCall 1 main0 () [] ())] ; body
+       ()                                  ; return-var
+       Source                              ; abi
+       Public                              ; access
+       Implementation                      ; deftype
+       ()                                  ; bindc-name (TODO: !!! string? !!!)
+       .false.                             ; elemental
+       .false.                             ; pure
+       .false.                             ; module
+       .false.                             ; inline
+       .false.                             ; static
+       []                                  ; type-params
+       []                                  ; restrictions
+       .false.                             ; is-restriction
+       .false.                             ; deterministic
+       .false.),                           ; side-effect-free
       :main0
       (Function
-       (SymbolTable
-        2
-        {:x
+       (SymbolTable 2 {:x
          (Variable
           2
           x
@@ -1906,9 +1911,226 @@
     (is (= expr2-pp expr2-clj))))
 
 
-((eval-unit expr2-pp) ΓΠ)
-;; => nil
-;; => nil
+((eval-symbol expr2-pp) ΓΠ)
+;; {:head TranslationUnit,
+;;  :term unit,
+;;  :global-scope
+;;  {:head SymbolTable,
+;;   :term symbol,
+;;   :integer-id 1,
+;;   :bindings
+;;   {:_lpython_main_program
+;;    (Function
+;;     (SymbolTable 4 {})
+;;     _lpython_main_program
+;;     [main0]
+;;     []
+;;     [(SubroutineCall 1 main0 () [] ())]
+;;     ()
+;;     Source
+;;     Public
+;;     Implementation
+;;     ()
+;;     .false.
+;;     .false.
+;;     .false.
+;;     .false.
+;;     .false.
+;;     []
+;;     []
+;;     .false.
+;;     .false.
+;;     .false.),
+;;    :main0
+;;    (Function
+;;     (SymbolTable
+;;      2
+;;      {:x
+;;       (Variable
+;;        2
+;;        x
+;;        []
+;;        Local
+;;        ()
+;;        ()
+;;        Default
+;;        (Integer 4 [])
+;;        Source
+;;        Public
+;;        Required
+;;        .false.)})
+;;     main0
+;;     []
+;;     []
+;;     [(=
+;;       (Var 2 x)
+;;       (IntegerBinOp
+;;        (IntegerBinOp
+;;         (IntegerConstant 2 (Integer 4 []))
+;;         Add
+;;         (IntegerConstant 3 (Integer 4 []))
+;;         (Integer 4 [])
+;;         (IntegerConstant 5 (Integer 4 [])))
+;;        Mul
+;;        (IntegerConstant 5 (Integer 4 []))
+;;        (Integer 4 [])
+;;        (IntegerConstant 25 (Integer 4 [])))
+;;       ())
+;;      (Print () [(Var 2 x)] () ())]
+;;     ()
+;;     Source
+;;     Public
+;;     Implementation
+;;     ()
+;;     .false.
+;;     .false.
+;;     .false.
+;;     .false.
+;;     .false.
+;;     []
+;;     []
+;;     .false.
+;;     .false.
+;;     .false.),
+;;    :main_program
+;;    (Program
+;;     (SymbolTable 3 {})
+;;     main_program
+;;     []
+;;     [(SubroutineCall 1 _lpython_main_program () [] ())])},
+;;   :penv
+;;   #<Atom@6a9e5408:
+;;     {:φ
+;;      {:_lpython_main_program
+;;       {...
+;;        :symtab
+;;        {:head SymbolTable,
+;;         :term symbol,
+;;         :integer-id 4,
+;;         :bindings {},
+;;         :penv #<Atom@4bcf80ac:
+;;                 {:φ {}, :π #<Atom@40ae7424: {:φ {}, :π nil}>}>},
+;;        ...
+;;        :module false,
+;;        :term symbol,
+;;        :head Function,
+;;        ...
+;;        :body
+;;        ({:head :asr.autospecs/SubroutineCall,
+;;          :term :asr.autospecs/stmt,
+;;          :grup :ASDL-COMPOSITE,
+;;          :form
+;;          {:ASDL-COMPOSITE
+;;           {:ASDL-HEAD "SubroutineCall",
+;;            :ASDL-ARGS
+;;            ({:ASDL-TYPE "symbol",
+;;              :MULTIPLICITY :asr.parsed/once,
+;;              :ASDL-NYM "name"}
+;;             {:ASDL-TYPE "symbol",
+;;              :MULTIPLICITY :asr.parsed/at-most-once,
+;;              :ASDL-NYM "original_name"}
+;;             {:ASDL-TYPE "call_arg",
+;;              :MULTIPLICITY :asr.parsed/zero-or-more,
+;;              :ASDL-NYM "args"}
+;;             {:ASDL-TYPE "expr",
+;;              :MULTIPLICITY :asr.parsed/at-most-once,
+;;              :ASDL-NYM "dt"})}}}),
+;;        :dependencies [main0],
+;;        :inline false,
+;;        :elemental false},
+;;       :main0
+;;       {...
+;;        :symtab
+;;        {:head SymbolTable,
+;;         :term symbol,
+;;         :integer-id 2,
+;;         :bindings
+;;         {:x
+;;          (Variable
+;;           2
+;;           x
+;;           []
+;;           Local
+;;           ()
+;;           ()
+;;           Default
+;;           (Integer 4 [])
+;;           Source
+;;           Public
+;;           Required
+;;           .false.)},
+;;         :penv
+;;         #<Atom@782696fa:
+;;           {:φ
+;;            {:x
+;;             {:presence
+;;              {:head :asr.autospecs/Required,
+;;               :term :asr.autospecs/presence,
+;;               :grup :ASDL-SYMCONST,
+;;               :form {:ASDL-SYMCONST "Required"}},
+;;              :name x,
+;;              :value (),
+;;              :type
+;;              {:head :asr.autospecs/Integer,
+;;               :term :asr.autospecs/ttype,
+;;               :grup :ASDL-COMPOSITE,
+;;               :form
+;;               {:ASDL-COMPOSITE
+;;                {:ASDL-HEAD "Integer",
+;;                 :ASDL-ARGS
+;;                 ({:ASDL-TYPE "int",
+;;                   :MULTIPLICITY :asr.parsed/once,
+;;                   :ASDL-NYM "kind"}
+;;                  {:ASDL-TYPE "dimension",
+;;                   :MULTIPLICITY :asr.parsed/zero-or-more,
+;;                   :ASDL-NYM "dims"})}}},
+;;              :term symbol,
+;;              :head Variable,
+;;              :symtab-id 2,
+;;              ...
+;;              :value-attr .false.}},
+;;            :π #<Atom@40ae7424: {:φ {}, :π nil}>}>},
+;;        ...
+;;        :term symbol,
+;;        :head Function,
+;;        :body
+;;        (nil
+;;         {:head :asr.autospecs/Print,
+;;          :term :asr.autospecs/stmt,
+;;          :grup :ASDL-COMPOSITE,
+;;          :form
+;;          {:ASDL-COMPOSITE
+;;           {:ASDL-HEAD "Print",
+;;            :ASDL-ARGS
+;;            ({:ASDL-TYPE "expr",
+;;              :MULTIPLICITY :asr.parsed/at-most-once,
+;;              :ASDL-NYM "fmt"}
+;;             {:ASDL-TYPE "expr",
+;;              :MULTIPLICITY :asr.parsed/zero-or-more,
+;;              :ASDL-NYM "values"}
+;;             {:ASDL-TYPE "expr",
+;;              :MULTIPLICITY :asr.parsed/at-most-once,
+;;              :ASDL-NYM "separator"}
+;;             {:ASDL-TYPE "expr",
+;;              :MULTIPLICITY :asr.parsed/at-most-once,
+;;              :ASDL-NYM "end"})}}}),
+;;        ...},
+;;       :main_program
+;;       {:head Program,
+;;        :term symbol,
+;;        :symtab
+;;        {:head SymbolTable,
+;;         :term symbol,
+;;         :integer-id 3,
+;;         :bindings {},
+;;         :penv #<Atom@79c5af4b:
+;;                 {:φ {}, :π #<Atom@40ae7424: {:φ {}, :π nil}>}>},
+;;        :nym main_program,
+;;        :dependencies [],
+;;        :body [(SubroutineCall 1 _lpython_main_program () [] ())],
+;;        :penv #<Atom@40ae7424: {:φ {}, :π nil}>}},
+;;      :π #<Atom@40ae7424: {:φ {}, :π nil}>}>},
+;;  :items ()}
 
 
 ;;                         _
