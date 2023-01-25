@@ -33,31 +33,36 @@
 ;;; Example:
 
 
-#_(doseq [t (list
+(doseq [t (list
            () [] {} #{} "")
         f (list
-           list? vector? map? set? coll? seq? empty?)]
+           ;; list? vector? map? set? coll? seq? empty?
+           ;; sequential?
+           ;; string?
+           )]
   (prn ((plnecho f) (plnecho t))))
-
-;; --------.-----------------------------------------------
-;;         |   ()        []        {}        #{}       ""
-;; --------|-----------------------------------------------
-;; list?   |  true      false     false     false     false
-;; vector? |  false     true      false     false     false
-;; map?    |  false     false     true      false     false
-;; set?    |  false     false     false     true      false
-;; --------|-----------------------------------------------
-;; coll?   |  true      true      true      true      false
-;; seq?    |  true      false     false     false     false
-;; --------|-----------------------------------------------
-;; empty?  |  true      true      true      true      true
-;; --------'-----------------------------------------------
+;; ------------.-----------------------------------------------
+;;             |   ()        []        {}        #{}       ""
+;; ------------|-----------------------------------------------
+;; coll?       |  true      true      true      true      false
+;; seq?        |  true      false     false     false     false
+;; sequential? |  true      true      false     false     false
+;; ------------|-----------------------------------------------
+;; empty?      |  true      true      true      true      true
+;; ------------'-----------------------------------------------
+;; list?       |  true      false     false     false     false
+;; vector?     |  false     true      false     false     false
+;; map?        |  false     false     true      false     false
+;; set?        |  false     false     false     true      false
+;; string?     |  false     false     false     false     true
+;; ------------|-----------------------------------------------
 
 
 ;;          _               _       _          _         __
 ;;  _ _  __| |____ __ _____| |_____| |__  __ _| |__ ___ / _|_ _ ___ _ __
 ;; | ' \(_-< / /\ V  V /___| / / -_) '_ \/ _` | '_ \___|  _| '_/ _ \ '  \
 ;; |_||_/__/_\_\ \_/\_/    |_\_\___|_.__/\__,_|_.__/   |_| |_| \___/_|_|_|
+
 
 (defn nskw-kebab-from ;; TODO: macro?
 

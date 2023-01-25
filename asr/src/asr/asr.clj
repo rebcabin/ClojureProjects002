@@ -52,11 +52,13 @@
 
 
 (defn clj-atom?
+  "Thread-safe mutable container, not a primitive data object."
   [thing]
   (instance? clojure.lang.Atom thing))
 
 
 (defn is-penv?
+  "TODO: Consider clojure.spec for this."
   [thing]
   (and (clj-atom? thing)
        (is-environment? @thing)))
@@ -81,6 +83,7 @@
 (def ΓΠ
   "Unique, session-specific penv: Global Γ Perimeter Π; has a
   frame (:φ is-a dict) and a parent perimeter (:π is-a penv).
+  TODO: built-ins go here.
   TODO: spec."
   (atom {:φ {}, :π nil} :validator is-environment?))
 
@@ -105,8 +108,8 @@
         :validator is-environment?))
 
 
-;;; I think we don't ever need to "delete" a penv, but we may need to clear one
-;;; or more bindings.
+;;; I think we don't ever need to "delete" a penv, but we may need
+;;; to clear one or more bindings.
 
 
 (defn clear-bindings-penv!
@@ -1338,17 +1341,17 @@
   [node]
   (fn [penv]
 
-    (cond
+    (cond  ; order matters ...
       ;;------------------------------------------------
-      (symbol? node)
+      (symbol? node)  ; then
       (let [stuff (node big-symdict-by-head)]
         (or stuff node))
       ;;------------------------------------------------
       (and (coll? node)
-           (empty? node))
+           (empty? node))  ; then
       node
       ;;------------------------------------------------
-      (list? node)
+      (list? node)  ; then
       (let [stuff ((first node) big-symdict-by-head)]
         ((eval-stuff stuff) penv))
       ;;------------------------------------------------
@@ -1428,6 +1431,17 @@
 ;;; SymbolTable is not actually specified in ASR.
 
 
+(defn term-from-head-sym
+  [sym]
+  (cond
+    (= sym 'SymbolTable) 'symbol   ; no spec for this in ASDL
+    (= sym 'ForTest)     'testing  ; ditto
+    :else (symbol
+           (name
+            (:term
+             (sym big-symdict-by-head))))))
+
+
 (defmethod eval-symbol 'Program
   [[head
     symtab
@@ -1437,11 +1451,12 @@
     :as program]]
   (fn [penv]
     {:head         head          ; 'Program
+     :term         (term-from-head-sym head)
      :symtab       ((eval-symbol symtab) penv)        ; 'SymbolTable
      :nym          nym           ; identifier
      :dependencies dependencies  ; identifier*
      :body         body          ; stmt*
-     :penv         penv         ; Environment
+     :penv         penv          ; Environment
      }))
 
 
@@ -1453,11 +1468,12 @@
   (fn [penv]
     (let [np (new-penv bindings penv)
           ts {:head       head
+              :term       (term-from-head-sym head)
               :integer-id integer-id   ; int
               :bindings   bindings     ; dict
-              :penv       np          ; Environment
+              :penv       np           ; Environment
               }
-          _ (identity (keys @ΓΣ))]  ; inspect in debugger
+          _ (identity (keys @ΓΣ))]     ; inspect in debugger
       (swap! ΓΣ (fn [old] (into old {integer-id np})))
       ts)))
 
@@ -1468,6 +1484,7 @@
   (fn [penv]
     (if datum
       {:head  head,
+       :term  (term-from-head-sym head)
        :datum ((eval-node datum) penv)}
       {:head head})))
 
@@ -1489,18 +1506,19 @@
     :as variable]]
   (fn [penv]
     {:head           head
+     :term           (term-from-head-sym head)
      :symtab-id      parent-symtab-id
      :name           nym
      :dependencies   dependencies
-     :intent         ((eval-node    intent)         penv)
-     :symbolic-value ((eval-node    symbolic-value) penv)
-     :value          ((eval-node    value)          penv)
-     :storage        ((eval-node    storage)        penv)
-     :type           ((eval-node    tipe)           penv)
-     :abi            ((eval-node    abi)            penv)
-     :access         ((eval-node    access)         penv)
-     :presence       ((eval-node    presence)       penv)
-     :value-attr     ((eval-node    value-attr)     penv)
+     :intent         ((eval-node intent)         penv)
+     :symbolic-value ((eval-node symbolic-value) penv)
+     :value          ((eval-node value)          penv)
+     :storage        ((eval-node storage)        penv)
+     :type           ((eval-node tipe)           penv)
+     :abi            ((eval-node abi)            penv)
+     :access         ((eval-node access)         penv)
+     :presence       ((eval-node presence)       penv)
+     :value-attr     ((eval-node value-attr)     penv)
      }))
 
 
@@ -1527,10 +1545,11 @@
     :as function]]
   (fn [penv]
     {:head           head
+     :term           (term-from-head-sym head)
      :symtab         ((eval-symbol symtab)          penv)
      :name           nym
      :dependencies   dependencies
-     :args           ((eval-nodes   args)           penv)
+     :args           ((eval-nodes   args)           penv)  ; TODO: params!
      :body           ((eval-nodes   body)           penv)
      :return-var     ((eval-node    return-var)     penv)
      :abi            ((eval-node    abi)            penv)
@@ -1568,6 +1587,7 @@
         (do (println "Calling subroutine: " nym " with args: " args)
             #_(run-subroutine subroutine args penv)
             {:head           head
+             :term           (term-from-head-sym head)
              :symtab         symtab
              :name           nym
              :arguments      args
@@ -1583,13 +1603,274 @@
 
 
 
-(defn run-evaled
+(defn run-program
   [e]
   (echo e)
+  (echo @ΓΣ)
   (echo (keys (:φ @(get @ΓΣ 1))))
   (let [code (:body e)]
     (echo code))
   )
+
+
+@ΓΣ
+
+
+;;; The "global scope" or "global symbol registry" ΓΣ is really
+;;; one below the unique global environment ΓΠ. ΓΣ contains
+;;; user-defined symbols. ΓΠ contains built-ins.
+
+;; {4
+;;  #<Atom@427a99ab:
+;;    {:φ {}, :π #<Atom@110d2d14: {:φ {}, :π nil}>}>,
+;;  2
+;;  #<Atom@7d9983df:
+;;    {:φ
+;;     {:x
+;;      {:presence
+;;       {:head :asr.autospecs/Required,
+;;        :term :asr.autospecs/presence,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Required"}},
+;;       :name x,
+;;       :value (),
+;;       :type
+;;       {:head :asr.autospecs/Integer,
+;;        :term :asr.autospecs/ttype,
+;;        :grup :ASDL-COMPOSITE,
+;;        :form
+;;        {:ASDL-COMPOSITE
+;;         {:ASDL-HEAD "Integer",
+;;          :ASDL-ARGS
+;;          ({:ASDL-TYPE "int",
+;;            :MULTIPLICITY :asr.parsed/once,
+;;            :ASDL-NYM "kind"}
+;;           {:ASDL-TYPE "dimension",
+;;            :MULTIPLICITY :asr.parsed/zero-or-more,
+;;            :ASDL-NYM "dims"})}}},
+;;       :head Variable,
+;;       :symtab-id 2,
+;;       :abi
+;;       {:head :asr.autospecs/Source,
+;;        :term :asr.autospecs/abi,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Source"}},
+;;       :intent
+;;       {:head :asr.autospecs/Local,
+;;        :term :asr.autospecs/intent,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Local"}},
+;;       :storage
+;;       {:head :asr.autospecs/Default,
+;;        :term :asr.autospecs/storage_type,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Default"}},
+;;       :access
+;;       {:head :asr.autospecs/Public,
+;;        :term :asr.autospecs/access,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Public"}},
+;;       :dependencies [],
+;;       :symbolic-value (),
+;;       :value-attr .false.}},
+;;     :π #<Atom@110d2d14: {:φ {}, :π nil}>}>,
+;;  3
+;;  #<Atom@2ba69af7:
+;;    {:φ {}, :π #<Atom@110d2d14: {:φ {}, :π nil}>}>,
+;;  1
+;;  #<Atom@4b5084d8:
+;;    {:φ
+;;     {:_lpython_main_program
+;;      {:args (),
+;;       :deftype
+;;       {:head :asr.autospecs/Implementation,
+;;        :term :asr.autospecs/deftype,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Implementation"}},
+;;       :restrictions (),
+;;       :type-params (),
+;;       :symtab
+;;       {:head SymbolTable,
+;;        :integer-id 4,
+;;        :bindings {},
+;;        :penv
+;;        #<Atom@427a99ab:
+;;          {:φ {}, :π #<Atom@110d2d14: {:φ {}, :π nil}>}>},
+;;       :is-restriction false,
+;;       :bindc-name (),
+;;       :name _lpython_main_program,
+;;       :static false,
+;;       :return-var (),
+;;       :module false,
+;;       :head Function,
+;;       :abi
+;;       {:head :asr.autospecs/Source,
+;;        :term :asr.autospecs/abi,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Source"}},
+;;       :access
+;;       {:head :asr.autospecs/Public,
+;;        :term :asr.autospecs/access,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Public"}},
+;;       :pure false,
+;;       :body
+;;       ({:head :asr.autospecs/SubroutineCall,
+;;         :term :asr.autospecs/stmt,
+;;         :grup :ASDL-COMPOSITE,
+;;         :form
+;;         {:ASDL-COMPOSITE
+;;          {:ASDL-HEAD "SubroutineCall",
+;;           :ASDL-ARGS
+;;           ({:ASDL-TYPE "symbol",
+;;             :MULTIPLICITY :asr.parsed/once,
+;;             :ASDL-NYM "name"}
+;;            {:ASDL-TYPE "symbol",
+;;             :MULTIPLICITY :asr.parsed/at-most-once,
+;;             :ASDL-NYM "original_name"}
+;;            {:ASDL-TYPE "call_arg",
+;;             :MULTIPLICITY :asr.parsed/zero-or-more,
+;;             :ASDL-NYM "args"}
+;;            {:ASDL-TYPE "expr",
+;;             :MULTIPLICITY :asr.parsed/at-most-once,
+;;             :ASDL-NYM "dt"})}}}),
+;;       :dependencies [main0],
+;;       :inline false,
+;;       :elemental false},
+;;      :main0
+;;      {:args (),
+;;       :deftype
+;;       {:head :asr.autospecs/Implementation,
+;;        :term :asr.autospecs/deftype,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Implementation"}},
+;;       :restrictions (),
+;;       :type-params (),
+;;       :symtab
+;;       {:head SymbolTable,
+;;        :integer-id 2,
+;;        :bindings
+;;        {:x
+;;         (Variable
+;;          2
+;;          x
+;;          []
+;;          Local
+;;          ()
+;;          ()
+;;          Default
+;;          (Integer 4 [])
+;;          Source
+;;          Public
+;;          Required
+;;          .false.)},
+;;        :penv
+;;        #<Atom@7d9983df:
+;;          {:φ
+;;           {:x
+;;            {:presence
+;;             {:head :asr.autospecs/Required,
+;;              :term :asr.autospecs/presence,
+;;              :grup :ASDL-SYMCONST,
+;;              :form {:ASDL-SYMCONST "Required"}},
+;;             :name x,
+;;             :value (),
+;;             :type
+;;             {:head :asr.autospecs/Integer,
+;;              :term :asr.autospecs/ttype,
+;;              :grup :ASDL-COMPOSITE,
+;;              :form
+;;              {:ASDL-COMPOSITE
+;;               {:ASDL-HEAD "Integer",
+;;                :ASDL-ARGS
+;;                ({:ASDL-TYPE "int",
+;;                  :MULTIPLICITY :asr.parsed/once,
+;;                  :ASDL-NYM "kind"}
+;;                 {:ASDL-TYPE "dimension",
+;;                  :MULTIPLICITY :asr.parsed/zero-or-more,
+;;                  :ASDL-NYM "dims"})}}},
+;;             :head Variable,
+;;             :symtab-id 2,
+;;             :abi
+;;             {:head :asr.autospecs/Source,
+;;              :term :asr.autospecs/abi,
+;;              :grup :ASDL-SYMCONST,
+;;              :form {:ASDL-SYMCONST "Source"}},
+;;             :intent
+;;             {:head :asr.autospecs/Local,
+;;              :term :asr.autospecs/intent,
+;;              :grup :ASDL-SYMCONST,
+;;              :form {:ASDL-SYMCONST "Local"}},
+;;             :storage
+;;             {:head :asr.autospecs/Default,
+;;              :term :asr.autospecs/storage_type,
+;;              :grup :ASDL-SYMCONST,
+;;              :form {:ASDL-SYMCONST "Default"}},
+;;             :access
+;;             {:head :asr.autospecs/Public,
+;;              :term :asr.autospecs/access,
+;;              :grup :ASDL-SYMCONST,
+;;              :form {:ASDL-SYMCONST "Public"}},
+;;             :dependencies [],
+;;             :symbolic-value (),
+;;             :value-attr .false.}},
+;;           :π #<Atom@110d2d14: {:φ {}, :π nil}>}>},
+;;       :is-restriction false,
+;;       :bindc-name (),
+;;       :name main0,
+;;       :static false,
+;;       :return-var (),
+;;       :module false,
+;;       :head Function,
+;;       :abi
+;;       {:head :asr.autospecs/Source,
+;;        :term :asr.autospecs/abi,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Source"}},
+;;       :access
+;;       {:head :asr.autospecs/Public,
+;;        :term :asr.autospecs/access,
+;;        :grup :ASDL-SYMCONST,
+;;        :form {:ASDL-SYMCONST "Public"}},
+;;       :pure false,
+;;       :body
+;;       (nil
+;;        {:head :asr.autospecs/Print,
+;;         :term :asr.autospecs/stmt,
+;;         :grup :ASDL-COMPOSITE,
+;;         :form
+;;         {:ASDL-COMPOSITE
+;;          {:ASDL-HEAD "Print",
+;;           :ASDL-ARGS
+;;           ({:ASDL-TYPE "expr",
+;;             :MULTIPLICITY :asr.parsed/at-most-once,
+;;             :ASDL-NYM "fmt"}
+;;            {:ASDL-TYPE "expr",
+;;             :MULTIPLICITY :asr.parsed/zero-or-more,
+;;             :ASDL-NYM "values"}
+;;            {:ASDL-TYPE "expr",
+;;             :MULTIPLICITY :asr.parsed/at-most-once,
+;;             :ASDL-NYM "separator"}
+;;            {:ASDL-TYPE "expr",
+;;             :MULTIPLICITY :asr.parsed/at-most-once,
+;;             :ASDL-NYM "end"})}}}),
+;;       :dependencies [],
+;;       :inline false,
+;;       :elemental false},
+;;      :main_program
+;;      {:head Program,
+;;       :symtab
+;;       {:head SymbolTable,
+;;        :integer-id 3,
+;;        :bindings {},
+;;        :penv
+;;        #<Atom@2ba69af7:
+;;          {:φ {}, :π #<Atom@110d2d14: {:φ {}, :π nil}>}>},
+;;       :nym main_program,
+;;       :dependencies [],
+;;       :body [(SubroutineCall 1 _lpython_main_program () [] ())],
+;;       :penv #<Atom@110d2d14: {:φ {}, :π nil}>}},
+;;     :π #<Atom@110d2d14: {:φ {}, :π nil}>}>}
 
 
 ;;  _   _      _ _
@@ -1599,7 +1880,8 @@
 
 
 (defn eval-unit
-  "The symbol table of a translation unit is the global scope ΓΠ."
+  "The symbol table of a translation unit is one below the global
+  scope ΓΠ, which contains only built-ins."
   [[head
     global-scope
     items
@@ -1615,5 +1897,5 @@
               :items        ((eval-nodes items) penv)}
           main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))]
       (when main-prog
-        (run-evaled main-prog)))
+        (run-program main-prog)))
     ))
