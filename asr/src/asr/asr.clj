@@ -1546,26 +1546,28 @@
     side-effect-free           ; bool (.true., .false.)
     :as function]]
   (fn [penv]
-    {:head           head
-     :term           (term-from-head-sym head)
-     :symtab         ((eval-symbol symtab)          penv)
-     :name           nym
-     :dependencies   dependencies
-     :args           ((eval-nodes   args)           penv)  ; TODO: params!
-     :body           ((eval-nodes   body)           penv)
-     :return-var     ((eval-node    return-var)     penv)
-     :abi            ((eval-node    abi)            penv)
-     :access         ((eval-node    access)         penv)
-     :deftype        ((eval-node    deftype)        penv)
-     :bindc-name     bindc-name
-     :elemental      ((eval-bool    elemental)      penv)
-     :pure           ((eval-bool    pure)           penv)
-     :module         ((eval-bool    module)         penv)
-     :inline         ((eval-bool    inline)         penv)
-     :static         ((eval-bool    static)         penv)
-     :type-params    ((eval-nodes   type-params)    penv)
-     :restrictions   ((eval-symbols restrictions)   penv)
-     :is-restriction ((eval-bool    is-restriction) penv)
+    {:head             head
+     :term             (term-from-head-sym head)
+     :symtab           ((eval-symbol symtab)            penv)
+     :name             nym
+     :dependencies     dependencies
+     :args             ((eval-nodes   args)             penv)  ; TODO: params!
+     :body             ((eval-nodes   body)             penv)
+     :return-var       ((eval-node    return-var)       penv)
+     :abi              ((eval-node    abi)              penv)
+     :access           ((eval-node    access)           penv)
+     :deftype          ((eval-node    deftype)          penv)
+     :bindc-name       bindc-name
+     :elemental        ((eval-bool    elemental)        penv)
+     :pure             ((eval-bool    pure)             penv)
+     :module           ((eval-bool    module)           penv)
+     :inline           ((eval-bool    inline)           penv)
+     :static           ((eval-bool    static)           penv)
+     :type-params      ((eval-nodes   type-params)      penv)
+     :restrictions     ((eval-symbols restrictions)     penv)
+     :is-restriction   ((eval-bool    is-restriction)   penv)
+     :deterministic    ((eval-bool    determinisic)     penv)
+     :side-effect-free ((eval-bool    side-effect-free) penv)
      }))
 
 
