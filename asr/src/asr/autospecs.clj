@@ -125,7 +125,8 @@
        #_echo))
 
 
-;;; Try (s/exercise ::symbol) and (s/exercise ::expr in the REPL.
+;;; Try (s/exercise :asr.autospecs/symbol)
+;;; and (s/exercise :asr.autospecs/expr in the REPL.
 
 
 (let [heads (heads-for-composite ::symbol)]
@@ -256,6 +257,7 @@
 ;;; Manual topological sort shows we must spec ::dimension before
 ;;; the others.
 
+
 (defn do-one-tuple-spec-head-and-term!
   "Spec one tuple type, head-spec and term-spec, by term."
   [term]
@@ -264,18 +266,18 @@
   ;; "Echo" is enough.
 
   (->> tuple-stuffs
-       (filter #(= term (-> % :term)))
+       (filter #(= term (-> % :term)))  ; get a singleton
        (map tuple-head-spec-from-stuff)
        (map eval)
-       doall
-       #_echo)
+       count  ; implicit "doall"
+       #_echo)  ; prints "1"
 
-  (->> tuple-stuffss-by-term
+  (->> tuple-stuffss-by-term  ; get a singleton
        (filter #(= term (-> % first :term)))
        (map tuple-term-spec-from-stuffs)
        (map eval)
-       doall
-       #_echo))
+       count  ; implicit "doall"
+       #_echo))  ; prints "1"
 
 
 ;;                     __                                           _ _

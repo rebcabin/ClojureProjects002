@@ -5,21 +5,22 @@
   ;;; TODO: Consider https://github.com/rebcabin/odin
 
   (:require
-   [asr.grammar                   ]
-   [asr.lpython                   ]
-   [clojure.pprint :refer [pprint]]
-   [asr.parsed     :refer [
-                           shallow-map-from-speclet,
-                           hashmap-from-speclet,
-                           map-pair-from-speclet-map,
+   [blaster.clj-fstring :refer [f-str] ]
+   [asr.grammar                        ]
+   [asr.lpython                        ]
+   [clojure.pprint      :refer [pprint]]
+   [asr.parsed          :refer [
+                                shallow-map-from-speclet,
+                                hashmap-from-speclet,
+                                map-pair-from-speclet-map,
 
-                           kind-from-form,
-                           head-from-kind-form,
-                           stuff-from-term-form,
-                           ]]
-   [clojure.walk   :as     walk    ]
-   [clojure.zip    :as     zip    ]
-   [clojure.spec.alpha :as s]))
+                                kind-from-form,
+                                head-from-kind-form,
+                                stuff-from-term-form,
+                               ]]
+   [clojure.walk        :as     walk   ]
+   [clojure.zip         :as     zip    ]
+   [clojure.spec.alpha  :as s]))
 
 
 ;;  ___         _                            _
@@ -1297,17 +1298,64 @@
 ;; (first tuple-stuffs)
 
 
+;;  ___ _        ___               _ _    _     _           _  _             _
+;; | _ |_)__ _  / __|_  _ _ __  __| (_)__| |_  | |__ _  _  | || |___ __ _ __| |
+;; | _ \ / _` | \__ \ || | '  \/ _` | / _|  _| | '_ \ || | | __ / -_) _` / _` |
+;; |___/_\__, | |___/\_, |_|_|_\__,_|_\__|\__| |_.__/\_, | |_||_\___\__,_\__,_|
+;;       |___/       |__/                            |__/
+
+
+(def big-symdict-by-head
+  (let [heads (map :head big-list-of-stuff)
+        syms  (map (comp symbol name) heads)
+        pairs (partition 2 (interleave syms big-list-of-stuff))
+        pvecs (map vec pairs)
+        big-dict (into {} pvecs)]
+    big-dict))
+
+
 ;;  _  _         _
 ;; | \| |___  __| |___
 ;; | .` / _ \/ _` / -_)
 ;; |_|\_\___/\__,_\___|
 
 
+;;; Every alternative of a term is a _node_ (see grammar.clj).
+
+
+;;; TODO: consider moving penv parameter to the front of every
+;;; eval function.
+
+
+(defn eval-stuff
+  [stuff]
+  (fn [penv]
+    stuff))
+
+
 (defn eval-node
   "sketch"
   [node]
   (fn [penv]
-    node))
+
+    (cond
+      ;;------------------------------------------------
+      (symbol? node)
+      (let [stuff (node big-symdict-by-head)]
+        (or stuff node))
+      ;;------------------------------------------------
+      (and (coll? node)
+           (empty? node))
+      node
+      ;;------------------------------------------------
+      (list? node)
+      (let [stuff ((first node) big-symdict-by-head)]
+        ((eval-stuff stuff) penv))
+      ;;------------------------------------------------
+      :else
+      node
+      ;;------------------------------------------------
+      )))
 
 
 (defn eval-nodes
@@ -1315,7 +1363,8 @@
   [nodes]
   (fn [penv]
     (map (fn [node]
-           ((eval-node node) penv)) nodes)))
+           ((eval-node node) penv))
+         nodes)))
 
 
 ;;  ___            _         _ _____     _    _
@@ -1329,6 +1378,8 @@
 
 
 (defn eval-bindings
+  "Return a function of a penv, in which all bindings are evaluated.
+  Supports lexical environments and closures."
   [bindings]
   (fn [penv]
     (loop [result {}
@@ -1525,20 +1576,20 @@
              :subroutine     ((eval-symbol sub) penv)})))))
 
 
-;;                        _
-;;  _ _ _  _ _ _    ___  | |_ ___ _ _ _ __
-;; | '_| || | ' \  |___| |  _/ -_) '_| '  \
-;; |_|  \_,_|_||_|        \__\___|_| |_|_|_|
+;;                                     _        _
+;;  _ _ _  _ _ _    ___   _____ ____ _| |___ __| |
+;; | '_| || | ' \  |___| / -_) V / _` | / -_) _` |
+;; |_|  \_,_|_||_|       \___|\_/\__,_|_\___\__,_|
 
 
 
-(defmulti run-term :head)
-
-
-(defmethod run-term 'Program
-  [program]
-  (let [penv (-> program :symtab :penv)]
-    true))
+(defn run-evaled
+  [e]
+  (echo e)
+  (echo (keys (:φ @(get @ΓΣ 1))))
+  (let [code (:body e)]
+    (echo code))
+  )
 
 
 ;;  _   _      _ _
@@ -1548,6 +1599,7 @@
 
 
 (defn eval-unit
+  "The symbol table of a translation unit is the global scope ΓΠ."
   [[head
     global-scope
     items
@@ -1561,5 +1613,7 @@
               :global-scope ((eval-symbol global-scope) penv)
                                         ; TODO: eval-symbol-table?
               :items        ((eval-nodes items) penv)}
-          main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))])
+          main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))]
+      (when main-prog
+        (run-evaled main-prog)))
     ))

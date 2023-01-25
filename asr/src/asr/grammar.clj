@@ -155,7 +155,7 @@
   The default multiplicity, with no STAR or QUES, is \"exactly
   once.\"
 
-  TL;DR SUMMARY:
+  ## TL;DR SUMMARY:
 
   The big picture to remember about _terms_ and _heads_ is that a
   _speclet_ looks like one of the following three:
@@ -173,6 +173,11 @@
   A _term_ corresponds to a _bunch_ (one or more) _forms_ with
   _heads_, but each head corresponds to exactly one term.
 
+  In the evaluator in asr.clj, though not in the grammar below,
+  each alternative of a term is called a ___node___. For example,
+  \"Program,\" \"Module,\" and \"Function\" are all nodes of the
+  term \"Symbol.\"
+
   A term has exactly one _speclet_. The speclet is the term and
   the whole alternation of forms:, left-hand side (term) and
   right-hand side (alternation of forms), one form per head.
@@ -186,15 +191,14 @@
 
   :ASDL-SYMCONSTs are heads without parameter lists.
 
-  :ASDL-TUPLEs are parameter-lists with gensymmed heads.
+  :ASDL-TUPLEs are parameter-lists with anonymous, gensymmed
+  heads.
 
-  :ASDL-COMPOSITEs have symbolic heads and parameter-lists in
-  round brackets.
+  :ASDL-COMPOSITEs have symbolic heads and parameter-lists.
 
-  In addition to the 3 groups, it turns out there are about 28
-  terms and speclets, and 227 heads, forms, and clojure.specs when
-  we're done in the testing snapshot of ASR. The numbers grow as
-  features are added to ASR.
+  In addition to the 3 groups, it turns out there are 28 terms and
+  speclets, and 227 heads, forms, and clojure.specs in the testing
+  snapshot of ASR. The numbers grow as features are added to ASR.
   "
 
   "MODULE         = SPC* <'module'> SPC* IDENT LBRACE SPEC RBRACE

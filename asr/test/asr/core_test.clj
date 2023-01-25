@@ -1808,9 +1808,6 @@
 ;;     :penv #<Atom@7738f742: {:φ {}, :π nil}>}
 
 
-(run-term ((eval-symbol (:main_program mp)) ΓΠ))
-
-
 (def expr2-pp
   '(TranslationUnit
     (SymbolTable
@@ -1937,24 +1934,30 @@
   (testing "multiple, independent ways of counting terms and forms"
 
     (is (= (count asr.asr/composite-stuffs)
-           (apply +
+           (apply +  ; composites are nested by term
                   (->> (asr.asr/get-composites)
                        (asr.asr/symbolize-composite-heads)
                        (map count)))))
 
     (is (= (count asr.asr/symconst-stuffs)
-           (apply +
+           (apply +  ; symconsts are nested by term
                   (->> (asr.asr/get-symconsts)
                        (asr.asr/symbolize-symconst-heads)
                        (map count)))))
 
     (is (= (count asr.asr/tuple-stuffs)
-           (->> (asr.asr/get-tuples)
+           (->> (asr.asr/get-tuples)  ; tuples are not nested
                 (asr.asr/symbolize-tuple-heads)
                 count)))))
 
 
 (deftest no-duplicated-heads
-  (is (=
-       (count asr.asr/big-list-of-stuff)
-       (count (map :head asr.asr/big-list-of-stuff)))))
+  (testing "no duplicated heads, even as symbolized names (without namespace
+  qualification)"
+    (let [lyst  asr.asr/big-list-of-stuff
+          heads (map :head lyst)
+          syms  (map (comp symbol name) heads)]
+      (is (= (count lyst)
+             (count heads)
+             (count syms)
+             (count asr.asr/big-symdict-by-head))))))
