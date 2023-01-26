@@ -190,9 +190,9 @@
 ;;;
 ;;; :ASDL-SYMCONSTs are heads without parameter lists.
 ;;;
-;;; :ASDL-TUPLEs are parameter-lists with gensymmed heads.
+;;; :ASDL-TUPLE s are parameter-lists with gensymmed heads.
 ;;;
-;;; :ASDL-COMPOSITEs have symbolic _heads_ and parameter-lists in
+;;; :ASDL-COMPOSITE s have symbolic _heads_ and parameter-lists in
 ;;; round brackets.
 
 
@@ -552,7 +552,7 @@
 ;; => 10
 
 
-;; Here are the terms (left-hand sides) of all ASR-COMPOSITEs.
+;; Here are the terms (left-hand sides) of all ASR-COMPOSITE s.
 
 
 #_(->> (get-composites) symbolize-terms)
@@ -591,7 +591,7 @@
 
 
 (defn symbolize-composite-heads
-  [group]
+  [_]
   (let [forms   (map second (get-composites))
         valss-  (map #(map :ASDL-COMPOSITE %) forms)
         headss- (map #(map :ASDL-HEAD %) valss-)
@@ -1311,7 +1311,7 @@
 
 
 (defn new-penv
-  "A new penv has a frame φ and an penv π. Bindings are looked up in
+  "A new penv has a frame φ and a penv π. Bindings are looked up in
   the old penv and bound in the new penv. A frequent case for this is
   binding actual arguments to function parameters."
   [bindings penv]
@@ -1348,7 +1348,7 @@
 
 (defn eval-bool
   [bool]
-  (fn [penv]
+  (fn [_]
     (case bool
       .true.  true
       .false. false)))
@@ -1484,7 +1484,7 @@
     type-params                ; ttype*
     restrictions               ; symbol*
     is-restriction             ; bool (.true., .false.)
-    determinisic               ; bool (.true., .false.)
+    deterministic               ; bool (.true., .false.)
     side-effect-free           ; bool (.true., .false.)
     :as function]]
   (fn [penv]
@@ -1508,7 +1508,7 @@
      :type-params      ((eval-nodes   type-params)      penv)
      :restrictions     ((eval-symbols restrictions)     penv)
      :is-restriction   ((eval-bool    is-restriction)   penv)
-     :deterministic    ((eval-bool    determinisic)     penv)
+     :deterministic    ((eval-bool    deterministic)    penv)
      :side-effect-free ((eval-bool    side-effect-free) penv)
      }))
 
