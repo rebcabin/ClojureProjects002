@@ -1822,48 +1822,56 @@
     (SymbolTable
      1
      {:_lpython_main_program
-      (Function
-       (SymbolTable 4 {})
-       _lpython_main_program               ; nym
-       [main0]                             ; dependencies
-       []                                  ; args (TODO: !!! params !!!)
-       [(SubroutineCall 1 main0 () [] ())] ; body
-       ()                                  ; return-var
-       Source                              ; abi
-       Public                              ; access
-       Implementation                      ; deftype
-       ()                                  ; bindc-name (TODO: !!! string? !!!)
-       .false.                             ; elemental
-       .false.                             ; pure
-       .false.                             ; module
-       .false.                             ; inline
-       .false.                             ; static
-       []                                  ; type-params
-       []                                  ; restrictions
-       .false.                             ; is-restriction
-       .false.                             ; deterministic
-       .false.),                           ; side-effect-free
+      (Function                         ; head, term: symbol
+       (SymbolTable 4 {})               ; symbol_table  symtab
+       _lpython_main_program            ; identifier    nym
+       [main0]                          ; identifier *  dependencies
+       []                               ; expr *        args (TODO: params !!!)
+       [(SubroutineCall                 ;  stmt * body, head, term: stmt
+         1                              ;  ???
+         main0                          ;  symbol        nym
+         ()                             ;  symbol ?      original-nym
+         []                             ;  call_arg *    args
+         ())                            ;  expr ?        dt
+        ]                               ; stmt *        body
+       ()                               ; expr ?        return-var
+       Source                           ; abi           abi
+       Public                           ; access        access
+       Implementation                   ; deftype       deftype
+       ()                               ; string?       bindc-name (TODO: !!!)
+       .false.                          ; bool          elemental
+       .false.                          ; bool          pure
+       .false.                          ; bool          module
+       .false.                          ; bool          inline
+       .false.                          ; bool          static
+       []                               ; ttype *       type-params
+       []                               ; symbol *      restrictions
+       .false.                          ; bool          is-restriction
+       .false.                          ; bool          deterministic
+       .false.),                        ; bool          side-effect-free
       :main0
-      (Function
-       (SymbolTable 2 {:x
-         (Variable
-          2
-          x
-          []
-          Local
-          ()
-          ()
-          Default
-          (Integer 4 [])
-          Source
-          Public
-          Required
-          .false.)})
-       main0
-       []
-       []
-       [(=
-         (Var 2 x)
+      (Function                   ; head, term: symbol
+       (SymbolTable               ;  symbol_table    symtab
+        2                         ;  integer         unique_global_id
+        {:x                       ;  key
+         (Variable                ;   head, term: symbol
+          2                       ;   symbol_table    parent-symtab-id (TODO: !!!)
+          x                       ;   identifier      nym
+          []                      ;   identifier *    dependencies
+          Local                   ;   intent          intent
+          ()                      ;   expr ?          symbolic-value
+          ()                      ;   expr ?          value
+          Default                 ;   storage_type    storage
+          (Integer 4 [])          ;   ttype           tipe
+          Source                  ;   abi             abi
+          Public                  ;   access          access
+          Required                ;   presence        presence
+          .false.)})              ;   bool            value-attr
+       main0                      ; identifier      nym
+       []                         ; identifier *    dependencies
+       []                         ; expr *          args (TODO: params !!!)
+       [(Assignment               ; `=` stmt * body, head, term: ?
+         (Var 2 x)                ;
          (IntegerBinOp
           (IntegerBinOp
            (IntegerConstant 2 (Integer 4 []))
@@ -1903,7 +1911,14 @@
 
 (def expr2-lpy "examples/expr2.py")
 (def expr2-clj
-  (lpython/get-sample-clj expr2-lpy))
+  (walk/prewalk
+   (fn [node]
+     ;; see https://github.com/lcompilers/lpython/issues/1466
+     (cond (= node '=)
+           'Assignment
+           :else
+           node))
+   (lpython/get-sample-clj expr2-lpy)))
 
 
 (deftest lpython-asr-test
