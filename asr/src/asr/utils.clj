@@ -11,7 +11,17 @@
 ;; \___\__|_||_\___/
 
 
-(defmacro plnecho [x]
+(defmacro nkecho
+  "just the value, please"
+  [x]
+  `(let [x# ~x]
+     (do (println "~~>" x#)
+         x#)))
+
+
+(defmacro plnecho
+  "preimage and value"
+  [x]
   `(let [x# ~x]
      (do (println '~x "~~>" x#)
          x#)))
@@ -20,7 +30,9 @@
 ;;; and pretty-printing version
 
 
-(defmacro echo [x]
+(defmacro echo
+  "big, pretty-printed block"
+  [x]
   `(let [x# ~x]
      (do (println "-.-.-.-.-.-.-.-.-")
          (clojure.pprint/pprint '~x)

@@ -33,19 +33,23 @@
 
 
 ;;; For flexibility, all "(eval-...)" functions return a function
-;;; of an Environment. TODO: spec Environment. Such functions can
-;;; be evaluated in any environment later.
+;;; of an Environment. Such functions can be evaluated in any
+;;; environment later. TODO: spec Environment. TODO: consider
+;;; moving env to first position for partial evaluation /
+;;; currying.
 
 
-;;; An Environment is a dictionary. An Environment-atom or
-;;; PEnv (for pointer-to-environment) is a mutable object: an atom
-;;; containing an Environment. It is needed for mutability.
+;;; An Environment is a dictionary φ and a pointer π to an
+;;; enclosing penv (π is also a pun for Greek περι, peri-,
+;;; meaning "belt," "enclosing," "around," as in "perimeter,"
+;;; not "parameter"). A penv or Environment-atom is a mutable atom
+;;; containing an Environment.
 
 
 (defn is-environment?
   "Ensure keys φ and π exist. Note it's not sufficient to check the
   value of π because it's nil for the global environment AND it's
-  nil for an missing the key π because `(:π {:φ (atom 'foo)})` ~~>
+  nil for a missing key π because `(:π {:φ (atom 'foo)})` ~~>
   nil."
   [thing]
   (subset? #{:φ, :π} (set (keys thing))))
@@ -95,13 +99,17 @@
 
 
 (defn eval-bindings
+  "Return a function of a penv, in which all bindings are evaluated.
+  Supports lexical environments and closures."
   [bindings]
   (throw (AssertionError.
           "Forward-reference: incorrect eval-bindings function called")))
 
 
 (defn new-penv
-  "A new penv has a frame φ and an penv π."
+  "A new penv has a frame φ and an penv π. Bindings are looked up in
+  the old penv and bound in the new penv. A frequent case for this is
+  binding actual arguments to function parameters."
   [bindings penv]
   (atom {:φ ((eval-bindings bindings) penv),
          :π penv}
@@ -1065,6 +1073,27 @@
   (filter #(= (:grup %) :ASDL-TUPLE) big-list-of-stuff))
 
 
+#_tuple-stuffs
+;; => ({:head :asr.autospecs/asr-tuple10800,
+;;      :term :asr.autospecs/call_arg,
+;;      :form ...
+;;     {:head :asr.autospecs/asr-tuple10801,
+;;      :term :asr.autospecs/do_loop_head,
+;;      :form ...
+;;     {:head :asr.autospecs/asr-tuple10802,
+;;      :term :asr.autospecs/alloc_arg,
+;;      :form ...
+;;     {:head :asr.autospecs/asr-tuple10803,
+;;      :term :asr.autospecs/attribute_arg,
+;;      :form ...
+;;     {:head :asr.autospecs/asr-tuple10804,
+;;      :term :asr.autospecs/array_index,
+;;      :form ...
+;;     {:head :asr.autospecs/asr-tuple10805,
+;;      :term :asr.autospecs/dimension,
+;;      :form ...
+
+
 (def symconst-stuffs
   (filter #(= (:grup %) :ASDL-SYMCONST) big-list-of-stuff))
 
@@ -1317,6 +1346,10 @@
     big-dict))
 
 
+#_(count big-symdict-by-head)
+;; => 248
+
+
 ;;  _  _         _
 ;; | \| |___  __| |___
 ;; | .` / _ \/ _` / -_)
@@ -1327,7 +1360,7 @@
 
 
 ;;; TODO: consider moving penv parameter to the front of every
-;;; eval function.
+;;; eval function, as with `self` in OOP.
 
 
 (defn eval-stuff
@@ -1375,6 +1408,28 @@
 ;; \__ \ || | '  \| '_ \/ _ \ | | |/ _` | '_ \ / -_)
 ;; |___/\_, |_|_|_|_.__/\___/_| |_|\__,_|_.__/_\___|
 ;;      |__/
+
+
+;;; Symbol-table is not spec'ced in ASR.asdl.
+
+
+;;; We have a design that is explicitly recursive. Try a design
+;;; suitable for clojure.walk.
+
+
+;;               ____
+;;   __ _  __ __/ / / ____  _/|
+;;  /  ' \/ // / / / /___/ > _<
+;; /_/_/_/\_,_/_/_/        |/
+
+
+
+
+
+;;                 __
+;;  ___ _  _____ _/ / ____  _/|
+;; / -_) |/ / _ `/ / /___/ > _<
+;; \__/|___/\_,_/_/        |/
 
 
 (defmulti eval-symbol first)            ; forward reference
@@ -1432,13 +1487,14 @@
 
 
 (defn term-from-head-sym
+  "Summarize from 'big-symdict-by-head."
   [sym]
   (cond
     (= sym 'SymbolTable) 'symbol   ; no spec for this in ASDL
     (= sym 'ForTest)     'testing  ; ditto
-    :else (symbol
-           (name
-            (:term
+    :else (symbol ; strip quotes
+           (name ; strip namespace
+            (:term ; fetch
              (sym big-symdict-by-head))))))
 
 
@@ -1458,6 +1514,10 @@
      :body         body          ; stmt*
      :penv         penv          ; Environment
      }))
+
+
+;;; The problem to solve today 26 Jan 2023 is recursive lookup in
+;;; penvs versus explicit lookup by symbol-table-id number.
 
 
 (defmethod eval-symbol 'SymbolTable
@@ -1612,8 +1672,8 @@
     #_(assert (s/valid? :asr.autospecs/TranslationUnit translation-unit))
     (let [tu {:head         head
               :term         (term-from-head-sym head)
+              ;; We know the global-scope is a symbol-table.
               :global-scope ((eval-symbol global-scope) penv)
-                                        ; TODO: eval-symbol-table?
               :items        ((eval-nodes items) penv)}
           main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))]
       tu

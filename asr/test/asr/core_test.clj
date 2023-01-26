@@ -1926,140 +1926,75 @@
     (is (= expr2-pp expr2-clj))))
 
 
+(walk/prewalk
+ (fn [node]
+   (nkecho ((eval-node node) ΓΠ)))
+ expr2-pp)
+;; => {:head :asr.autospecs/TranslationUnit,
+;;     :term :asr.autospecs/unit,
+;;     :grup :ASDL-COMPOSITE,
+;;     :form
+;;     {:ASDL-COMPOSITE
+;;      {:ASDL-HEAD "TranslationUnit",
+;;       :ASDL-ARGS
+;;       ({:ASDL-TYPE "symbol_table",
+;;         :MULTIPLICITY :asr.parsed/once,
+;;         :ASDL-NYM "global_scope"}
+;;        {:ASDL-TYPE "node",
+;;         :MULTIPLICITY :asr.parsed/zero-or-more,
+;;         :ASDL-NYM "items"})}}}
+
+
+((eval-node expr2-pp) ΓΠ)
+;; => {:head :asr.autospecs/TranslationUnit,
+;;     :term :asr.autospecs/unit,
+;;     :grup :ASDL-COMPOSITE,
+;;     :form
+;;     {:ASDL-COMPOSITE
+;;      {:ASDL-HEAD "TranslationUnit",
+;;       :ASDL-ARGS
+;;       ({:ASDL-TYPE "symbol_table",
+;;         :MULTIPLICITY :asr.parsed/once,
+;;         :ASDL-NYM "global_scope"}
+;;        {:ASDL-TYPE "node",
+;;         :MULTIPLICITY :asr.parsed/zero-or-more,
+;;         :ASDL-NYM "items"})}}}
+
+
 ((eval-symbol expr2-pp) ΓΠ)
-;; {:head TranslationUnit,
-;;  :term unit,
-;;  :global-scope
-;;  {:head SymbolTable,
-;;   :term symbol,
-;;   :integer-id 1,
-;;   :bindings
-;;   {:_lpython_main_program
-;;    (Function
-;;     (SymbolTable 4 {})
-;;     _lpython_main_program
-;;     [main0]
-;;     []
-;;     [(SubroutineCall 1 main0 () [] ())]
-;;     ()
-;;     Source
-;;     Public
-;;     Implementation
-;;     ()
-;;     .false.
-;;     .false.
-;;     .false.
-;;     .false.
-;;     .false.
-;;     []
-;;     []
-;;     .false.
-;;     .false.
-;;     .false.),
-;;    :main0
-;;    (Function
-;;     (SymbolTable
-;;      2
-;;      {:x
-;;       (Variable
-;;        2
-;;        x
+;; => {:head TranslationUnit,
+;;     :term unit,
+;;     :global-scope
+;;     {:head SymbolTable,
+;;      :term symbol,
+;;      :integer-id 1,
+;;      :bindings
+;;      {:_lpython_main_program
+;;       (Function
+;;        (SymbolTable 4 {})
+;;        _lpython_main_program
+;;        [main0]
 ;;        []
-;;        Local
+;;        [(SubroutineCall 1 main0 () [] ())]
 ;;        ()
-;;        ()
-;;        Default
-;;        (Integer 4 [])
 ;;        Source
 ;;        Public
-;;        Required
-;;        .false.)})
-;;     main0
-;;     []
-;;     []
-;;     [(=
-;;       (Var 2 x)
-;;       (IntegerBinOp
-;;        (IntegerBinOp
-;;         (IntegerConstant 2 (Integer 4 []))
-;;         Add
-;;         (IntegerConstant 3 (Integer 4 []))
-;;         (Integer 4 [])
-;;         (IntegerConstant 5 (Integer 4 [])))
-;;        Mul
-;;        (IntegerConstant 5 (Integer 4 []))
-;;        (Integer 4 [])
-;;        (IntegerConstant 25 (Integer 4 [])))
-;;       ())
-;;      (Print () [(Var 2 x)] () ())]
-;;     ()
-;;     Source
-;;     Public
-;;     Implementation
-;;     ()
-;;     .false.
-;;     .false.
-;;     .false.
-;;     .false.
-;;     .false.
-;;     []
-;;     []
-;;     .false.
-;;     .false.
-;;     .false.),
-;;    :main_program
-;;    (Program
-;;     (SymbolTable 3 {})
-;;     main_program
-;;     []
-;;     [(SubroutineCall 1 _lpython_main_program () [] ())])},
-;;   :penv
-;;   #<Atom@6a9e5408:
-;;     {:φ
-;;      {:_lpython_main_program
-;;       {...
-;;        :symtab
-;;        {:head SymbolTable,
-;;         :term symbol,
-;;         :integer-id 4,
-;;         :bindings {},
-;;         :penv #<Atom@4bcf80ac:
-;;                 {:φ {}, :π #<Atom@40ae7424: {:φ {}, :π nil}>}>},
-;;        ...
-;;        :module false,
-;;        :term symbol,
-;;        :head Function,
-;;        ...
-;;        :body
-;;        ({:head :asr.autospecs/SubroutineCall,
-;;          :term :asr.autospecs/stmt,
-;;          :grup :ASDL-COMPOSITE,
-;;          :form
-;;          {:ASDL-COMPOSITE
-;;           {:ASDL-HEAD "SubroutineCall",
-;;            :ASDL-ARGS
-;;            ({:ASDL-TYPE "symbol",
-;;              :MULTIPLICITY :asr.parsed/once,
-;;              :ASDL-NYM "name"}
-;;             {:ASDL-TYPE "symbol",
-;;              :MULTIPLICITY :asr.parsed/at-most-once,
-;;              :ASDL-NYM "original_name"}
-;;             {:ASDL-TYPE "call_arg",
-;;              :MULTIPLICITY :asr.parsed/zero-or-more,
-;;              :ASDL-NYM "args"}
-;;             {:ASDL-TYPE "expr",
-;;              :MULTIPLICITY :asr.parsed/at-most-once,
-;;              :ASDL-NYM "dt"})}}}),
-;;        :dependencies [main0],
-;;        :inline false,
-;;        :elemental false},
+;;        Implementation
+;;        ()
+;;        .false.
+;;        .false.
+;;        .false.
+;;        .false.
+;;        .false.
+;;        []
+;;        []
+;;        .false.
+;;        .false.
+;;        .false.),
 ;;       :main0
-;;       {...
-;;        :symtab
-;;        {:head SymbolTable,
-;;         :term symbol,
-;;         :integer-id 2,
-;;         :bindings
+;;       (Function
+;;        (SymbolTable
+;;         2
 ;;         {:x
 ;;          (Variable
 ;;           2
@@ -2073,79 +2008,249 @@
 ;;           Source
 ;;           Public
 ;;           Required
-;;           .false.)},
-;;         :penv
-;;         #<Atom@782696fa:
-;;           {:φ
-;;            {:x
-;;             {:presence
-;;              {:head :asr.autospecs/Required,
-;;               :term :asr.autospecs/presence,
-;;               :grup :ASDL-SYMCONST,
-;;               :form {:ASDL-SYMCONST "Required"}},
-;;              :name x,
-;;              :value (),
-;;              :type
-;;              {:head :asr.autospecs/Integer,
-;;               :term :asr.autospecs/ttype,
-;;               :grup :ASDL-COMPOSITE,
-;;               :form
-;;               {:ASDL-COMPOSITE
-;;                {:ASDL-HEAD "Integer",
-;;                 :ASDL-ARGS
-;;                 ({:ASDL-TYPE "int",
-;;                   :MULTIPLICITY :asr.parsed/once,
-;;                   :ASDL-NYM "kind"}
-;;                  {:ASDL-TYPE "dimension",
-;;                   :MULTIPLICITY :asr.parsed/zero-or-more,
-;;                   :ASDL-NYM "dims"})}}},
-;;              :term symbol,
-;;              :head Variable,
-;;              :symtab-id 2,
-;;              ...
-;;              :value-attr .false.}},
-;;            :π #<Atom@40ae7424: {:φ {}, :π nil}>}>},
-;;        ...
-;;        :term symbol,
-;;        :head Function,
-;;        :body
-;;        (nil
-;;         {:head :asr.autospecs/Print,
-;;          :term :asr.autospecs/stmt,
-;;          :grup :ASDL-COMPOSITE,
-;;          :form
-;;          {:ASDL-COMPOSITE
-;;           {:ASDL-HEAD "Print",
-;;            :ASDL-ARGS
-;;            ({:ASDL-TYPE "expr",
-;;              :MULTIPLICITY :asr.parsed/at-most-once,
-;;              :ASDL-NYM "fmt"}
-;;             {:ASDL-TYPE "expr",
-;;              :MULTIPLICITY :asr.parsed/zero-or-more,
-;;              :ASDL-NYM "values"}
-;;             {:ASDL-TYPE "expr",
-;;              :MULTIPLICITY :asr.parsed/at-most-once,
-;;              :ASDL-NYM "separator"}
-;;             {:ASDL-TYPE "expr",
-;;              :MULTIPLICITY :asr.parsed/at-most-once,
-;;              :ASDL-NYM "end"})}}}),
-;;        ...},
+;;           .false.)})
+;;        main0
+;;        []
+;;        []
+;;        [(=
+;;          (Var 2 x)
+;;          (IntegerBinOp
+;;           (IntegerBinOp
+;;            (IntegerConstant 2 (Integer 4 []))
+;;            Add
+;;            (IntegerConstant 3 (Integer 4 []))
+;;            (Integer 4 [])
+;;            (IntegerConstant 5 (Integer 4 [])))
+;;           Mul
+;;           (IntegerConstant 5 (Integer 4 []))
+;;           (Integer 4 [])
+;;           (IntegerConstant 25 (Integer 4 [])))
+;;          ())
+;;         (Print () [(Var 2 x)] () ())]
+;;        ()
+;;        Source
+;;        Public
+;;        Implementation
+;;        ()
+;;        .false.
+;;        .false.
+;;        .false.
+;;        .false.
+;;        .false.
+;;        []
+;;        []
+;;        .false.
+;;        .false.
+;;        .false.),
 ;;       :main_program
-;;       {:head Program,
-;;        :term symbol,
-;;        :symtab
-;;        {:head SymbolTable,
-;;         :term symbol,
-;;         :integer-id 3,
-;;         :bindings {},
-;;         :penv #<Atom@79c5af4b:
-;;                 {:φ {}, :π #<Atom@40ae7424: {:φ {}, :π nil}>}>},
-;;        :nym main_program,
-;;        :dependencies [],
-;;        :body [(SubroutineCall 1 _lpython_main_program () [] ())],
-;;        :penv #<Atom@40ae7424: {:φ {}, :π nil}>}},
-;;      :π #<Atom@40ae7424: {:φ {}, :π nil}>}>},
-;;  :items ()}
+;;       (Program
+;;        (SymbolTable 3 {})
+;;        main_program
+;;        []
+;;        [(SubroutineCall 1 _lpython_main_program () [] ())])},
+;;      :penv
+;;      #<Atom@73eb97c0:
+;;        {:φ
+;;         {:_lpython_main_program
+;;          {:args (),
+;;           :deftype
+;;           {:head :asr.autospecs/Implementation,
+;;            :term :asr.autospecs/deftype,
+;;            :grup :ASDL-SYMCONST,
+;;            :form {:ASDL-SYMCONST "Implementation"}},
+;;           :restrictions (),
+;;           :side-effect-free false,
+;;           :type-params (),
+;;           :symtab
+;;           {:head SymbolTable,
+;;            :term symbol,
+;;            :integer-id 4,
+;;            :bindings {},
+;;            :penv #<Atom@be92134: {:φ {}, :π #<Atom@6af86547: {:φ {}, :π nil}>}>},
+;;           :is-restriction false,
+;;           :bindc-name (),
+;;           :name _lpython_main_program,
+;;           :static false,
+;;           :return-var (),
+;;           :module false,
+;;           :deterministic false,
+;;           :term symbol,
+;;           :head Function,
+;;           :abi
+;;           {:head :asr.autospecs/Source,
+;;            :term :asr.autospecs/abi,
+;;            :grup :ASDL-SYMCONST,
+;;            :form {:ASDL-SYMCONST "Source"}},
+;;           :access
+;;           {:head :asr.autospecs/Public,
+;;            :term :asr.autospecs/access,
+;;            :grup :ASDL-SYMCONST,
+;;            :form {:ASDL-SYMCONST "Public"}},
+;;           :pure false,
+;;           :body
+;;           ({:head :asr.autospecs/SubroutineCall,
+;;             :term :asr.autospecs/stmt,
+;;             :grup :ASDL-COMPOSITE,
+;;             :form
+;;             {:ASDL-COMPOSITE
+;;              {:ASDL-HEAD "SubroutineCall",
+;;               :ASDL-ARGS
+;;               ({:ASDL-TYPE "symbol",
+;;                 :MULTIPLICITY :asr.parsed/once,
+;;                 :ASDL-NYM "name"}
+;;                {:ASDL-TYPE "symbol",
+;;                 :MULTIPLICITY :asr.parsed/at-most-once,
+;;                 :ASDL-NYM "original_name"}
+;;                {:ASDL-TYPE "call_arg",
+;;                 :MULTIPLICITY :asr.parsed/zero-or-more,
+;;                 :ASDL-NYM "args"}
+;;                {:ASDL-TYPE "expr",
+;;                 :MULTIPLICITY :asr.parsed/at-most-once,
+;;                 :ASDL-NYM "dt"})}}}),
+;;           :dependencies [main0],
+;;           :inline false,
+;;           :elemental false},
+;;          :main0
+;;          {:args (),
+;;           :deftype
+;;           {:head :asr.autospecs/Implementation,
+;;            :term :asr.autospecs/deftype,
+;;            :grup :ASDL-SYMCONST,
+;;            :form {:ASDL-SYMCONST "Implementation"}},
+;;           :restrictions (),
+;;           :side-effect-free false,
+;;           :type-params (),
+;;           :symtab
+;;           {:head SymbolTable,
+;;            :term symbol,
+;;            :integer-id 2,
+;;            :bindings
+;;            {:x
+;;             (Variable
+;;              2
+;;              x
+;;              []
+;;              Local
+;;              ()
+;;              ()
+;;              Default
+;;              (Integer 4 [])
+;;              Source
+;;              Public
+;;              Required
+;;              .false.)},
+;;            :penv
+;;            #<Atom@2b04e079:
+;;              {:φ
+;;               {:x
+;;                {:presence
+;;                 {:head :asr.autospecs/Required,
+;;                  :term :asr.autospecs/presence,
+;;                  :grup :ASDL-SYMCONST,
+;;                  :form {:ASDL-SYMCONST "Required"}},
+;;                 :name x,
+;;                 :value (),
+;;                 :type
+;;                 {:head :asr.autospecs/Integer,
+;;                  :term :asr.autospecs/ttype,
+;;                  :grup :ASDL-COMPOSITE,
+;;                  :form
+;;                  {:ASDL-COMPOSITE
+;;                   {:ASDL-HEAD "Integer",
+;;                    :ASDL-ARGS
+;;                    ({:ASDL-TYPE "int",
+;;                      :MULTIPLICITY :asr.parsed/once,
+;;                      :ASDL-NYM "kind"}
+;;                     {:ASDL-TYPE "dimension",
+;;                      :MULTIPLICITY :asr.parsed/zero-or-more,
+;;                      :ASDL-NYM "dims"})}}},
+;;                 :term symbol,
+;;                 :head Variable,
+;;                 :symtab-id 2,
+;;                 :abi
+;;                 {:head :asr.autospecs/Source,
+;;                  :term :asr.autospecs/abi,
+;;                  :grup :ASDL-SYMCONST,
+;;                  :form {:ASDL-SYMCONST "Source"}},
+;;                 :intent
+;;                 {:head :asr.autospecs/Local,
+;;                  :term :asr.autospecs/intent,
+;;                  :grup :ASDL-SYMCONST,
+;;                  :form {:ASDL-SYMCONST "Local"}},
+;;                 :storage
+;;                 {:head :asr.autospecs/Default,
+;;                  :term :asr.autospecs/storage_type,
+;;                  :grup :ASDL-SYMCONST,
+;;                  :form {:ASDL-SYMCONST "Default"}},
+;;                 :access
+;;                 {:head :asr.autospecs/Public,
+;;                  :term :asr.autospecs/access,
+;;                  :grup :ASDL-SYMCONST,
+;;                  :form {:ASDL-SYMCONST "Public"}},
+;;                 :dependencies [],
+;;                 :symbolic-value (),
+;;                 :value-attr .false.}},
+;;               :π #<Atom@6af86547: {:φ {}, :π nil}>}>},
+;;           :is-restriction false,
+;;           :bindc-name (),
+;;           :name main0,
+;;           :static false,
+;;           :return-var (),
+;;           :module false,
+;;           :deterministic false,
+;;           :term symbol,
+;;           :head Function,
+;;           :abi
+;;           {:head :asr.autospecs/Source,
+;;            :term :asr.autospecs/abi,
+;;            :grup :ASDL-SYMCONST,
+;;            :form {:ASDL-SYMCONST "Source"}},
+;;           :access
+;;           {:head :asr.autospecs/Public,
+;;            :term :asr.autospecs/access,
+;;            :grup :ASDL-SYMCONST,
+;;            :form {:ASDL-SYMCONST "Public"}},
+;;           :pure false,
+;;           :body
+;;           (nil
+;;            {:head :asr.autospecs/Print,
+;;             :term :asr.autospecs/stmt,
+;;             :grup :ASDL-COMPOSITE,
+;;             :form
+;;             {:ASDL-COMPOSITE
+;;              {:ASDL-HEAD "Print",
+;;               :ASDL-ARGS
+;;               ({:ASDL-TYPE "expr",
+;;                 :MULTIPLICITY :asr.parsed/at-most-once,
+;;                 :ASDL-NYM "fmt"}
+;;                {:ASDL-TYPE "expr",
+;;                 :MULTIPLICITY :asr.parsed/zero-or-more,
+;;                 :ASDL-NYM "values"}
+;;                {:ASDL-TYPE "expr",
+;;                 :MULTIPLICITY :asr.parsed/at-most-once,
+;;                 :ASDL-NYM "separator"}
+;;                {:ASDL-TYPE "expr",
+;;                 :MULTIPLICITY :asr.parsed/at-most-once,
+;;                 :ASDL-NYM "end"})}}}),
+;;           :dependencies [],
+;;           :inline false,
+;;           :elemental false},
+;;          :main_program
+;;          {:head Program,
+;;           :term symbol,
+;;           :symtab
+;;           {:head SymbolTable,
+;;            :term symbol,
+;;            :integer-id 3,
+;;            :bindings {},
+;;            :penv #<Atom@504441e0:
+;;                    {:φ {}, :π #<Atom@6af86547: {:φ {}, :π nil}>}>},
+;;           :nym main_program,
+;;           :dependencies [],
+;;           :body [(SubroutineCall 1 _lpython_main_program () [] ())],
+;;           :penv #<Atom@6af86547: {:φ {}, :π nil}>}},
+;;         :π #<Atom@6af86547: {:φ {}, :π nil}>}>},
+;;     :items ()}
 
 
 ;;                         _
