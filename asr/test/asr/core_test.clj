@@ -4,6 +4,7 @@
         [asr.data]
         [asr.numbers]
         [asr.arithmetic]
+        [asr.environment]
         [asr.autospecs :exclude [tuple-stuffs]]
         [asr.expr.synnasr]
         [asr.expr.semnasr]
