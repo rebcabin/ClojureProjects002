@@ -3,6 +3,7 @@
         [asr.asr]
         [asr.columnize]
         [asr.data]
+        [asr.groupings]
         [asr.numbers]
         [asr.arithmetic]
         [asr.environment]
@@ -2265,7 +2266,7 @@
 (deftest asr-groupings
   (testing "whether groupings are complete"
 
-    (is (= (->> asr.asr/asr-groups  ;; roughly (14, 6, 10)
+    (is (= (->> asr.groupings/asr-groups  ;; roughly (14, 6, 10)
                 (map second)
                 (map count))
            (->> (group-by
@@ -2281,19 +2282,19 @@
 
     (is (= (count asr.asr/composite-stuffs)
            (apply +  ; composites are nested by term
-                  (->> (asr.asr/get-composites)
-                       (asr.asr/symbolize-composite-heads)
+                  (->> (asr.groupings/get-composites)
+                       (asr.groupings/symbolize-composite-heads)
                        (map count)))))
 
     (is (= (count asr.asr/symconst-stuffs)
            (apply +  ; symconsts are nested by term
-                  (->> (asr.asr/get-symconsts)
-                       (asr.asr/symbolize-symconst-heads)
+                  (->> (asr.groupings/get-symconsts)
+                       (asr.groupings/symbolize-symconst-heads)
                        (map count)))))
 
     (is (= (count asr.asr/tuple-stuffs)
-           (->> (asr.asr/get-tuples)  ; tuples are not nested
-                (asr.asr/symbolize-tuple-heads)
+           (->> (asr.groupings/get-tuples)  ; tuples are not nested
+                (asr.groupings/symbolize-tuple-heads)
                 count)))))
 
 
