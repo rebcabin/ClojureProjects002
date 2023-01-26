@@ -1,6 +1,7 @@
 (ns asr.core-test
   (:use [asr.core]
         [asr.asr]
+        [asr.columnize]
         [asr.data]
         [asr.numbers]
         [asr.arithmetic]
@@ -2269,7 +2270,7 @@
                 (map count))
            (->> (group-by
                  :group
-                 (map asr.asr/columnize-term
+                 (map asr.columnize/columnize-term
                       asr.asr/big-map-of-speclets-from-terms))
                 (map second)
                 (map count))))))
