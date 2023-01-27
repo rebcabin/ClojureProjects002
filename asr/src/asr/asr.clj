@@ -1,6 +1,7 @@
 (ns asr.asr
   (:use [asr.utils]
         [asr.environment]
+        [asr.groupings]
         [clojure.set])
 
   ;;; TODO: Consider https://github.com/rebcabin/odin
@@ -10,17 +11,7 @@
    [asr.grammar                        ]
    [asr.lpython                        ]
    [clojure.pprint      :refer [pprint]]
-   [asr.parsed          :refer [
-                                shallow-map-from-speclet,
-                                hashmap-from-speclet,
-                                map-pair-from-speclet-map,
-
-                                kind-from-form,
-                                head-from-kind-form,
-                                stuff-from-term-form,
-                               ]]
    [clojure.walk        :as     walk   ]
-   [clojure.zip         :as     zip    ]
    [clojure.spec.alpha  :as s]))
 
 
@@ -29,92 +20,6 @@
 ;; | |    | | \ \ / /|  _|     / _ \ \___ \| |_) |
 ;; | |___ | |  \ V / | |___   / ___ \ ___) |  _ <
 ;; |_____|___|  \_/  |_____| /_/   \_\____/|_| \_\
-
-
-;;; See grammar.clj for deeper documentation on terminology, here.
-
-
-;;                  _     _
-;;  ____ __  ___ __| |___| |_ ___
-;; (_-< '_ \/ -_) _| / -_)  _(_-<
-;; /__/ .__/\___\__|_\___|\__/__/
-;;    |_|
-
-
-;;; Parse the current, live ASR.ASDL, not the snapshot hard-coded
-;;; in "asr_snapshot.clj".
-
-
-(def asr-asdl-hiccup
-  (asr.grammar/asdl-parser asr.lpython/asr-asdl))
-
-
-;;; Some of the following gadgets collide with "parsed.clj," which
-;;; works on the snapshot data in "asr_snapshot.clj". Use explicit
-;;; namespaces, e.g. asr.parsed/speclets:
-
-
-(def speclets
-  (vec (rest
-        ((-> (zip/vector-zip asr-asdl-hiccup)
-             zip/down zip/right zip/right) 0))))
-
-
-;;; The snapshot has fewer speclets:
-
-
-#_(count asr.parsed/speclets)
-;; => 28
-
-#_(count speclets)
-;; => 30
-
-
-;;; But the CODE in asr.parsed works on both the snapshot and on
-;;; the live ASR:
-
-
-(def big-map-of-speclets-from-terms
-  (apply hash-map
-         (mapcat identity ;; flatten one level
-                 (map
-                  (comp map-pair-from-speclet-map
-                        hashmap-from-speclet)
-                  speclets))))
-
-
-;;; Inspect the count of speclets by pretty-printing to a
-;;; comment (C-c C-f C-v C-c e):
-
-
-#_(count big-map-of-speclets-from-terms)
-;; => 30
-
-
-;;  _    _        _ _    _          __      _         __  __
-;; | |__(_)__ _  | (_)__| |_   ___ / _|  __| |_ _  _ / _|/ _|
-;; | '_ \ / _` | | | (_-<  _| / _ \  _| (_-<  _| || |  _|  _|
-;; |_.__/_\__, | |_|_/__/\__| \___/_|   /__/\__|\_,_|_| |_|
-;;        |___/
-
-
-(def big-list-of-stuff
-  (mapcat
-   identity                             ; Flatten once.
-   (map (fn [speclet]
-          (let [[term forms] speclet]
-            (map
-             (partial
-              stuff-from-term-form term)
-             forms)))
-        big-map-of-speclets-from-terms)))
-
-
-(def lookup-stuff-by-head
-  (into {} (map (fn [stuff]
-                  [(symbol (name (:head stuff)))
-                   stuff])
-                big-list-of-stuff)))
 
 
 ('TranslationUnit lookup-stuff-by-head)
@@ -461,6 +366,21 @@
     stuff))
 
 
+(defn term-from-head-sym
+  "Summarize from 'big-symdict-by-head."
+  [sym]
+  (cond
+    (= sym 'SymbolTable) 'symbol   ; no spec for this in ASDL
+    (= sym 'ForTest)     'testing  ; ditto
+    :else (symbol ; strip quotes
+           (name ; strip namespace
+            (:term ; fetch
+             (sym big-symdict-by-head))))))
+
+
+(defmulti eval-symbol first)            ; forward reference
+
+
 (defn eval-node
   "sketch"
   [node]
@@ -469,6 +389,10 @@
     (cond  ; order matters ...
       ;;------------------------------------------------
       (symbol? node)  ; then
+      ;(cond
+      ;  (node asr.groupings/flat-composite-heads-set)
+      ;  (case (term-from-head-sym node)
+      ;    'symbol ((eval-symbol node) penv)))
       (let [stuff (node big-symdict-by-head)]
         (or stuff (echo node)))
       ;;------------------------------------------------
@@ -519,9 +443,6 @@
 ;;  ___ _  _____ _/ / ____  _/|
 ;; / -_) |/ / _ `/ / /___/ > _<
 ;; \__/|___/\_,_/_/        |/
-
-
-(defmulti eval-symbol first)            ; forward reference
 
 
 (defn eval-bindings
@@ -594,18 +515,6 @@
 ;;; docstrings are apparently not allowed in defmethod. For
 ;;; convenience, treat SymbolTable as if it were an ASR symbol.
 ;;; SymbolTable is not actually specified in ASR.
-
-
-(defn term-from-head-sym
-  "Summarize from 'big-symdict-by-head."
-  [sym]
-  (cond
-    (= sym 'SymbolTable) 'symbol   ; no spec for this in ASDL
-    (= sym 'ForTest)     'testing  ; ditto
-    :else (symbol ; strip quotes
-           (name ; strip namespace
-            (:term ; fetch
-             (sym big-symdict-by-head))))))
 
 
 (defmethod eval-symbol 'Program

@@ -1,5 +1,104 @@
 (ns asr.groupings
-  [:require [asr.asr :refer [big-map-of-speclets-from-terms]]])
+  (:require
+    [clojure.zip :as zip]
+    [asr.parsed :refer [
+                        shallow-map-from-speclet,
+                        hashmap-from-speclet,
+                        map-pair-from-speclet-map,
+
+                        kind-from-form,
+                        head-from-kind-form,
+                        stuff-from-term-form,
+                        ]])
+  ;[:require [asr.asr :refer [big-map-of-speclets-from-terms]]]
+  )
+
+
+;;; See grammar.clj for deeper documentation on terminology, here.
+
+
+;;                  _     _
+;;  ____ __  ___ __| |___| |_ ___
+;; (_-< '_ \/ -_) _| / -_)  _(_-<
+;; /__/ .__/\___\__|_\___|\__/__/
+;;    |_|
+
+
+;;; Parse the current, live ASR.ASDL, not the snapshot hard-coded
+;;; in "asr_snapshot.clj".
+
+
+(def asr-asdl-hiccup
+  (asr.grammar/asdl-parser asr.lpython/asr-asdl))
+
+
+;;; Some of the following gadgets collide with "parsed.clj," which
+;;; works on the snapshot data in "asr_snapshot.clj". Use explicit
+;;; namespaces, e.g. asr.parsed/speclets:
+
+
+(def speclets
+  (vec (rest
+         ((-> (zip/vector-zip asr-asdl-hiccup)
+              zip/down zip/right zip/right) 0))))
+
+
+;;; The snapshot has fewer speclets:
+
+
+#_(count asr.parsed/speclets)
+;; => 28
+
+#_(count speclets)
+;; => 30
+
+
+;;; But the CODE in asr.parsed works on both the snapshot and on
+;;; the live ASR:
+
+
+(def big-map-of-speclets-from-terms
+  (apply hash-map
+         (mapcat identity                                   ;; flatten one level
+                 (map
+                   (comp map-pair-from-speclet-map
+                         hashmap-from-speclet)
+                   speclets))))
+
+
+;;; Inspect the count of speclets by pretty-printing to a
+;;; comment (C-c C-f C-v C-c e):
+
+
+#_(count big-map-of-speclets-from-terms)
+;; => 30
+
+
+;;  _    _        _ _    _          __      _         __  __
+;; | |__(_)__ _  | (_)__| |_   ___ / _|  __| |_ _  _ / _|/ _|
+;; | '_ \ / _` | | | (_-<  _| / _ \  _| (_-<  _| || |  _|  _|
+;; |_.__/_\__, | |_|_/__/\__| \___/_|   /__/\__|\_,_|_| |_|
+;;        |___/
+
+
+(def big-list-of-stuff
+  (mapcat
+    identity                                                ; Flatten once.
+    (map (fn [speclet]
+           (let [[term forms] speclet]
+             (map
+               (partial
+                 stuff-from-term-form term)
+               forms)))
+         big-map-of-speclets-from-terms)))
+
+
+(def lookup-stuff-by-head
+  (into {} (map (fn [stuff]
+                  [(symbol (name (:head stuff)))
+                   stuff])
+                big-list-of-stuff)))
+
 
 ;;    _   ___ ___
 ;;   /_\ / __| _ \  __ _ _ _ ___ _  _ _ __ ___
@@ -85,14 +184,14 @@
   forms) have the same group key, :ASDL-SYMCONST, :ASDL-TUPLE,
   or :ASDL-COMPOSITE. See grammar.clj."
   (group-by
-   (fn [speclet]   ; e.g.,
-     (->> speclet  ; [:asr.autospecs/abi ({:ASDL-SYMCONST "Source"} ...)]
-          second   ; ({:ASDL-SYMCONST "Source"} ...)
-          first    ; {:ASDL-SYMCONST "Source"}
-          keys     ; (:ASDL-SYMCONST)
-          first)   ; :ASDL-SYMCONST
-     )
-   big-map-of-speclets-from-terms))
+    (fn [speclet]                                           ; e.g.,
+      (->> speclet                                          ; [:asr.autospecs/abi ({:ASDL-SYMCONST "Source"} ...)]
+           second                                           ; ({:ASDL-SYMCONST "Source"} ...)
+           first                                            ; {:ASDL-SYMCONST "Source"}
+           keys                                             ; (:ASDL-SYMCONST)
+           first)                                           ; :ASDL-SYMCONST
+      )
+    big-map-of-speclets-from-terms))
 
 
 ;;; There are three groups of
@@ -167,17 +266,12 @@
 
 
 (def flat-symconst-terms-set
-  (->> (:ASDL-SYMCONST asr-groups)
-       (symbolize-terms)
+  (->> asr-groups
+       :ASDL-SYMCONST
+       symbolize-terms
        set))
 
-(def flat-symconst-terms-set
-  (->> asr-groups
-      :ASDL-SYMCONST
-      symbolize-terms
-      set))
-
-#_flat-symconst-terms-set ; fourteen of them
+#_flat-symconst-terms-set                                   ; fourteen of them
 ;; => #{cmpop
 ;;      arraystorage
 ;;      deftype
@@ -195,7 +289,7 @@
        set))
 
 
-#_flat-composite-terms-set ; ten of them
+#_flat-composite-terms-set                                  ; ten of them
 ;; => #{tbind
 ;; ...
 ;;      unit
@@ -213,14 +307,14 @@
        set))
 
 
-#_flat-tuple-terms-set ; six of them
+#_flat-tuple-terms-set                                      ; six of them
 ;; => #{attribute_arg
 ;;      alloc_arg
 ;;      do_loop_head
 ;;      call_arg
 ;;      array_index
 ;;      dimension
-}
+
 
 
 ;;   _______                                    __
@@ -285,14 +379,14 @@
 ;;; Check that for the example:
 
 
-#_(let [forms         (map second (get-symconsts))
-      a-form        (first forms)
-      count-checked ((partial check-counts 1) a-form)
-      key-checked   ((partial check-firsts :ASDL-SYMCONST)
+#_(let [forms (map second (get-symconsts))
+        a-form (first forms)
+        count-checked ((partial check-counts 1) a-form)
+        key-checked ((partial check-firsts :ASDL-SYMCONST)
                      (map first count-checked))
-      ]
-  key-checked
-  )
+        ]
+    key-checked
+    )
 ;; => ([:ASDL-SYMCONST "Source"]
 ;;     [:ASDL-SYMCONST "LFortranModule"]
 ;;     [:ASDL-SYMCONST "GFortranModule"]
@@ -305,14 +399,14 @@
 ;;; fetch the vals and symbolize them to rid the double quotes:
 
 
-#_(let [forms         (map second (get-symconsts))
-      a-form        (first forms)
-      _             ((partial check-counts 1) a-form)
-      _             ((partial check-firsts :ASDL-SYMCONST)
-                     (map first a-form))
-      vals-         (map :ASDL-SYMCONST a-form)
-      syms-         (map symbol vals-)]
-  syms-)
+#_(let [forms (map second (get-symconsts))
+        a-form (first forms)
+        _ ((partial check-counts 1) a-form)
+        _ ((partial check-firsts :ASDL-SYMCONST)
+           (map first a-form))
+        vals- (map :ASDL-SYMCONST a-form)
+        syms- (map symbol vals-)]
+    syms-)
 ;; => (Source LFortranModule GFortranModule BindC Interactive Intrinsic)
 
 
@@ -325,17 +419,17 @@
   "The ->> macro does not debug cleanly on this construction, so we
   back off to a 'let.'"
   [group]
-  (let [forms  (map second group)
-        _      (map (partial check-counts 1) forms)
-        _      (map (partial check-firsts :ASDL-SYMCONST)
-                    (map first forms))
-        vals-  (map (partial map :ASDL-SYMCONST) forms)
-        syms-  (map (partial map symbol) vals-)]
+  (let [forms (map second group)
+        _ (map (partial check-counts 1) forms)
+        _ (map (partial check-firsts :ASDL-SYMCONST)
+               (map first forms))
+        vals- (map (partial map :ASDL-SYMCONST) forms)
+        syms- (map (partial map symbol) vals-)]
     syms-))
 
 
 #_(->> (get-symconsts)
-     (symbolize-symconst-heads))
+       (symbolize-symconst-heads))
 ;; => ((Source          LFortranModule      GFortranModule
 ;;      BindC           Interactive         Intrinsic)
 ;;     (Eq NotEq Lt LtE Gt GtE)
@@ -364,20 +458,20 @@
 
 
 #_(->> (get-symconsts)
-     (symbolize-symconst-heads)
-     (mapcat identity)
-     count)
+       (symbolize-symconst-heads)
+       (mapcat identity)
+       count)
 ;; => 74
 
 
 (def flat-symconst-heads-set
   (->> (get-symconsts)
-      symbolize-symconst-heads
-      (mapcat identity)
-      set))
+       symbolize-symconst-heads
+       (mapcat identity)
+       set))
 
 
-#_flat-symconst-heads-set ; 74 of them
+#_flat-symconst-heads-set                                   ; 74 of them
 ;; => #{ComplexToReal
 ;;      ReturnVar
 ;;      Source
@@ -428,9 +522,9 @@
 ;;; Here are the forms of the first tuple, as an example:
 
 
-#_(let [forms  (map second (get-tuples))
-      a-form (first forms)]
-  a-form)
+#_(let [forms (map second (get-tuples))
+        a-form (first forms)]
+    a-form)
 ;; => ({:ASDL-TUPLE "asr-tuple12765",
 ;;      :ASDL-ARGS
 ;;      ({:ASDL-TYPE "expr",
@@ -442,13 +536,13 @@
 ;;; check that the keyword is :ASDL-TUPLE:
 
 
-#_(let [forms  (map second (get-tuples))
-      a-form (first forms)
-      _      ((partial check-count 1) a-form)
-      _      ((partial check-counts 2) a-form)
-      _      ((partial check-first :ASDL-TUPLE)
-              (->> a-form first first))]
-  a-form)
+#_(let [forms (map second (get-tuples))
+        a-form (first forms)
+        _ ((partial check-count 1) a-form)
+        _ ((partial check-counts 2) a-form)
+        _ ((partial check-first :ASDL-TUPLE)
+           (->> a-form first first))]
+    a-form)
 ;; => ({:ASDL-TUPLE "asr-tuple12765",
 ;;      :ASDL-ARGS
 ;;      ({:ASDL-TYPE "expr",
@@ -459,16 +553,16 @@
 ;;; Now get the vals, check singleton, flatten and symbolize:
 
 
-#_(let [forms  (map second (get-tuples))
-      a-form (first forms)
-      _      ((partial check-count 1) a-form)
-      _      ((partial check-counts 2) a-form)
-      _      ((partial check-first :ASDL-TUPLE)
-              (->> a-form first first))
-      vals-  (map :ASDL-TUPLE a-form)
-      flat1  (first vals-)
-      sym    (symbol flat1)]
-  sym)
+#_(let [forms (map second (get-tuples))
+        a-form (first forms)
+        _ ((partial check-count 1) a-form)
+        _ ((partial check-counts 2) a-form)
+        _ ((partial check-first :ASDL-TUPLE)
+           (->> a-form first first))
+        vals- (map :ASDL-TUPLE a-form)
+        flat1 (first vals-)
+        sym (symbol flat1)]
+    sym)
 ;; => asr-tuple12765
 
 ;;; Note that the "head" is a gensymmed (made-up) symbol. See
@@ -484,21 +578,21 @@
 
 (defn symbolize-tuple-heads
   [group]
-  (let [forms  (map second group)
-        _      ((partial check-counts 1) forms)
-        _      (map (partial check-counts 2) forms)
-        _      (map (partial check-first :ASDL-TUPLE)
-                    (->> forms (map first) (map first)))
-        vals-  (map (partial map :ASDL-TUPLE) forms)
+  (let [forms (map second group)
+        _ ((partial check-counts 1) forms)
+        _ (map (partial check-counts 2) forms)
+        _ (map (partial check-first :ASDL-TUPLE)
+               (->> forms (map first) (map first)))
+        vals- (map (partial map :ASDL-TUPLE) forms)
         flats1 (map first vals-)
-        syms-  (map symbol flats1)]
+        syms- (map symbol flats1)]
     syms-))
 
 
 (def flat-tuple-heads-set
-(->> (get-tuples)
-     symbolize-tuple-heads
-     set))
+  (->> (get-tuples)
+       symbolize-tuple-heads
+       set))
 
 
 #_flat-tuple-heads-set
@@ -526,7 +620,7 @@
 (defn flip [f] (fn [x y] (f y x)))
 
 
-(def  third  (partial (flip nth) 2))
+(def third (partial (flip nth) 2))
 
 
 ;;; Convert asr-groups to a vec so "third" will work on it:
@@ -569,15 +663,15 @@
 ;;; of one composite:
 
 
-#_(let [forms  (map second (get-composites))
-      a-form (nth forms 2)
-      _      (map (partial check-firsts :ASDL-COMPOSITE)
-                  a-form)
-      vals-  (map :ASDL-COMPOSITE a-form)
-      heads- (map :ASDL-HEAD vals-)
-      syms-  (map symbol heads-)
-      ]
-  syms-)
+#_(let [forms (map second (get-composites))
+        a-form (nth forms 2)
+        _ (map (partial check-firsts :ASDL-COMPOSITE)
+               a-form)
+        vals- (map :ASDL-COMPOSITE a-form)
+        heads- (map :ASDL-HEAD vals-)
+        syms- (map symbol heads-)
+        ]
+    syms-)
 ;; => (CaseStmt CaseStmt_Range)
 
 
@@ -586,18 +680,18 @@
 
 (defn symbolize-composite-heads
   [_]
-  (let [forms   (map second (get-composites))
-        valss-  (map #(map :ASDL-COMPOSITE %) forms)
+  (let [forms (map second (get-composites))
+        valss- (map #(map :ASDL-COMPOSITE %) forms)
         headss- (map #(map :ASDL-HEAD %) valss-)
-        symss-  (map #(map symbol %) headss-)]
+        symss- (map #(map symbol %) headss-)]
     symss-))
 
 
 (def flat-composite-heads-set
-(->> (get-composites)
-     symbolize-composite-heads
-     (mapcat identity)
-     set))
+  (->> (get-composites)
+       symbolize-composite-heads
+       (mapcat identity)
+       set))
 
 
 #_flat-composite-heads-set
@@ -675,18 +769,15 @@
 ;;     (TranslationUnit))
 
 
-
-
-
 ;;; It's interesting to count them all:
 
 
 #_(let [ccs (get-composites)
-      terms (->> ccs symbolize-terms)
-      head-counts
-      (->> (symbolize-composite-heads ccs)
-           (map count))]
-  (interleave terms head-counts))
+        terms (->> ccs symbolize-terms)
+        head-counts
+        (->> (symbolize-composite-heads ccs)
+             (map count))]
+    (interleave terms head-counts))
 ;; => (restriction_arg  1
 ;;     type_stmt        1
 ;;     case_stmt        2
@@ -703,7 +794,7 @@
 
 
 #_(->> big-map-of-speclets-from-terms
-     (map first))
+       (map first))
 ;; 01  abi             call_arg        do_loop_head    restriction_arg
 ;; 02  cmpop           type_stmt       access          storage_type
 ;; 03  intent          case_stmt       enumtype        alloc_arg
@@ -719,14 +810,14 @@
 
 
 #_(defn fetch-pair [key map]
-  [key (key map)])
+    [key (key map)])
 
 
 #_(->> big-map-of-speclets-from-terms
-     (fetch-pair :asr.autospecs/symbol)
-     columnize-term
-     :heads
-     count)
+       (fetch-pair :asr.autospecs/symbol)
+       columnize-term
+       :heads
+       count)
 ;; => 14
 ;;  Program             Module              Function
 ;;  GenericProcedure    CustomOperator      ExternalSymbol
@@ -736,10 +827,10 @@
 
 
 #_(->> big-map-of-speclets-from-terms
-     (fetch-pair :asr.autospecs/expr)
-     columnize-term
-     :heads
-     count)
+       (fetch-pair :asr.autospecs/expr)
+       columnize-term
+       :heads
+       count)
 ;; => 86
 ;; 01 IfExp                   ComplexConstructor      NamedExpr
 ;; 02 FunctionCall            StructTypeConstructor   EnumTypeConstructor
@@ -773,10 +864,10 @@
 
 
 #_(->> big-map-of-speclets-from-terms
-     (fetch-pair :asr.autospecs/stmt)
-     columnize-term
-     :heads
-     count)
+       (fetch-pair :asr.autospecs/stmt)
+       columnize-term
+       :heads
+       count)
 ;; => 44
 ;; 01 Allocate            Assign              Assignment          Associate
 ;; 02 Cycle               ExplicitDeallocate  ImplicitDeallocate  DoConcurrentLoop
@@ -792,5 +883,5 @@
 
 
 #_(->> big-map-of-speclets-from-terms
-     (fetch-pair :asr.autospecs/call_arg)
-     columnize-term)
+       (fetch-pair :asr.autospecs/call_arg)
+       columnize-term)

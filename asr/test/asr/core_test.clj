@@ -2272,7 +2272,7 @@
            (->> (group-by
                  :group
                  (map asr.columnize/columnize-term
-                      asr.asr/big-map-of-speclets-from-terms))
+                      asr.groupings/big-map-of-speclets-from-terms))
                 (map second)
                 (map count))))))
 
@@ -2304,7 +2304,7 @@
 (deftest no-duplicated-heads
   (testing "no duplicated heads, even as symbolized names (without namespace
   qualification)"
-    (let [lyst  asr.asr/big-list-of-stuff
+    (let [lyst  asr.groupings/big-list-of-stuff
           heads (map :head lyst)
           syms  (map (comp symbol name) heads)]
       (is (= (count lyst)
