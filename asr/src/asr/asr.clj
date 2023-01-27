@@ -339,8 +339,10 @@
   "TODO: can race"
   []
   (let [glob @ΓΣ]
-    (doseq [s (keys glob)]
-      (nkecho {s (:φ (keys @(glob s)))}))))
+    (nkecho
+     (map
+      (fn [s] {s (keys (:φ @(glob s)))})
+      (keys glob)))))
 
 
 (defn dump-penv-keys
@@ -361,18 +363,14 @@
               :integer-id integer-id    ; int
               :bindings   bindings      ; dict
               :penv       np            ; Environment
-              }
-          _ (plnecho (keys @ΓΣ))
-          _ (echo (keys bindings))
-          _ (echo (keys (:φ @np)))
-          ;; _ (dump-penv-keys penv)
-          ;; _ (dump-global-keys)
-          ]                             ; inspect in debugger
+              }]
+      (plnecho integer-id)
       (swap! ΓΣ
              (fn [old]
                (into
                 old
                 {integer-id np})))
+      (dump-global-keys)
       ts)))
 
 
