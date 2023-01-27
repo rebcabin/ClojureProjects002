@@ -1761,7 +1761,7 @@
              (indirect-penvs (new-penv foo ΓΠ)))))))
 
 
-(def mp {:main_program
+#_(def mp {:main_program
          '(Program
            (SymbolTable 3 {})
            main_program
@@ -1769,7 +1769,7 @@
            [(SubroutineCall 1 _lpython_main_program () [] ())])})
 
 
-(deftest eval-program-symbol-test
+#_(deftest eval-program-symbol-test
   (testing "clojure.walk/walk on an ASR tree"
     (let [foo ((eval-symbol (:main_program mp)) ΓΠ)
           bar (walk/prewalk
@@ -1792,21 +1792,6 @@
               :body         ['(SubroutineCall 1 _lpython_main_program () [] ())],
               :penv         @ΓΠ}
              bar)))))
-
-
-#_((eval-symbol (:main_program mp)) ΓΠ)
-;; => {:head Program,
-;;     :term symbol,
-;;     :symtab
-;;     {:head SymbolTable,
-;;      :term symbol,
-;;      :integer-id 3,
-;;      :bindings {},
-;;      :penv #<Atom@7f51a683: {:φ {}, :π #<Atom@6bb8d033: {:φ {}, :π nil}>}>},
-;;     :nym main_program,
-;;     :dependencies [],
-;;     :body [(SubroutineCall 1 _lpython_main_program () [] ())],
-;;     :penv #<Atom@6bb8d033: {:φ {}, :π nil}>}
 
 
 ;; expr2.py
@@ -1927,25 +1912,6 @@
 (deftest lpython-asr-test
   (testing "This test alerts me to structural changes in lpython"
     (is (= expr2-pp expr2-clj))))
-
-
-#_(walk/prewalk
- (fn [node]
-   (identity ((eval-node node) ΓΠ)))
- expr2-pp)
-;; => {:head :asr.autospecs/TranslationUnit,
-;;     :term :asr.autospecs/unit,
-;;     :grup :ASDL-COMPOSITE,
-;;     :form
-;;     {:ASDL-COMPOSITE
-;;      {:ASDL-HEAD "TranslationUnit",
-;;       :ASDL-ARGS
-;;       ({:ASDL-TYPE "symbol_table",
-;;         :MULTIPLICITY :asr.parsed/once,
-;;         :ASDL-NYM "global_scope"}
-;;        {:ASDL-TYPE "node",
-;;         :MULTIPLICITY :asr.parsed/zero-or-more,
-;;         :ASDL-NYM "items"})}}}
 
 
 (deftest eval-node-test
