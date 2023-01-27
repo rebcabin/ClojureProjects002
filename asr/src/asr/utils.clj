@@ -15,7 +15,7 @@
   "just the value, please"
   [x]
   `(let [x# ~x]
-     (do (println "~~>" x#)
+     (do (print "~~>" (with-out-str (clojure.pprint/pprint x#)))
          x#)))
 
 

@@ -1,5 +1,6 @@
 (ns asr.environment
-  (:use clojure.set))
+  (:use clojure.set)
+  (:require [clojure.pprint :as pp]))
 
 
 ;;  ___         _                            _
@@ -110,3 +111,15 @@
              true r))))
 
 
+(let [f (partial format "%x")
+      _ (fn [n] (binding [pp/*print-base* 36
+                          pp/*print-radix* true]
+                  (with-out-str (pp/pprint n))))]
+  (defn dump-penv-chain
+    [penv]
+    (cond
+      (nil? penv) nil
+      :else (cons
+             [(f (hash penv)), (keys (:φ @penv))]
+             (dump-penv-chain (:π @penv))
+             ))))

@@ -345,6 +345,15 @@
       (keys glob)))))
 
 
+(defn dump-global-chains
+  []
+  (let [glob @ΓΣ]
+    (nkecho
+     (map
+      (fn [s] {s (asr.environment/dump-penv-chain (glob s))})
+      (keys glob)))))
+
+
 (defn dump-penv-keys
   [penv]
   (let [env @penv]
@@ -370,7 +379,7 @@
                (into
                 old
                 {integer-id np})))
-      (dump-global-keys)
+      (dump-global-chains)
       ts)))
 
 
