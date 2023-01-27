@@ -1949,19 +1949,6 @@
 
 
 ((eval-node expr2-pp) ΓΠ)
-;; => {:head :asr.autospecs/TranslationUnit,
-;;     :term :asr.autospecs/unit,
-;;     :grup :ASDL-COMPOSITE,
-;;     :form
-;;     {:ASDL-COMPOSITE
-;;      {:ASDL-HEAD "TranslationUnit",
-;;       :ASDL-ARGS
-;;       ({:ASDL-TYPE "symbol_table",
-;;         :MULTIPLICITY :asr.parsed/once,
-;;         :ASDL-NYM "global_scope"}
-;;        {:ASDL-TYPE "node",
-;;         :MULTIPLICITY :asr.parsed/zero-or-more,
-;;         :ASDL-NYM "items"})}}}
 
 
 ((eval-symbol expr2-pp) ΓΠ)
@@ -2015,7 +2002,7 @@
 ;;        main0
 ;;        []
 ;;        []
-;;        [(=
+;;        [(Assignment
 ;;          (Var 2 x)
 ;;          (IntegerBinOp
 ;;           (IntegerBinOp
@@ -2052,15 +2039,11 @@
 ;;        []
 ;;        [(SubroutineCall 1 _lpython_main_program () [] ())])},
 ;;      :penv
-;;      #<Atom@73eb97c0:
+;;      #<Atom@66c5b6c5:
 ;;        {:φ
 ;;         {:_lpython_main_program
 ;;          {:args (),
-;;           :deftype
-;;           {:head :asr.autospecs/Implementation,
-;;            :term :asr.autospecs/deftype,
-;;            :grup :ASDL-SYMCONST,
-;;            :form {:ASDL-SYMCONST "Implementation"}},
+;;           :deftype Implementation,
 ;;           :restrictions (),
 ;;           :side-effect-free false,
 ;;           :type-params (),
@@ -2069,7 +2052,8 @@
 ;;            :term symbol,
 ;;            :integer-id 4,
 ;;            :bindings {},
-;;            :penv #<Atom@be92134: {:φ {}, :π #<Atom@6af86547: {:φ {}, :π nil}>}>},
+;;            :penv #<Atom@36d795a2:
+;;                    {:φ {}, :π #<Atom@5f6f0865: {:φ {}, :π nil}>}>},
 ;;           :is-restriction false,
 ;;           :bindc-name (),
 ;;           :name _lpython_main_program,
@@ -2079,16 +2063,8 @@
 ;;           :deterministic false,
 ;;           :term symbol,
 ;;           :head Function,
-;;           :abi
-;;           {:head :asr.autospecs/Source,
-;;            :term :asr.autospecs/abi,
-;;            :grup :ASDL-SYMCONST,
-;;            :form {:ASDL-SYMCONST "Source"}},
-;;           :access
-;;           {:head :asr.autospecs/Public,
-;;            :term :asr.autospecs/access,
-;;            :grup :ASDL-SYMCONST,
-;;            :form {:ASDL-SYMCONST "Public"}},
+;;           :abi Source,
+;;           :access Public,
 ;;           :pure false,
 ;;           :body
 ;;           ({:head :asr.autospecs/SubroutineCall,
@@ -2115,11 +2091,7 @@
 ;;           :elemental false},
 ;;          :main0
 ;;          {:args (),
-;;           :deftype
-;;           {:head :asr.autospecs/Implementation,
-;;            :term :asr.autospecs/deftype,
-;;            :grup :ASDL-SYMCONST,
-;;            :form {:ASDL-SYMCONST "Implementation"}},
+;;           :deftype Implementation,
 ;;           :restrictions (),
 ;;           :side-effect-free false,
 ;;           :type-params (),
@@ -2143,14 +2115,10 @@
 ;;              Required
 ;;              .false.)},
 ;;            :penv
-;;            #<Atom@2b04e079:
+;;            #<Atom@5a1c327e:
 ;;              {:φ
 ;;               {:x
-;;                {:presence
-;;                 {:head :asr.autospecs/Required,
-;;                  :term :asr.autospecs/presence,
-;;                  :grup :ASDL-SYMCONST,
-;;                  :form {:ASDL-SYMCONST "Required"}},
+;;                {:presence Required,
 ;;                 :name x,
 ;;                 :value (),
 ;;                 :type
@@ -2170,30 +2138,14 @@
 ;;                 :term symbol,
 ;;                 :head Variable,
 ;;                 :symtab-id 2,
-;;                 :abi
-;;                 {:head :asr.autospecs/Source,
-;;                  :term :asr.autospecs/abi,
-;;                  :grup :ASDL-SYMCONST,
-;;                  :form {:ASDL-SYMCONST "Source"}},
-;;                 :intent
-;;                 {:head :asr.autospecs/Local,
-;;                  :term :asr.autospecs/intent,
-;;                  :grup :ASDL-SYMCONST,
-;;                  :form {:ASDL-SYMCONST "Local"}},
-;;                 :storage
-;;                 {:head :asr.autospecs/Default,
-;;                  :term :asr.autospecs/storage_type,
-;;                  :grup :ASDL-SYMCONST,
-;;                  :form {:ASDL-SYMCONST "Default"}},
-;;                 :access
-;;                 {:head :asr.autospecs/Public,
-;;                  :term :asr.autospecs/access,
-;;                  :grup :ASDL-SYMCONST,
-;;                  :form {:ASDL-SYMCONST "Public"}},
+;;                 :abi Source,
+;;                 :intent Local,
+;;                 :storage Default,
+;;                 :access Public,
 ;;                 :dependencies [],
 ;;                 :symbolic-value (),
 ;;                 :value-attr .false.}},
-;;               :π #<Atom@6af86547: {:φ {}, :π nil}>}>},
+;;               :π #<Atom@5f6f0865: {:φ {}, :π nil}>}>},
 ;;           :is-restriction false,
 ;;           :bindc-name (),
 ;;           :name main0,
@@ -2203,19 +2155,26 @@
 ;;           :deterministic false,
 ;;           :term symbol,
 ;;           :head Function,
-;;           :abi
-;;           {:head :asr.autospecs/Source,
-;;            :term :asr.autospecs/abi,
-;;            :grup :ASDL-SYMCONST,
-;;            :form {:ASDL-SYMCONST "Source"}},
-;;           :access
-;;           {:head :asr.autospecs/Public,
-;;            :term :asr.autospecs/access,
-;;            :grup :ASDL-SYMCONST,
-;;            :form {:ASDL-SYMCONST "Public"}},
+;;           :abi Source,
+;;           :access Public,
 ;;           :pure false,
 ;;           :body
-;;           (nil
+;;           ({:head :asr.autospecs/Assignment,
+;;             :term :asr.autospecs/stmt,
+;;             :grup :ASDL-COMPOSITE,
+;;             :form
+;;             {:ASDL-COMPOSITE
+;;              {:ASDL-HEAD "Assignment",
+;;               :ASDL-ARGS
+;;               ({:ASDL-TYPE "expr",
+;;                 :MULTIPLICITY :asr.parsed/once,
+;;                 :ASDL-NYM "target"}
+;;                {:ASDL-TYPE "expr",
+;;                 :MULTIPLICITY :asr.parsed/once,
+;;                 :ASDL-NYM "value"}
+;;                {:ASDL-TYPE "stmt",
+;;                 :MULTIPLICITY :asr.parsed/at-most-once,
+;;                 :ASDL-NYM "overloaded"})}}}
 ;;            {:head :asr.autospecs/Print,
 ;;             :term :asr.autospecs/stmt,
 ;;             :grup :ASDL-COMPOSITE,
@@ -2246,21 +2205,14 @@
 ;;            :term symbol,
 ;;            :integer-id 3,
 ;;            :bindings {},
-;;            :penv #<Atom@504441e0:
-;;                    {:φ {}, :π #<Atom@6af86547: {:φ {}, :π nil}>}>},
+;;            :penv #<Atom@49303fc2:
+;;                    {:φ {}, :π #<Atom@5f6f0865: {:φ {}, :π nil}>}>},
 ;;           :nym main_program,
 ;;           :dependencies [],
 ;;           :body [(SubroutineCall 1 _lpython_main_program () [] ())],
-;;           :penv #<Atom@6af86547: {:φ {}, :π nil}>}},
-;;         :π #<Atom@6af86547: {:φ {}, :π nil}>}>},
+;;           :penv #<Atom@5f6f0865: {:φ {}, :π nil}>}},
+;;         :π #<Atom@5f6f0865: {:φ {}, :π nil}>}>},
 ;;     :items ()}
-
-
-;;                         _
-;;  __ _ _ _ ___ _  _ _ __(_)_ _  __ _ ___
-;; / _` | '_/ _ \ || | '_ \ | ' \/ _` (_-<
-;; \__, |_| \___/\_,_| .__/_|_||_\__, /__/
-;; |___/             |_|         |___
 
 
 (deftest asr-groupings

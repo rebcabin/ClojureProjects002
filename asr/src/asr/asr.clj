@@ -22,50 +22,6 @@
 ;; |_____|___|  \_/  |_____| /_/   \_\____/|_| \_\
 
 
-('TranslationUnit lookup-stuff-by-head)
-;; => {:head :asr.autospecs/TranslationUnit,
-;;     :term :asr.autospecs/unit,
-;;     :grup :ASDL-COMPOSITE,
-;;     :form
-;;     {:ASDL-COMPOSITE
-;;      {:ASDL-HEAD "TranslationUnit",
-;;       :ASDL-ARGS
-;;       ({:ASDL-TYPE "symbol_table",
-;;         :MULTIPLICITY :asr.parsed/once,
-;;         :ASDL-NYM "global_scope"}
-;;        {:ASDL-TYPE "node",
-;;         :MULTIPLICITY :asr.parsed/zero-or-more,
-;;         :ASDL-NYM "items"})}}}
-
-
-;;; Spot-check with CIDER C-c C-e in buffer:
-
-
-#_(count big-list-of-stuff)
-;; => 248
-
-
-#_(first big-list-of-stuff)
-;; => {:head :asr.autospecs/Source,
-;;     :term :asr.autospecs/abi,
-;;     :grup :ASDL-SYMCONST,
-;;     :form {:ASDL-SYMCONST "Source"}}
-
-
-;;; Compare against the testing snapshot:
-
-
-#_(count asr.parsed/big-list-of-stuff)
-;; => 227
-
-
-#_(first asr.parsed/big-list-of-stuff)
-;; => {:head :asr.autospecs/Source,
-;;     :term :asr.autospecs/abi,
-;;     :grup :ASDL-SYMCONST,
-;;     :form {:ASDL-SYMCONST "Source"}}
-
-
 (def tuple-stuffs
   (filter #(= (:grup %) :ASDL-TUPLE) big-list-of-stuff))
 
@@ -95,236 +51,8 @@
   (filter #(= (:grup %) :ASDL-SYMCONST) big-list-of-stuff))
 
 
-;;; Spot-check with CIDER C-c C-e in buffer.
-
-
-;; (count symconst-stuffs)
-;; => 74
-
-
-;; (first symconst-stuffs)
-;; => {:head :asr.autospecs/Source,
-;;     :term :asr.autospecs/abi,
-;;     :grup :ASDL-SYMCONST,
-;;     :form {:ASDL-SYMCONST "Source"}}
-
-
-;; (count asr.parsed/symconst-stuffs)
-;; => 72
-
-
-;; (first asr.parsed/symconst-stuffs)
-;; => {:head :asr.autospecs/Source,
-;;     :term :asr.autospecs/abi,
-;;     :grup :ASDL-SYMCONST,
-;;     :form {:ASDL-SYMCONST "Source"}}
-
-
 (def composite-stuffs
   (filter #(= (:grup %) :ASDL-COMPOSITE) big-list-of-stuff))
-
-;;; Spot-check with CIDER C-c C-e in buffer
-
-
-;;; These are promoted to ../../tests/asr/core_test.clj
-#_(count composite-stuffs)
-;; => 168
-#_(let [ccs (get-composites)
-      head-counts
-      (->> ccs (symbolize-composite-heads)
-           (map count))]
-  (apply + head-counts))
-;; => 168
-
-
-#_(first composite-stuffs)
-;; => {:head :asr.autospecs/RestrictionArg,
-;;     :term :asr.autospecs/restriction_arg,
-;;     :grup :ASDL-COMPOSITE,
-;;     :form
-;;     {:ASDL-COMPOSITE
-;;      {:ASDL-HEAD "RestrictionArg",
-;;       :ASDL-ARGS
-;;       ({:ASDL-TYPE "identifier",
-;;         :MULTIPLICITY :asr.parsed/once,
-;;         :ASDL-NYM "restriction_name"}
-;;        {:ASDL-TYPE "symbol",
-;;         :MULTIPLICITY :asr.parsed/once,
-;;         :ASDL-NYM "restriction_func"})}}}
-
-
-#_(count asr.parsed/composite-stuffs)
-;; => 149
-
-
-#_(first asr.parsed/composite-stuffs)
-;; => {:head :asr.autospecs/CaseStmt,
-;;     :term :asr.autospecs/case_stmt,
-;;     :grup :ASDL-COMPOSITE,
-;;     :form
-;;     {:ASDL-COMPOSITE
-;;      {:ASDL-HEAD "CaseStmt",
-;;       :ASDL-ARGS
-;;       ({:ASDL-TYPE "expr",
-;;         :MULTIPLICITY :asr.parsed/zero-or-more,
-;;         :ASDL-NYM "test"}
-;;        {:ASDL-TYPE "stmt",
-;;         :MULTIPLICITY :asr.parsed/zero-or-more,
-;;         :ASDL-NYM "body"})}}}
-
-
-;; (def raw-composite-heads
-;;   (->> composite-stuffs
-;;        (map :head)
-;;        (map name)  ; strip namespace
-;;        set
-;;        ))
-;; ;; (count raw-composite-heads)
-
-
-;; (def raw-snapshot-composite-heads
-;;   (->> asr.parsed/composite-stuffs
-;;        (map :head)
-;;        (map name)
-;;        set
-;;        ))
-;; ;; (count raw-snapshot-composite-heads)
-
-
-;; (defn get-names [specs]
-;;   (->> specs
-;;        asr.autospecs/heads-for-composite
-;;        (map name)
-;;        set
-;;        ))
-
-
-;;; These are the left-hand sides (terms) of all speclets in a
-;;; current version of ASR.asdl, NOT the snapshot
-
-;;; 001 unit
-;;; 002 symbol
-;;; 003 storage_type
-;;; 004 access
-;;; 005 intent
-;;; 006 deftype
-;;; 007 presence
-;;; 008 abi
-;;; 009 stmt
-;;; 010 expr
-;;; 011 ttype
-;;; 012 restriction_arg
-;;; 013 binop
-;;; 014 logicalbinop
-;;; 015 cmpop
-;;; 016 integerboz
-;;; 017 arraybound
-;;; 018 arryastorage
-;;; 019 cast_kind
-;;; 020 dimension
-;;; 021 alloc_arg
-;;; 022 attribute
-;;; 023 attribute_arg
-;;; 024 call_arg
-;;; 025 tbind
-;;; 026 array_index
-;;; 027 do_loop_head
-;;; 028 case_stmt
-;;; 029 type_stmt
-;;; 030 enumtype
-
-;;; Let's see what the reader finds; it should find 30 "terms."
-;;; The count of speclets equals the number of terms.
-
-;; (count speclets)
-
-;;; The snapshot has 28 terms. This number does not change as
-;;; ASR.asdl is updated.
-
-;; (count asr.parsed/speclets)
-
-;; ;;; The following un-commented sets have autospecs:
-
-;; (get-names :asr.autospecs/unit)
-;; (get-names :asr.autospecs/symbol)
-;; #_(get-names :asr.autospecs/storage_type)
-;; #_(get-names :asr.autospecs/access)
-;; #_(get-names :asr.autospecs/intent)
-;; #_(get-names :asr.autospecs/deftype)
-;; #_(get-names :asr.autospecs/presence)
-;; #_(get-names :asr.autospecs/abi)
-;; (get-names :asr.autospecs/stmt)
-;; (get-names :asr.autospecs/expr)
-;; (get-names :asr.autospecs/ttype)
-;; (get-names :asr.autospecs/restriction_arg)
-;; #_(get-names :asr.autospecs/binop)
-;; #_(get-names :asr.autospecs/logicalbinop)
-;; #_(get-names :asr.autospecs/cmpop)
-;; #_(get-names :asr.autospecs/integerboz)
-;; #_(get-names :asr.autospecs/arraybound)
-;; (get-names :asr.autospecs/arryastorage)
-;; #_(get-names :asr.autospecs/cast_kind)
-;; #_(get-names :asr.autospecs/dimension)
-;; #_(get-names :asr.autospecs/alloc_arg)
-;; (get-names :asr.autospecs/attribute)
-;; #_(get-names :asr.autospecs/attribute_arg)
-;; #_(get-names :asr.autospecs/call_arg)
-;; (get-names :asr.autospecs/tbind)
-;; #_(get-names :asr.autospecs/array_index)
-;; #_(get-names :asr.autospecs/do_loop_head)
-;; (get-names :asr.autospecs/case_stmt)
-;; (get-names :asr.autospecs/type_stmt)
-;; (get-names :asr.autospecs/enumtype)
-
-
-;; (def cooked-composite-heads
-;;   (let [exprs     (get-names :asr.autospecs/expr)
-;;         stmts     (get-names :asr.autospecs/stmt)
-;;         ttypes    (get-names :asr.autospecs/ttype)
-;;         symbols   (get-names :asr.autospecs/symbol)
-;;         ctexprs   (count exprs)
-;;         ctstmts   (count stmts)
-;;         ctttypes  (count ttypes)
-;;         ctsymbols (count symbols)
-;;         sum (+ ctexprs ctstmts ctttypes ctsymbols)
-;;         all (clojure.set/union exprs stmts ttypes symbols)]
-;;     {:ctexprs ctexprs, :ctstmts ctstmts,
-;;      :ctttypes ctttypes, :ctsymbols ctsymbols,
-;;      :sum sum,
-;;      :subset?
-;;      (clojure.set/subset?
-;;       all
-;;       raw-composite-heads),
-;;      :raw-all-difference
-;;      (clojure.set/difference
-;;       raw-composite-heads
-;;       all),
-;;      :all-raw-difference
-;;      (clojure.set/difference
-;;       all,
-;;       raw-composite-heads)}))
-
-;; (count raw-composite-heads)
-;; cooked-composite-heads
-;; (count cooked-composite-heads)
-
-;; (take 5 raw-composite-heads)
-
-;; (take 5 cooked-composite-heads)
-
-;; (clojure.set/subset? cooked-composite-heads raw-composite-heads)
-
-;; (count (clojure.set/difference raw-composite-heads cooked-composite-heads))
-
-;; (filter #(= (:head %) :asr.autospecs/TypeStmt) composite-stuffs)
-
-;; (def tuple-stuffs
-;;   (filter #(= (:grup %) :ASDL-TUPLE) big-list-of-stuff))
-
-;; ;; spot-check with CIDER C-c C-e in buffer
-
-;; (count tuple-stuffs)
-;; (first tuple-stuffs)
 
 
 ;;  ___ _        ___               _ _    _     _           _  _             _
@@ -381,38 +109,103 @@
 (defmulti eval-symbol first)            ; forward reference
 
 
+(defmulti eval-expr first)
+
+
+(defmulti eval-stmt first)
+
+
+(defmethod eval-stmt 'SubroutineCall
+  [node]
+  (quote node))
+
+
+(defmethod eval-stmt 'Assignment
+  [node]
+  (quote node))
+
+
+(defmethod eval-stmt 'Print
+  [node]
+  (quote node))
+
+
+(defmulti eval-tuple first)
+
+
+(defmulti eval-ttype first)
+
+
+(defmethod eval-ttype 'Integer
+  [node]
+  (quote node))
+
+
+(defmulti eval-unit first)
+
+
 (defn eval-node
   "sketch"
   [node]
   (fn [penv]
 
-    (cond  ; order matters ...
+    (cond       ; order matters ...
       ;;------------------------------------------------
-      (symbol? node)  ; then
+      (symbol? node)                    ; then
       (cond
-       (node asr.groupings/flat-composite-heads-set)
-       (case (term-from-head-sym node)
-         'symbol ((eval-symbol node) penv))
-       (node asr.groupings/flat-symconst-heads-set)
-       node  ; TODO
-       (node asr.groupings/flat-tuple-terms-set)
-       node  ; TODO
-       :else
-       node
-       )
-      ;; (let [stuff (node big-symdict-by-head)]
-      ;;   (or stuff (echo node)))
+        (node asr.groupings/flat-symconst-heads-set)
+        node                            ; TODO
+
+        (node asr.groupings/flat-tuple-terms-set)
+        (assert false "Not Yet Implemented: asr-tuples") ; TODO
+
+        :else
+        node
+        )
       ;;------------------------------------------------
       (and (coll? node)
-           (empty? node))  ; then
+           (empty? node))               ; then
       node
       ;;------------------------------------------------
-      (list? node)  ; then
-      (let [stuff ((first node) big-symdict-by-head)]
-        ((eval-stuff stuff) penv))
+      (list? node)                      ; then
+      (let [head (first node)
+            com (head asr.groupings/flat-composite-heads-set)
+            con (head asr.groupings/flat-symconst-heads-set)
+            tup (head asr.groupings/flat-tuple-terms-set)
+            smt (= head 'SymbolTable)]
+        (cond
+
+          smt
+          ((eval-symbol node) penv)
+
+          com
+          (let [com- (term-from-head-sym com)]
+            (case com-
+              unit   ((eval-unit   node) penv)
+              symbol ((eval-symbol node) penv)
+              expr   ((eval-expr   node) penv)
+              stmt   ((eval-stmt   node) penv)
+              ttype  ((eval-ttype  node) penv)
+              (assert
+               false
+               (f-str
+                "Not Yet Implemented: composite case {com-}"))
+              ))
+
+          con
+          (assert false (f-str "Shouldn't have the symconst {con} here."))
+
+          tup
+          ((eval-tuple tup) penv)
+
+          :else
+          (assert false (f-str "unclassified head {head} here"))
+          ))
+      ;; (let [stuff ((first node) big-symdict-by-head)]
+      ;;   ((eval-stuff stuff) penv))
       ;;------------------------------------------------
       :else
-      node
+      (plnecho node)
       ;;------------------------------------------------
       )))
 
@@ -686,7 +479,7 @@
              :subroutine     ((eval-symbol sub) penv)})))))
 
 
-(defmethod eval-symbol 'TranslationUnit
+(defmethod eval-unit 'TranslationUnit
   [[head
     global-scope
     items
@@ -699,7 +492,7 @@
     (let [tu {:head         head
               :term         (term-from-head-sym head)
               ;; We know the global-scope is a symbol-table.
-              :global-scope ((eval-symbol global-scope) penv)
+              :global-scope ((eval-node  global-scope) penv)
               :items        ((eval-nodes items) penv)}
           main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))]
       tu
@@ -714,7 +507,6 @@
 ;; |_|  \_,_|_||_|       \___|\_/\__,_|_\___\__,_|
 
 
-
 (defn run-program
   [e]
   (echo e)
@@ -725,261 +517,9 @@
   )
 
 
-@ΓΣ
+; @ΓΣ
 
 
 ;;; The "global scope" or "global symbol registry" ΓΣ is really
 ;;; one below the unique global environment ΓΠ. ΓΣ contains
 ;;; user-defined symbols. ΓΠ contains built-ins.
-
-;; {4
-;;  #<Atom@427a99ab:
-;;    {:φ {}, :π #<Atom@110d2d14: {:φ {}, :π nil}>}>,
-;;  2
-;;  #<Atom@7d9983df:
-;;    {:φ
-;;     {:x
-;;      {:presence
-;;       {:head :asr.autospecs/Required,
-;;        :term :asr.autospecs/presence,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Required"}},
-;;       :name x,
-;;       :value (),
-;;       :type
-;;       {:head :asr.autospecs/Integer,
-;;        :term :asr.autospecs/ttype,
-;;        :grup :ASDL-COMPOSITE,
-;;        :form
-;;        {:ASDL-COMPOSITE
-;;         {:ASDL-HEAD "Integer",
-;;          :ASDL-ARGS
-;;          ({:ASDL-TYPE "int",
-;;            :MULTIPLICITY :asr.parsed/once,
-;;            :ASDL-NYM "kind"}
-;;           {:ASDL-TYPE "dimension",
-;;            :MULTIPLICITY :asr.parsed/zero-or-more,
-;;            :ASDL-NYM "dims"})}}},
-;;       :head Variable,
-;;       :symtab-id 2,
-;;       :abi
-;;       {:head :asr.autospecs/Source,
-;;        :term :asr.autospecs/abi,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Source"}},
-;;       :intent
-;;       {:head :asr.autospecs/Local,
-;;        :term :asr.autospecs/intent,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Local"}},
-;;       :storage
-;;       {:head :asr.autospecs/Default,
-;;        :term :asr.autospecs/storage_type,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Default"}},
-;;       :access
-;;       {:head :asr.autospecs/Public,
-;;        :term :asr.autospecs/access,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Public"}},
-;;       :dependencies [],
-;;       :symbolic-value (),
-;;       :value-attr .false.}},
-;;     :π #<Atom@110d2d14: {:φ {}, :π nil}>}>,
-;;  3
-;;  #<Atom@2ba69af7:
-;;    {:φ {}, :π #<Atom@110d2d14: {:φ {}, :π nil}>}>,
-;;  1
-;;  #<Atom@4b5084d8:
-;;    {:φ
-;;     {:_lpython_main_program
-;;      {:args (),
-;;       :deftype
-;;       {:head :asr.autospecs/Implementation,
-;;        :term :asr.autospecs/deftype,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Implementation"}},
-;;       :restrictions (),
-;;       :type-params (),
-;;       :symtab
-;;       {:head SymbolTable,
-;;        :integer-id 4,
-;;        :bindings {},
-;;        :penv
-;;        #<Atom@427a99ab:
-;;          {:φ {}, :π #<Atom@110d2d14: {:φ {}, :π nil}>}>},
-;;       :is-restriction false,
-;;       :bindc-name (),
-;;       :name _lpython_main_program,
-;;       :static false,
-;;       :return-var (),
-;;       :module false,
-;;       :head Function,
-;;       :abi
-;;       {:head :asr.autospecs/Source,
-;;        :term :asr.autospecs/abi,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Source"}},
-;;       :access
-;;       {:head :asr.autospecs/Public,
-;;        :term :asr.autospecs/access,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Public"}},
-;;       :pure false,
-;;       :body
-;;       ({:head :asr.autospecs/SubroutineCall,
-;;         :term :asr.autospecs/stmt,
-;;         :grup :ASDL-COMPOSITE,
-;;         :form
-;;         {:ASDL-COMPOSITE
-;;          {:ASDL-HEAD "SubroutineCall",
-;;           :ASDL-ARGS
-;;           ({:ASDL-TYPE "symbol",
-;;             :MULTIPLICITY :asr.parsed/once,
-;;             :ASDL-NYM "name"}
-;;            {:ASDL-TYPE "symbol",
-;;             :MULTIPLICITY :asr.parsed/at-most-once,
-;;             :ASDL-NYM "original_name"}
-;;            {:ASDL-TYPE "call_arg",
-;;             :MULTIPLICITY :asr.parsed/zero-or-more,
-;;             :ASDL-NYM "args"}
-;;            {:ASDL-TYPE "expr",
-;;             :MULTIPLICITY :asr.parsed/at-most-once,
-;;             :ASDL-NYM "dt"})}}}),
-;;       :dependencies [main0],
-;;       :inline false,
-;;       :elemental false},
-;;      :main0
-;;      {:args (),
-;;       :deftype
-;;       {:head :asr.autospecs/Implementation,
-;;        :term :asr.autospecs/deftype,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Implementation"}},
-;;       :restrictions (),
-;;       :type-params (),
-;;       :symtab
-;;       {:head SymbolTable,
-;;        :integer-id 2,
-;;        :bindings
-;;        {:x
-;;         (Variable
-;;          2
-;;          x
-;;          []
-;;          Local
-;;          ()
-;;          ()
-;;          Default
-;;          (Integer 4 [])
-;;          Source
-;;          Public
-;;          Required
-;;          .false.)},
-;;        :penv
-;;        #<Atom@7d9983df:
-;;          {:φ
-;;           {:x
-;;            {:presence
-;;             {:head :asr.autospecs/Required,
-;;              :term :asr.autospecs/presence,
-;;              :grup :ASDL-SYMCONST,
-;;              :form {:ASDL-SYMCONST "Required"}},
-;;             :name x,
-;;             :value (),
-;;             :type
-;;             {:head :asr.autospecs/Integer,
-;;              :term :asr.autospecs/ttype,
-;;              :grup :ASDL-COMPOSITE,
-;;              :form
-;;              {:ASDL-COMPOSITE
-;;               {:ASDL-HEAD "Integer",
-;;                :ASDL-ARGS
-;;                ({:ASDL-TYPE "int",
-;;                  :MULTIPLICITY :asr.parsed/once,
-;;                  :ASDL-NYM "kind"}
-;;                 {:ASDL-TYPE "dimension",
-;;                  :MULTIPLICITY :asr.parsed/zero-or-more,
-;;                  :ASDL-NYM "dims"})}}},
-;;             :head Variable,
-;;             :symtab-id 2,
-;;             :abi
-;;             {:head :asr.autospecs/Source,
-;;              :term :asr.autospecs/abi,
-;;              :grup :ASDL-SYMCONST,
-;;              :form {:ASDL-SYMCONST "Source"}},
-;;             :intent
-;;             {:head :asr.autospecs/Local,
-;;              :term :asr.autospecs/intent,
-;;              :grup :ASDL-SYMCONST,
-;;              :form {:ASDL-SYMCONST "Local"}},
-;;             :storage
-;;             {:head :asr.autospecs/Default,
-;;              :term :asr.autospecs/storage_type,
-;;              :grup :ASDL-SYMCONST,
-;;              :form {:ASDL-SYMCONST "Default"}},
-;;             :access
-;;             {:head :asr.autospecs/Public,
-;;              :term :asr.autospecs/access,
-;;              :grup :ASDL-SYMCONST,
-;;              :form {:ASDL-SYMCONST "Public"}},
-;;             :dependencies [],
-;;             :symbolic-value (),
-;;             :value-attr .false.}},
-;;           :π #<Atom@110d2d14: {:φ {}, :π nil}>}>},
-;;       :is-restriction false,
-;;       :bindc-name (),
-;;       :name main0,
-;;       :static false,
-;;       :return-var (),
-;;       :module false,
-;;       :head Function,
-;;       :abi
-;;       {:head :asr.autospecs/Source,
-;;        :term :asr.autospecs/abi,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Source"}},
-;;       :access
-;;       {:head :asr.autospecs/Public,
-;;        :term :asr.autospecs/access,
-;;        :grup :ASDL-SYMCONST,
-;;        :form {:ASDL-SYMCONST "Public"}},
-;;       :pure false,
-;;       :body
-;;       (nil
-;;        {:head :asr.autospecs/Print,
-;;         :term :asr.autospecs/stmt,
-;;         :grup :ASDL-COMPOSITE,
-;;         :form
-;;         {:ASDL-COMPOSITE
-;;          {:ASDL-HEAD "Print",
-;;           :ASDL-ARGS
-;;           ({:ASDL-TYPE "expr",
-;;             :MULTIPLICITY :asr.parsed/at-most-once,
-;;             :ASDL-NYM "fmt"}
-;;            {:ASDL-TYPE "expr",
-;;             :MULTIPLICITY :asr.parsed/zero-or-more,
-;;             :ASDL-NYM "values"}
-;;            {:ASDL-TYPE "expr",
-;;             :MULTIPLICITY :asr.parsed/at-most-once,
-;;             :ASDL-NYM "separator"}
-;;            {:ASDL-TYPE "expr",
-;;             :MULTIPLICITY :asr.parsed/at-most-once,
-;;             :ASDL-NYM "end"})}}}),
-;;       :dependencies [],
-;;       :inline false,
-;;       :elemental false},
-;;      :main_program
-;;      {:head Program,
-;;       :symtab
-;;       {:head SymbolTable,
-;;        :integer-id 3,
-;;        :bindings {},
-;;        :penv
-;;        #<Atom@2ba69af7:
-;;          {:φ {}, :π #<Atom@110d2d14: {:φ {}, :π nil}>}>},
-;;       :nym main_program,
-;;       :dependencies [],
-;;       :body [(SubroutineCall 1 _lpython_main_program () [] ())],
-;;       :penv #<Atom@110d2d14: {:φ {}, :π nil}>}},
-;;     :π #<Atom@110d2d14: {:φ {}, :π nil}>}>}

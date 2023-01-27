@@ -1,5 +1,4 @@
-(ns asr.data
-  (:require [clojure.pprint  :refer [pprint] ]))
+(ns asr.data)
 
 
 ;;  _          _                      __  _
