@@ -470,7 +470,7 @@
       ;;------------------------------------------------
       (symbol? node)  ; then
       (let [stuff (node big-symdict-by-head)]
-        (or stuff node))
+        (or stuff (echo node)))
       ;;------------------------------------------------
       (and (coll? node)
            (empty? node))  ; then

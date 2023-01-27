@@ -162,6 +162,67 @@
        (map symbol)))
 
 
+#_(symbolize-terms asr-groups)
+;; => (ASDL-SYMCONST ASDL-TUPLE ASDL-COMPOSITE)
+
+
+(def flat-symconst-terms-set
+  (->> (:ASDL-SYMCONST asr-groups)
+       (symbolize-terms)
+       set))
+
+(def flat-symconst-terms-set
+  (->> asr-groups
+      :ASDL-SYMCONST
+      symbolize-terms
+      set))
+
+#_flat-symconst-terms-set ; fourteen of them
+;; => #{cmpop
+;;      arraystorage
+;;      deftype
+;;      arraybound
+;; ...
+;;      intent
+;;      cast_kind
+;;      access}
+
+
+(def flat-composite-terms-set
+  (->> asr-groups
+       :ASDL-COMPOSITE
+       symbolize-terms
+       set))
+
+
+#_flat-composite-terms-set ; ten of them
+;; => #{tbind
+;; ...
+;;      unit
+;;      symbol
+;;      expr
+;; ...
+;;      ttype
+;;      stmt}
+
+
+(def flat-tuple-terms-set
+  (->> asr-groups
+       :ASDL-TUPLE
+       symbolize-terms
+       set))
+
+
+#_flat-tuple-terms-set ; six of them
+;; => #{attribute_arg
+;;      alloc_arg
+;;      do_loop_head
+;;      call_arg
+;;      array_index
+;;      dimension
+}
+
+
 ;;   _______                                    __
 ;;  <  / / /  ___ __ ____ _  _______  ___  ___ / /____
 ;;  / /_  _/ (_-</ // /  ' \/ __/ _ \/ _ \(_-</ __(_-<
@@ -309,6 +370,23 @@
 ;; => 74
 
 
+(def flat-symconst-heads-set
+  (->> (get-symconsts)
+      symbolize-symconst-heads
+      (mapcat identity)
+      set))
+
+
+#_flat-symconst-heads-set ; 74 of them
+;; => #{ComplexToReal
+;;      ReturnVar
+;;      Source
+;; ...
+;;      CharacterToList
+;;      Parameter
+;;      IntegerToComplex}
+
+
 ;;   ____   __            __
 ;;  / __/  / /___ _____  / /__ ___
 ;; / _ \  / __/ // / _ \/ / -_|_-<
@@ -417,13 +495,19 @@
     syms-))
 
 
-#_(->> (get-tuples) (symbolize-tuple-heads))
-;; => (asr-tuple12765
-;;     asr-tuple12766
-;;     asr-tuple12767
-;;     asr-tuple12768
-;;     asr-tuple12769
-;;     asr-tuple12770)
+(def flat-tuple-heads-set
+(->> (get-tuples)
+     symbolize-tuple-heads
+     set))
+
+
+#_flat-tuple-heads-set
+;; => #{asr-tuple10900
+;;      asr-tuple10898
+;;      asr-tuple10895
+;;      asr-tuple10896
+;;      asr-tuple10897
+;;      asr-tuple10899}
 
 
 ;;   ______                                 _ __
@@ -509,6 +593,23 @@
     symss-))
 
 
+(def flat-composite-heads-set
+(->> (get-composites)
+     symbolize-composite-heads
+     (mapcat identity)
+     set))
+
+
+#_flat-composite-heads-set
+;; => #{ComplexConstructor
+;;      Enum
+;;      ListConstant
+;; ...
+;;      Program
+;;      ComplexBinOp
+;;      List}
+
+
 #_(symbolize-composite-heads (get-composites))
 ;; => ((RestrictionArg)
 ;;     (TypeStmt)
@@ -572,6 +673,9 @@
 ;;      Ichar               Iachar              SizeOfType
 ;;      PointerNullConstant PointerAssociated)
 ;;     (TranslationUnit))
+
+
+
 
 
 ;;; It's interesting to count them all:
@@ -690,4 +794,3 @@
 #_(->> big-map-of-speclets-from-terms
      (fetch-pair :asr.autospecs/call_arg)
      columnize-term)
-

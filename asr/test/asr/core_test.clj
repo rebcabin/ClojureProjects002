@@ -1931,7 +1931,7 @@
 
 (walk/prewalk
  (fn [node]
-   (nkecho ((eval-node node) ΓΠ)))
+   (identity ((eval-node node) ΓΠ)))
  expr2-pp)
 ;; => {:head :asr.autospecs/TranslationUnit,
 ;;     :term :asr.autospecs/unit,
@@ -2281,18 +2281,21 @@
   (testing "multiple, independent ways of counting terms and forms"
 
     (is (= (count asr.asr/composite-stuffs)
+           (count asr.groupings/flat-composite-heads-set)
            (apply +  ; composites are nested by term
                   (->> (asr.groupings/get-composites)
                        (asr.groupings/symbolize-composite-heads)
                        (map count)))))
 
     (is (= (count asr.asr/symconst-stuffs)
+           (count asr.groupings/flat-symconst-heads-set)
            (apply +  ; symconsts are nested by term
                   (->> (asr.groupings/get-symconsts)
                        (asr.groupings/symbolize-symconst-heads)
                        (map count)))))
 
     (is (= (count asr.asr/tuple-stuffs)
+           (count asr.groupings/flat-tuple-heads-set)
            (->> (asr.groupings/get-tuples)  ; tuples are not nested
                 (asr.groupings/symbolize-tuple-heads)
                 count)))))
