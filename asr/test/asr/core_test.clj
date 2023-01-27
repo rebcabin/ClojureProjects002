@@ -1794,7 +1794,7 @@
              bar)))))
 
 
-((eval-symbol (:main_program mp)) ΓΠ)
+#_((eval-symbol (:main_program mp)) ΓΠ)
 ;; => {:head Program,
 ;;     :term symbol,
 ;;     :symtab
@@ -1929,7 +1929,7 @@
     (is (= expr2-pp expr2-clj))))
 
 
-(walk/prewalk
+#_(walk/prewalk
  (fn [node]
    (identity ((eval-node node) ΓΠ)))
  expr2-pp)
@@ -1948,10 +1948,11 @@
 ;;         :ASDL-NYM "items"})}}}
 
 
-((eval-node expr2-pp) ΓΠ)
+(deftest eval-node-test
+  (is ((eval-node expr2-pp) ΓΠ)))
 
 
-(deftest asr-groupings
+(deftest asr-groupings-test
   (testing "whether groupings are complete"
 
     (is (= (->> asr.groupings/asr-groups  ;; roughly (14, 6, 10)

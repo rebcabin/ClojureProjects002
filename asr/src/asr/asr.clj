@@ -176,7 +176,7 @@
         (cond
 
           smt
-          ((eval-symbol node) penv)
+          ((eval-symbol node) penv) ; SymbolTable is an unspec'ced symbol
 
           com
           (let [com- (term-from-head-sym com)]
@@ -205,7 +205,7 @@
       ;;   ((eval-stuff stuff) penv))
       ;;------------------------------------------------
       :else
-      (plnecho node)
+      (identity node)
       ;;------------------------------------------------
       )))
 
@@ -264,9 +264,9 @@
   the old penv and bound in the new penv. A frequent case for this is
   binding actual arguments to function parameters."
   [bindings penv]
-  (atom {:φ ((eval-bindings bindings) penv),
-         :π penv}
-        :validator is-environment?))
+  (let [nu-bindings ((eval-bindings bindings) penv)]
+   (atom {:φ nu-bindings, :π penv}
+         :validator is-environment?)))
 
 
 (defn augment-bindings-penv!
@@ -335,8 +335,18 @@
      }))
 
 
-;;; The problem to solve today 26 Jan 2023 is recursive lookup in
-;;; penvs versus explicit lookup by symbol-table-id number.
+(defn dump-global-keys
+  "TODO: can race"
+  []
+  (let [glob @ΓΣ]
+    (doseq [s (keys glob)]
+      (nkecho {s (:φ (keys @(glob s)))}))))
+
+
+(defn dump-penv-keys
+  [penv]
+  (let [env @penv]
+    (echo (keys (:φ env)))))
 
 
 (defmethod eval-symbol 'SymbolTable
@@ -348,12 +358,21 @@
     (let [np (new-penv bindings penv)
           ts {:head       head
               :term       (term-from-head-sym head)
-              :integer-id integer-id   ; int
-              :bindings   bindings     ; dict
-              :penv       np           ; Environment
+              :integer-id integer-id    ; int
+              :bindings   bindings      ; dict
+              :penv       np            ; Environment
               }
-          _ (identity (keys @ΓΣ))]     ; inspect in debugger
-      (swap! ΓΣ (fn [old] (into old {integer-id np})))
+          _ (plnecho (keys @ΓΣ))
+          _ (echo (keys bindings))
+          _ (echo (keys (:φ @np)))
+          ;; _ (dump-penv-keys penv)
+          ;; _ (dump-global-keys)
+          ]                             ; inspect in debugger
+      (swap! ΓΣ
+             (fn [old]
+               (into
+                old
+                {integer-id np})))
       ts)))
 
 
@@ -491,7 +510,6 @@
     #_(assert (s/valid? :asr.autospecs/TranslationUnit translation-unit))
     (let [tu {:head         head
               :term         (term-from-head-sym head)
-              ;; We know the global-scope is a symbol-table.
               :global-scope ((eval-node  global-scope) penv)
               :items        ((eval-nodes items) penv)}
           main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))]
