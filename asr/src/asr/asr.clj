@@ -389,12 +389,19 @@
     (cond  ; order matters ...
       ;;------------------------------------------------
       (symbol? node)  ; then
-      ;(cond
-      ;  (node asr.groupings/flat-composite-heads-set)
-      ;  (case (term-from-head-sym node)
-      ;    'symbol ((eval-symbol node) penv)))
-      (let [stuff (node big-symdict-by-head)]
-        (or stuff (echo node)))
+      (cond
+       (node asr.groupings/flat-composite-heads-set)
+       (case (term-from-head-sym node)
+         'symbol ((eval-symbol node) penv))
+       (node asr.groupings/flat-symconst-heads-set)
+       node  ; TODO
+       (node asr.groupings/flat-tuple-terms-set)
+       node  ; TODO
+       :else
+       node
+       )
+      ;; (let [stuff (node big-symdict-by-head)]
+      ;;   (or stuff (echo node)))
       ;;------------------------------------------------
       (and (coll? node)
            (empty? node))  ; then
