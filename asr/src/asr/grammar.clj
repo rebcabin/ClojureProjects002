@@ -48,7 +48,7 @@
     |     |    |           |
      symbol  =  Program(...)
              |  Module(...)
-             |  Functin(...)
+             |  Function(...)
                 ...
 
   The left-hand side of (the equals sign in) a speclet is a term.

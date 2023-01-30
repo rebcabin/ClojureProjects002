@@ -271,15 +271,13 @@
        symbolize-terms
        set))
 
-#_flat-symconst-terms-set                                   ; fourteen of them
-;; => #{cmpop
-;;      arraystorage
-;;      deftype
-;;      arraybound
-;; ...
-;;      intent
-;;      cast_kind
-;;      access}
+
+#_flat-symconst-terms-set
+;;; => #{cmpop          arraystorage    deftype
+;;      arraybound      storage_type    binop
+;;      presence        integerboz      logicalbinop
+;;      enumtype        abi             intent
+;;      cast_kind       access
 
 
 (def flat-composite-terms-set
@@ -289,14 +287,10 @@
        set))
 
 
-#_flat-composite-terms-set                                  ; ten of them
-;; => #{tbind
-;; ...
-;;      unit
-;;      symbol
-;;      expr
-;; ...
-;;      ttype
+#_flat-composite-terms-set
+;; => #{tbind           attribute       restriction_arg
+;;      unit            symbol          case_stmt
+;;      type_stmt       expr            ttype
 ;;      stmt}
 
 
@@ -307,13 +301,9 @@
        set))
 
 
-#_flat-tuple-terms-set                                      ; six of them
-;; => #{attribute_arg
-;;      alloc_arg
-;;      do_loop_head
-;;      call_arg
-;;      array_index
-;;      dimension
+#_flat-tuple-terms-set
+;; => #{attribute_arg   alloc_arg       do_loop_head
+;;      call_arg        array_index     dimension
 
 
 

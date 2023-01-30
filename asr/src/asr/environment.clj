@@ -111,10 +111,7 @@
              true r))))
 
 
-(let [f (partial format "%x")
-      _ (fn [n] (binding [pp/*print-base* 36
-                          pp/*print-radix* true]
-                  (with-out-str (pp/pprint n))))]
+(let [f (partial format "%x")]
   (defn dump-penv-chain
     [penv]
     (cond

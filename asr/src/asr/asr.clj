@@ -28,23 +28,17 @@
 
 #_tuple-stuffs
 ;; => ({:head :asr.autospecs/asr-tuple10800,
-;;      :term :asr.autospecs/call_arg,
-;;      :form ...
+;;      :term :asr.autospecs/call_arg, ...
 ;;     {:head :asr.autospecs/asr-tuple10801,
-;;      :term :asr.autospecs/do_loop_head,
-;;      :form ...
+;;      :term :asr.autospecs/do_loop_head, ...
 ;;     {:head :asr.autospecs/asr-tuple10802,
-;;      :term :asr.autospecs/alloc_arg,
-;;      :form ...
+;;      :term :asr.autospecs/alloc_arg, ...
 ;;     {:head :asr.autospecs/asr-tuple10803,
-;;      :term :asr.autospecs/attribute_arg,
-;;      :form ...
+;;      :term :asr.autospecs/attribute_arg, ...
 ;;     {:head :asr.autospecs/asr-tuple10804,
-;;      :term :asr.autospecs/array_index,
-;;      :form ...
+;;      :term :asr.autospecs/array_index, ...
 ;;     {:head :asr.autospecs/asr-tuple10805,
-;;      :term :asr.autospecs/dimension,
-;;      :form ...
+;;      :term :asr.autospecs/dimension, ...
 
 
 (def symconst-stuffs
@@ -64,11 +58,9 @@
 
 (def big-symdict-by-head
   (let [heads (map :head big-list-of-stuff)
-        syms  (map (comp symbol name) heads)
-        pairs (partition 2 (interleave syms big-list-of-stuff))
-        pvecs (map vec pairs)
-        big-dict (into {} pvecs)]
-    big-dict))
+        ;; Rid namespaces and quote marks:
+        syms  (map (comp symbol name) heads)]
+    (zipmap syms big-list-of-stuff)))
 
 
 #_(count big-symdict-by-head)
@@ -81,218 +73,215 @@
 ;; |_|\_\___/\__,_\___|
 
 
-;;; Every alternative of a term is a _node_ (see grammar.clj).
+;;; Every alternative of a term is a _node_ or _speclet_ or
+;;; ASDL-DEF(see grammar.clj).
+
+
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  E V A L   N O D E   F W D   R E F
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+
+(defn eval-node [node]
+  (assert false "This eval-node should never be called."))
 
 
 ;;; TODO: consider moving penv parameter to the front of every
 ;;; eval function, as with `self` in OOP.
 
 
-(defn eval-stuff
-  [stuff]
-  (fn [penv]
-    stuff))
-
-
-(defn term-from-head-sym
+(defn term-from-head
   "Summarize from 'big-symdict-by-head."
   [sym]
-  (cond
-    (= sym 'SymbolTable) 'symbol   ; no spec for this in ASDL
-    (= sym 'ForTest)     'testing  ; ditto
-    :else (symbol ; strip quotes
-           (name ; strip namespace
-            (:term ; fetch
-             (sym big-symdict-by-head))))))
+  (case sym
+    SymbolTable 'symbol   ;; not spec'ced, but used frequently in ASR
+    ForTest     'testing  ;; also not spec'ced, and not used in ASR
+    (symbol ; strip quotes
+     (name ; strip namespace
+      (:term ; fetch
+       (sym big-symdict-by-head))))))
 
 
-(defmulti eval-symbol first)            ; forward reference
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  E V A L S   F O R   T U P L E S
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
 
-(defmulti eval-expr first)
+#_flat-tuple-terms-set
+;; => #{attribute_arg   alloc_arg       do_loop_head
+;;      call_arg        array_index     dimension
 
 
-(defmulti eval-stmt first)
-
-
-(defmethod eval-stmt 'SubroutineCall
-  [node]
-  (quote node))
-
-
-(defmethod eval-stmt 'Assignment
-  [node]
-  (quote node))
-
-
-(defmethod eval-stmt 'Print
-  [node]
-  (quote node))
-
-
-(defmulti eval-tuple first)
-
-
-(defmulti eval-ttype first)
-
-
-(defmethod eval-ttype 'Integer
-  [node]
-  (quote node))
-
-
-(defmulti eval-unit first)
-
-
-(defn eval-node
-  "sketch"
-  [node]
+(defn eval-tuple
+  [tup]
   (fn [penv]
-
-    (cond       ; order matters ...
-      ;;------------------------------------------------
-      (symbol? node)                    ; then
-      (cond
-        (node asr.groupings/flat-symconst-heads-set)
-        node                            ; TODO
-
-        (node asr.groupings/flat-tuple-terms-set)
-        (assert false "Not Yet Implemented: asr-tuples") ; TODO
-
-        :else
-        node
-        )
-      ;;------------------------------------------------
-      (and (coll? node)
-           (empty? node))               ; then
-      node
-      ;;------------------------------------------------
-      (list? node)                      ; then
-      (let [head (first node)
-            com (head asr.groupings/flat-composite-heads-set)
-            con (head asr.groupings/flat-symconst-heads-set)
-            tup (head asr.groupings/flat-tuple-terms-set)
-            smt (= head 'SymbolTable)]
-        (cond
-
-          smt
-          ((eval-symbol node) penv) ; SymbolTable is an unspec'ced symbol
-
-          com
-          (let [com- (term-from-head-sym com)]
-            (case com-
-              unit   ((eval-unit   node) penv)
-              symbol ((eval-symbol node) penv)
-              expr   ((eval-expr   node) penv)
-              stmt   ((eval-stmt   node) penv)
-              ttype  ((eval-ttype  node) penv)
-              (assert
-               false
-               (f-str
-                "Not Yet Implemented: composite case {com-}"))
-              ))
-
-          con
-          (assert false (f-str "Shouldn't have the symconst {con} here."))
-
-          tup
-          ((eval-tuple tup) penv)
-
-          :else
-          (assert false (f-str "unclassified head {head} here"))
-          ))
-      ;; (let [stuff ((first node) big-symdict-by-head)]
-      ;;   ((eval-stuff stuff) penv))
-      ;;------------------------------------------------
-      :else
-      (identity node)
-      ;;------------------------------------------------
-      )))
+    (echo tup)))
 
 
-(defn eval-nodes
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  E V A L S   F O R   S Y M C O N S T S
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+
+#_flat-symconst-terms-set
+;;; => #{cmpop          arraystorage    deftype
+;;      arraybound      storage_type    binop
+;;      presence        integerboz      logicalbinop
+;;      enumtype        abi             intent
+;;      cast_kind       access
+
+
+;; binop = Add | Sub | Mul | Div | Pow
+;;       | BitAnd | BitOr | BitXor | BitLShift | BitRShift
+
+
+(defn eval-binop
+  [head]
+  (fn [penv]
+    (echo {:head head
+           :term (term-from-head head)})))
+
+
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  E V A L S   F O R   C O M P O S I T E S
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+
+#_flat-composite-terms-set
+;; => #{tbind           attribute       restriction_arg
+;;      unit            symbol          case_stmt
+;;      type_stmt       expr            ttype
+;;      stmt}
+
+
+(defmulti eval-tbind           first)
+(defmulti eval-attribute       first)
+(defmulti eval-restriction-arg first)
+(defmulti eval-unit            first)
+(defmulti eval-symbol          first)
+(defmulti eval-case-stmt       first)
+(defmulti eval-type-stmt       first)
+(defmulti eval-expr            first)
+(defmulti eval-ttype           first)
+(defmulti eval-stmt            first)
+
+
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  E V A L S   F O R   S T M T S
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+
+;; => 44
+;; Allocate            Assign              Assignment          Associate
+;; Cycle               ExplicitDeallocate  ImplicitDeallocate  DoConcurrentLoop
+;; DoLoop              ErrorStop           Exit                ForAllSingle
+;; GoTo                GoToTarget          If                  IfArithmetic
+;; Print               FileOpen            FileClose           FileRead
+;; FileBackspace       FileRewind          FileInquire         FileWrite
+;; Return              Select              Stop                Assert
+;; SubroutineCall      Where               WhileLoop           Nullify
+;; Flush               ListAppend          AssociateBlockCall  SelectType
+;; CPtrToPointer       BlockCall           SetInsert           SetRemove
+;; ListInsert          ListRemove          ListClear           DictInsert
+
+
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  E V A L S   F O R   E X P R S
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+
+;; | IntegerBinOp(expr left, binop op, expr right, ttype type, expr? value)
+
+
+(defmethod eval-expr 'IntegerBinOp
+  [[head
+    left
+    op
+    right
+    tipe
+    value]]
+  (fn [penv]
+    (echo {:head head
+           :term  (term-from-head head)
+
+           :left  ((eval-expr  left)  penv)
+           :op    ((eval-binop op)    penv)
+           :right ((eval-expr  right) penv)
+           :type  ((eval-ttype tipe)  penv)
+           :value ((eval-expr  value) penv)
+           })))
+
+
+;; | IntegerConstant(int n, ttype type)
+
+
+(defmethod eval-expr 'IntegerConstant
+  [[head
+    n
+    tipe]]
+  (fn [penv]
+    (echo {:head head
+           :term (term-from-head head)
+
+           :n    n
+           :type ((eval-ttype tipe) penv)})))
+
+
+;; | Var(symbol v)
+;; https://github.com/lcompilers/lpython/issues/1478
+;; should be
+;; | Var(symtab-id id, symbol v)
+
+(defmethod eval-expr 'Var
+  [[head
+    id
+    v]]
+  (fn [penv]
+    (echo {:head      head
+           :term      (term-from-head head)
+
+           :symtab-id id
+           ;; TODO chain the environments!
+           :v         (lookup-penv v (@ΓΣ id))})))
+
+
+;; -+-+-+-+-+-+-+-
+;;  P L U R A L S
+;; -+-+-+-+-+-+-+-
+
+
+(defn eval-many
   "sketch"
-  [nodes]
+  [nodes evaluator]
   (fn [penv]
     (map (fn [node]
-           ((eval-node node) penv))
+           ((evaluator node) penv))
          nodes)))
 
 
-;;  ___            _         _ _____     _    _
-;; / __|_  _ _ __ | |__  ___| |_   _|_ _| |__| |___
-;; \__ \ || | '  \| '_ \/ _ \ | | |/ _` | '_ \ / -_)
-;; |___/\_, |_|_|_|_.__/\___/_| |_|\__,_|_.__/_\___|
-;;      |__/
+(defn eval-nodes
+  [nodes]
+  (eval-many nodes eval-node))
 
 
-;;; Symbol-table is not spec'ced in ASR.asdl.
-
-
-;;; We have a design that is explicitly recursive. Try a design
-;;; suitable for clojure.walk.
-
-
-;;               ____
-;;   __ _  __ __/ / / ____  _/|
-;;  /  ' \/ // / / / /___/ > _<
-;; /_/_/_/\_,_/_/_/        |/
-
-
-;;                 __
-;;  ___ _  _____ _/ / ____  _/|
-;; / -_) |/ / _ `/ / /___/ > _<
-;; \__/|___/\_,_/_/        |/
-
-
-(defn eval-bindings
-  "Return a function of a penv, in which all bindings are evaluated.
-  Supports lexical environments and closures."
-  [bindings]
-  (fn [penv]
-    (loop [result {}
-           remaining bindings]
-      (if (seq remaining)               ; idiom for not empty
-        (let [[k v] (first remaining)]
-          (recur (into result {k ((eval-symbol v) penv)})
-                 (rest remaining)))
-        result))))
-
-
-(defn new-penv
-  "A new penv has a frame φ and a penv π. Bindings are looked up in
-  the old penv and bound in the new penv. A frequent case for this is
-  binding actual arguments to function parameters."
-  [bindings penv]
-  (let [nu-bindings ((eval-bindings bindings) penv)]
-   (atom {:φ nu-bindings, :π penv}
-         :validator is-environment?)))
-
-
-(defn augment-bindings-penv!
-  [bindings penv]
-  (assert (is-penv? penv))
-  (let [oenv (:π @penv)]
-   (swap! penv (fn [env]
-                 {:φ
-                  (into (:φ env)
-                        ((eval-bindings bindings) oenv))
-                  :π oenv}))))
-
-
-;;                             _
-;;  ____  _ _ __ _ __  ___ _ _| |_
-;; (_-< || | '_ \ '_ \/ _ \ '_|  _|
-;; /__/\_,_| .__/ .__/\___/_|  \__|
-;;         |_|  |_|
+(defn eval-stmts
+  [stmts]
+  (eval-many stmts eval-stmt))
 
 
 (defn eval-symbols
-  "sketch"
-  [symbols]
-  (fn [penv]
-    (map (fn [sym] ((eval-symbol sym) penv))
-         symbols)))
+  [syms]
+  (eval-many syms eval-symbol))
+
+
+(defn eval-exprs
+  [exprs]
+  (eval-many exprs eval-expr))
+
+
+;; -+-+-+-+-
+;;  M I S C
+;; -+-+-+-+-
 
 
 (defn eval-bool
@@ -303,13 +292,47 @@
       .false. false)))
 
 
-;;               _                       _         _
-;;  _____ ____ _| |  ___   ____  _ _ __ | |__  ___| |
-;; / -_) V / _` | | |___| (_-< || | '  \| '_ \/ _ \ |
-;; \___|\_/\__,_|_|       /__/\_, |_|_|_|_.__/\___/_|
-;;                            |__/
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  e v a l   u n i t   ( c o m p o s i t e )
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;; unit is a composite like expr or stmt.
 
-;;; That's probably not a great name for this thing.
+
+;; unit
+;; = TranslationUnit(symbol_table global_scope, node* items)
+
+
+(defn run-program
+  [_]
+  (assert false "Should not run this forward reference of run-program"))
+
+
+(defmethod eval-unit 'TranslationUnit
+  [[head
+    global-scope
+    items
+    :as translation-unit]]
+  (assert (= 'TranslationUnit head)
+          "head of a translation unit must be the symbol
+          TranslationUnit")
+  (fn [penv]
+    #_(assert (s/valid? :asr.autospecs/TranslationUnit translation-unit))
+    (let [tu {:head         head
+              :term         (term-from-head head)
+              :global-scope ((eval-symbol global-scope) penv)
+              :items        ((eval-nodes items) penv)}
+          main-prog (lookup-penv
+                     'main_program
+                     (:penv (:global-scope tu)))]
+      tu
+      (when main-prog
+        ((run-program main-prog) penv))
+      )))
+
+
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  e v a l   s y m b o l   ( c o m p o s i t e )
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
 
 ;;; docstrings are apparently not allowed in defmethod. For
@@ -326,7 +349,8 @@
     :as program]]
   (fn [penv]
     {:head         head          ; 'Program
-     :term         (term-from-head-sym head)
+     :term         (term-from-head head)
+
      :symtab       ((eval-symbol symtab) penv)        ; 'SymbolTable
      :nym          nym           ; identifier
      :dependencies dependencies  ; identifier*
@@ -360,6 +384,45 @@
     (echo (keys (:φ env)))))
 
 
+(defn eval-bindings
+  "Return a function of a penv, in which all bindings are evaluated.
+  Supports lexical environments and closures. Can't be in namespace
+  'asr.environment' due to circular reference."
+  [bindings]
+  (fn [penv]
+    (loop [result {}
+           remaining bindings]
+      (if (seq remaining)               ; idiom for not empty
+        (let [[k v] (first remaining)]
+          ;; Every value had better be a symbol and not a node.
+          (recur (into result {k ((eval-symbol v) penv)})
+                 (rest remaining)))
+        result))))
+
+
+(defn new-penv
+  "A new penv has a frame φ and a penv π. Bindings are looked up in
+  the old penv and bound in the new penv. A frequent case for this is
+  binding actual arguments to function parameters."
+  [bindings penv]
+  (let [nu-bindings ((eval-bindings bindings) penv)]
+   (atom {:φ nu-bindings, :π penv}
+         :validator is-environment?)))
+
+
+(defn augment-bindings-penv!
+  [bindings penv]
+  (assert (is-penv? penv))
+  (let [oenv (:π @penv)]
+    (swap!
+     penv
+     (fn [env]
+       {:φ
+        (into (:φ env)
+              ((eval-bindings bindings) oenv))
+        :π oenv}))))
+
+
 (defmethod eval-symbol 'SymbolTable
   [[head
     integer-id
@@ -368,7 +431,8 @@
   (fn [penv]
     (let [np (new-penv bindings penv)
           ts {:head       head
-              :term       (term-from-head-sym head)
+              :term       (term-from-head head)
+
               :integer-id integer-id    ; int
               :bindings   bindings      ; dict
               :penv       np            ; Environment
@@ -389,7 +453,7 @@
   (fn [penv]
     (if datum
       {:head  head,
-       :term  (term-from-head-sym head)
+       :term  (term-from-head head)
        :datum ((eval-node datum) penv)}
       {:head head})))
 
@@ -411,7 +475,7 @@
     :as variable]]
   (fn [penv]
     {:head           head
-     :term           (term-from-head-sym head)
+     :term           (term-from-head head)
      :symtab-id      parent-symtab-id
      :name           nym
      :dependencies   dependencies
@@ -447,12 +511,12 @@
     type-params                ; ttype*
     restrictions               ; symbol*
     is-restriction             ; bool (.true., .false.)
-    deterministic               ; bool (.true., .false.)
+    deterministic              ; bool (.true., .false.)
     side-effect-free           ; bool (.true., .false.)
     :as function]]
   (fn [penv]
     {:head             head
-     :term             (term-from-head-sym head)
+     :term             (term-from-head head)
      :symtab           ((eval-symbol symtab)            penv)
      :name             nym
      :dependencies     dependencies
@@ -476,75 +540,211 @@
      }))
 
 
-;;; The following was automatically written by chatGPT:
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  e v a l   t t y p e   ( c o m p o s i t e )
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
 
-(defmethod eval-symbol 'SubroutineCall
+(defmethod eval-ttype 'Integer
+  [node]
+  (fn [penv]
+    (echo node)
+    (quote node)))
+
+
+;; | Assignment(expr target, expr value, stmt? overloaded)
+
+
+(defmethod eval-stmt 'Assignment
   [[head
-    symtab
+    target      ;; expr: often usually a Variable
+    value       ;; expr
+    overloaded  ;; stmt ? -- absence is an empty list
+    :as assignment
+    ]]
+  (fn [penv]
+    (echo
+     {;; Every eval'ed speclet has :head and :term:
+      :head       head
+      :term       (term-from-head head)
+      ;; The rest of this varies from speclet to speclet.
+      :value      ((eval-expr value) penv)
+      ;; Use "eval-node" for ? multiplicities. Otherwise, use the
+      ;; most specific "eval-<whatever>" you can read from the
+      ;; ASR: "eval-expr" if you know it's an expr;
+      ;; "eval-stmt" if you know it's a stmt, etc.
+      :overloaded ((eval-node overloaded) penv)
+      })))
+
+
+;; Print(expr? fmt, expr* values, expr? separator, expr? end)
+
+
+(defmethod eval-stmt 'Print
+  [[head
+    fmt        ; expr ?
+    values     ; expr *
+    separator  ; expr ?
+    end        ; expr ?
+    :as print]]
+  (fn [penv]
+    (echo
+     {:head      head
+      :term      (term-from-head head)
+
+      :fmt       ((eval-node  fmt)       penv)
+      :values    ((eval-exprs values)    penv)
+      :separator ((eval-node  separator) penv)
+      :end       ((eval-node  end)       penv)
+      })))
+
+
+(defmethod eval-stmt 'SubroutineCall
+  [[head
+    symtab-id
     nym
     arguments
     dependencies
     call-type
     :as subroutine-call]]
   (fn [penv]
-    (let [symtable  ((eval-symbol symtab) penv)
+    (let [symtable  (@ΓΣ symtab-id)
           args      (map (fn [arg] ((eval-node arg) penv)) arguments)
-          sub       (get symtable nym)]
+          sub       (lookup-penv nym symtable)]
       (if (not sub)
         (throw (Exception. (str "Error: Subroutine " nym " not found")))
         (do (println "Calling subroutine: " nym " with args: " args)
             #_(run-subroutine subroutine args penv)
             {:head           head
-             :term           (term-from-head-sym head)
-             :symtab         symtab
-             :name           nym
-             :arguments      args
-             :dependencies   dependencies
-             :call-type      ((eval-node call-type) penv)
-             :subroutine     ((eval-symbol sub) penv)})))))
+             :term           (term-from-head head)
+             :symtab-id      symtab-id
+             :nym            nym  ;; Function and Variable have :name
+             :arguments      ((eval-node args)         penv)
+             :dependencies   ((eval-node dependencies) penv)
+             :call-type      ((eval-node call-type)    penv)
+             :subroutine     ((eval-node sub)          penv)})))))
 
 
-(defmethod eval-unit 'TranslationUnit
-  [[head
-    global-scope
-    items
-    :as translation-unit]]
-  (assert (= 'TranslationUnit head)
-          "head of a translation unit must be the symbol
-          TranslationUnit")
+;; -+-+-+-+-+-+-+-+-+-
+;;  E V A L   N O D E
+;; -+-+-+-+-+-+-+-+-+-
+
+
+(defn eval-node
+  "sketch"
+  [node]
   (fn [penv]
-    #_(assert (s/valid? :asr.autospecs/TranslationUnit translation-unit))
-    (let [tu {:head         head
-              :term         (term-from-head-sym head)
-              :global-scope ((eval-node  global-scope) penv)
-              :items        ((eval-nodes items) penv)}
-          main-prog (lookup-penv 'main_program (:penv (:global-scope tu)))]
-      tu
-      ;; (when main-prog
-      ;;   (run-program main-prog))
+
+    (cond       ; order matters ...
+      ;;------------------------------------------------
+      (symbol? node)                    ; then
+      (cond
+        (node asr.groupings/flat-symconst-heads-set)
+        node                            ; TODO
+
+        (node asr.groupings/flat-tuple-terms-set)
+        (assert false "Not Yet Implemented: asr-tuples") ; TODO
+
+        :else
+        node
+        )
+      ;;------------------------------------------------
+      (and (coll? node)
+           (empty? node))               ; then
+      node
+      ;;------------------------------------------------
+      ;; e.g., [(SubroutineCall ...) ...]
+      (vector? node)
+      (doall (for [n node] ((eval-node n) penv)))
+      ;;------------------------------------------------
+      (list? node)                      ; then
+      (let [head (first node)
+            com (head asr.groupings/flat-composite-heads-set)
+            con (head asr.groupings/flat-symconst-heads-set)
+            tup (head asr.groupings/flat-tuple-terms-set)
+            smt (= head 'SymbolTable)]
+
+        (cond
+
+          smt
+          ((eval-symbol node) penv) ; SymbolTable is an unspec'ced symbol
+
+          com
+          (let [com- (term-from-head com)]
+            (case com-
+              unit   ((eval-unit   node) penv)
+              symbol ((eval-symbol node) penv)  ; collides with built-in
+              expr   ((eval-expr   node) penv)
+              stmt   ((eval-stmt   node) penv)
+              ttype  ((eval-ttype  node) penv)
+              (assert
+               false
+               (f-str
+                "Not Yet Implemented: composite case {com-}"))
+              ))
+
+          con
+          (assert false (f-str "Shouldn't have the symconst {con} here."))
+
+          tup
+          ((eval-tuple tup) penv)
+
+          :else
+          (assert false (f-str "unclassified head {head} here"))
+          ))
+      ;;------------------------------------------------
+      :else
+      (identity node)
+      ;;------------------------------------------------
       )))
 
 
-;;                                     _        _
-;;  _ _ _  _ _ _    ___   _____ ____ _| |___ __| |
-;; | '_| || | ' \  |___| / -_) V / _` | / -_) _` |
-;; |_|  \_,_|_||_|       \___|\_/\__,_|_\___\__,_|
+;;  _ _ _  _ _ _    ___  _/\_
+;; | '_| || | ' \  |___| >  <
+;; |_|  \_,_|_||_|        \/
+
+
+(defn run-stmt
+  [s]
+  (fn [penv]
+    (let [head (:head s)]
+      (case (:head s)
+
+        SubroutineCall
+        (let [nym  (:nym s)
+              stid (:symtab-id s) ;; local variables
+
+              ;; We've lost the nested chains of envrt's wherein to
+              ;; look up free variables. We need to restore that
+              ;; nesting.
+
+              stab (@ΓΣ stid)
+
+              ;; Look up parameters; evaluate actual args in penv;
+              ;; zipmap them to parameters; eval bindings in a new
+              ;; penv.
+
+              body (echo (:body (:subroutine s)))
+              ]
+          nil)
+
+        Assignment
+        (assert false "Assignment Not Yet Implemented")
+
+        Print
+        (assert false "Print Not Yet Implemented")
+
+        (assert
+         false
+         (f-str "Statement {(:head s)} Not Yet Implemented.")))
+      )))
 
 
 (defn run-program
   [e]
-  (echo e)
-  (echo @ΓΣ)
-  (echo (keys (:φ @(get @ΓΣ 1))))
-  (let [code (:body e)]
-    (echo code))
-  )
-
-
-; @ΓΣ
-
-
-;;; The "global scope" or "global symbol registry" ΓΣ is really
-;;; one below the unique global environment ΓΠ. ΓΣ contains
-;;; user-defined symbols. ΓΠ contains built-ins.
+  (fn [penv]
+    (let [code (:body e)
+          ev ((eval-node code) penv)]
+      ;; could have expressions here, too
+      (doall (for [s ev] ((run-stmt s) penv)))
+      )))

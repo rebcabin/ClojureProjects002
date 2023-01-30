@@ -1723,11 +1723,16 @@
         npenv1 (new-penv nbdgs1 npenv0)
         nbdgs2 {:d '(ForTest d)}
         npenv2 (new-penv nbdgs2 npenv1)]
-    (is (= {:head 'ForTest, :term 'testing, :datum 'a42} (lookup-penv 'a npenv2)))
-    (is (= {:head 'ForTest, :term 'testing, :datum 'a  } (lookup-penv 'a npenv0)))
-    (is (= {:head 'ForTest, :term 'testing, :datum 'b  } (lookup-penv 'b npenv2)))
-    (is (= {:head 'ForTest, :term 'testing, :datum 'c  } (lookup-penv 'c npenv2)))
-    (is (= {:head 'ForTest, :term 'testing, :datum 'd  } (lookup-penv 'd npenv2)))
+    (is (= {:head 'ForTest, :term 'testing, :datum 'a42}
+           (lookup-penv 'a npenv2)))
+    (is (= {:head 'ForTest, :term 'testing, :datum 'a  }
+           (lookup-penv 'a npenv0)))
+    (is (= {:head 'ForTest, :term 'testing, :datum 'b  }
+           (lookup-penv 'b npenv2)))
+    (is (= {:head 'ForTest, :term 'testing, :datum 'c  }
+           (lookup-penv 'c npenv2)))
+    (is (= {:head 'ForTest, :term 'testing, :datum 'd  }
+           (lookup-penv 'd npenv2)))
     (is (nil? (lookup-penv 'e npenv2)))
     ))
 
