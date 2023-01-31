@@ -213,15 +213,15 @@
     tipe
     value]]
   (fn [penv]
-    (echo {:head head
-           :term  (term-from-head head)
+    {:head head
+     :term  (term-from-head head)
 
-           :left  ((eval-expr  left)  penv)
-           :op    ((eval-node  op)    penv)
-           :right ((eval-expr  right) penv)
-           :type  ((eval-ttype tipe)  penv)
-           :value ((eval-expr  value) penv)
-           })))
+     :left  ((eval-expr  left)  penv)
+     :op    ((eval-node  op)    penv)
+     :right ((eval-expr  right) penv)
+     :type  ((eval-ttype tipe)  penv)
+     :value ((eval-expr  value) penv)
+     }))
 
 
 ;; | IntegerConstant(int n, ttype type)
@@ -232,11 +232,11 @@
     n
     tipe]]
   (fn [penv]
-    (echo {:head head
-           :term (term-from-head head)
+    {:head head
+     :term (term-from-head head)
 
-           :n    n
-           :type ((eval-ttype tipe) penv)})))
+     :n    n
+     :type ((eval-ttype tipe) penv)}))
 
 
 ;; | Var(symbol v)
@@ -250,12 +250,12 @@
     id
     v]]
   (fn [penv]
-    (echo {:head      head
-           :term      (term-from-head head)
+    {:head      head
+     :term      (term-from-head head)
 
-           :symtab-id id
-           ;; TODO chain the environments!
-           :v         (lookup-penv v (@ΓΣ id))})))
+     :symtab-id id
+     ;; TODO chain the environments!
+     :v         (lookup-penv v (@ΓΣ id))}))
 
 
 ;; -+-+-+-+-+-+-+-
@@ -572,10 +572,16 @@
 
 
 (defmethod eval-ttype 'Integer
-  [node]
+  [[head  ;
+    kind  ; Integer kinds: 1 (i8), 2 (i16), 4 (i32), 8 (i64)
+    dims  ; dimension *
+    ]]
   (fn [penv]
-    (echo node)
-    (quote node)))
+    {:head head
+     :term (term-from-head head)
+
+     :kind kind
+     :dims ((eval-nodes dims) penv)}))
 
 
 ;; | Assignment(expr target, expr value, stmt? overloaded)
@@ -589,18 +595,17 @@
     :as assignment
     ]]
   (fn [penv]
-    (echo
-     {;; Every eval'ed speclet has :head and :term:
-      :head       head
-      :term       (term-from-head head)
-      ;; The rest of this varies from speclet to speclet.
-      :value      ((eval-expr value) penv)
-      ;; Use "eval-node" for ? multiplicities. Otherwise, use the
-      ;; most specific "eval-<whatever>" you can read from the
-      ;; ASR: "eval-expr" if you know it's an expr;
-      ;; "eval-stmt" if you know it's a stmt, etc.
-      :overloaded ((eval-node overloaded) penv)
-      })))
+    {;; Every eval'ed speclet has :head and :term:
+     :head       head
+     :term       (term-from-head head)
+     ;; The rest of this varies from speclet to speclet.
+     :value      ((eval-expr value) penv)
+     ;; Use "eval-node" for ? multiplicities. Otherwise, use the
+     ;; most specific "eval-<whatever>" you can read from the
+     ;; ASR: "eval-expr" if you know it's an expr;
+     ;; "eval-stmt" if you know it's a stmt, etc.
+     :overloaded ((eval-node overloaded) penv)
+     }))
 
 
 ;; Print(expr? fmt, expr* values, expr? separator, expr? end)
@@ -614,41 +619,50 @@
     end        ; expr ?
     :as print]]
   (fn [penv]
-    (echo
-     {:head      head
-      :term      (term-from-head head)
-      ;; Use "eval-node" for ? multiplicities.
-      :fmt       ((eval-node  fmt)       penv)
-      :values    ((eval-exprs values)    penv)
-      :separator ((eval-node  separator) penv)
-      :end       ((eval-node  end)       penv)
-      })))
+    {:head      head
+     :term      (term-from-head head)
+     ;; Use "eval-node" for ? multiplicities.
+     :fmt       ((eval-node  fmt)       penv)
+     :values    ((eval-exprs values)    penv)
+     :separator ((eval-node  separator) penv)
+     :end       ((eval-node  end)       penv)
+     }))
 
+
+;; https://github.com/lcompilers/lpython/issues/1479
+;; | SubroutineCall(symtab-id id, symbol name, symbol? original_name,
+;;                  call_arg* args, expr? dt)
+
+;; examples:
+
+;; (SubroutineCall 1 main0                 () [] ())
+;; (SubroutineCall 1 _lpython_main_program () [] ())
 
 (defmethod eval-stmt 'SubroutineCall
-  [[head
-    symtab-id
-    nym
-    arguments
-    dependencies
-    call-type
+  [[head                             ; 'SubroutineCall
+    symtab-id                        ; integer
+    nym                              ; e.g., _lpython_main_program
+    original-name                    ; nil, GenericProcedure or ExternalSymbol
+    arguments                        ;
+    dt                               ; expr ?
     :as subroutine-call]]
   (fn [penv]
     (let [symtable  (@ΓΣ symtab-id)
-          args      (map (fn [arg] ((eval-node arg) penv)) arguments)
           sub       (lookup-penv nym symtable)]
-      (if (not sub)
-        (throw (Exception. (str "Error: Subroutine " nym " not found")))
-        (do (println "Calling subroutine: " nym " with args: " args)
-            #_(run-subroutine subroutine args penv)
-            {:head           head
-             :term           (term-from-head head)
-             :symtab-id      symtab-id
-             :nym            nym  ;; Function and Variable have :name
-             :arguments      ((eval-node args)         penv)
-             :dependencies   ((eval-node dependencies) penv)
-             :call-type      ((eval-node call-type)    penv)
-             :subroutine     ((eval-node sub)          penv)})))))
+      (when (not sub)
+        (throw (Exception. (f-str "Error: Subroutine {nym} not found"))))
+      (println (f-str"Setting up subroutine call {nym} with {arguments}"))
+      {:head           head
+       :term           (term-from-head head)
+
+       ;; TODO: Look up parameters, here?
+       :symtab-id      symtab-id
+       :nym            nym ;; Function and Variable have :name
+       :original-name  ((eval-node  original-name) penv)
+       :arguments      ((eval-nodes arguments)     penv)
+       :dt             ((eval-node  dt)            penv)
+       :subroutine     sub
+       })))
 
 
 ;; -+-+-+-+-+-+-+-+-+-

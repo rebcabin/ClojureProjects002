@@ -1,6 +1,7 @@
 (ns asr.groupings
   (:require
     [clojure.zip :as zip]
+    [asr.columnize :refer :all]
     [asr.parsed :refer [
                         shallow-map-from-speclet,
                         hashmap-from-speclet,
@@ -34,13 +35,18 @@
 
 ;;; Some of the following gadgets collide with "parsed.clj," which
 ;;; works on the snapshot data in "asr_snapshot.clj". Use explicit
-;;; namespaces, e.g. asr.parsed/speclets:
+;;; namespaces, e.g. asr.parsed/speclets to prevent collisions
+;;; with the snapshot:
 
 
 (def speclets
   (vec (rest
          ((-> (zip/vector-zip asr-asdl-hiccup)
-              zip/down zip/right zip/right) 0))))
+               zip/down zip/right zip/right) 0))))
+
+
+#_(count speclets)
+;; => 30
 
 
 ;;; The snapshot has fewer speclets:
@@ -49,9 +55,6 @@
 #_(count asr.parsed/speclets)
 ;; => 28
 
-#_(count speclets)
-;; => 30
-
 
 ;;; But the CODE in asr.parsed works on both the snapshot and on
 ;;; the live ASR:
@@ -59,7 +62,7 @@
 
 (def big-map-of-speclets-from-terms
   (apply hash-map
-         (mapcat identity                                   ;; flatten one level
+         (mapcat identity ; flatten once
                  (map
                    (comp map-pair-from-speclet-map
                          hashmap-from-speclet)
@@ -74,6 +77,9 @@
 ;; => 30
 
 
+;;; Obviously, terms and speclets are in 1-to-1 correspondence.
+
+
 ;;  _    _        _ _    _          __      _         __  __
 ;; | |__(_)__ _  | (_)__| |_   ___ / _|  __| |_ _  _ / _|/ _|
 ;; | '_ \ / _` | | | (_-<  _| / _ \  _| (_-<  _| || |  _|  _|
@@ -83,7 +89,7 @@
 
 (def big-list-of-stuff
   (mapcat
-    identity                                                ; Flatten once.
+    identity ; Flatten once.
     (map (fn [speclet]
            (let [[term forms] speclet]
              (map
@@ -184,12 +190,12 @@
   forms) have the same group key, :ASDL-SYMCONST, :ASDL-TUPLE,
   or :ASDL-COMPOSITE. See grammar.clj."
   (group-by
-    (fn [speclet]                                           ; e.g.,
-      (->> speclet                                          ; [:asr.autospecs/abi ({:ASDL-SYMCONST "Source"} ...)]
-           second                                           ; ({:ASDL-SYMCONST "Source"} ...)
-           first                                            ; {:ASDL-SYMCONST "Source"}
-           keys                                             ; (:ASDL-SYMCONST)
-           first)                                           ; :ASDL-SYMCONST
+    (fn [speclet]   ; e.g.,
+      (->> speclet  ; [:asr.autospecs/abi ({:ASDL-SYMCONST "Source"} ...)]
+           second   ; ({:ASDL-SYMCONST "Source"} ...)
+           first    ; {:ASDL-SYMCONST "Source"}
+           keys     ; (:ASDL-SYMCONST)
+           first)   ; :ASDL-SYMCONST
       )
     big-map-of-speclets-from-terms))
 
@@ -205,7 +211,7 @@
 ;;; round brackets.
 
 
-;;; The group-by above produces a list with three elements:
+;;; The group-by above produces a hashmap with three elements:
 
 
 #_(->> asr-groups count)
@@ -215,11 +221,13 @@
 ;;; The elements are the group keys:
 
 
+#_(->> asr-groups keys)
+;; => (:ASDL-SYMCONST :ASDL-TUPLE :ASDL-COMPOSITE)
 #_(->> asr-groups (map first))
 ;; => (:ASDL-SYMCONST :ASDL-TUPLE :ASDL-COMPOSITE)
 
 
-;;; some support routines, same for all the groups
+;;; Here are support routines, same for all the groups
 
 
 (defn check-first
@@ -246,14 +254,15 @@
 
 
 ;;; For readability, strip the asr.autospecs namespace; convert to
-;;; string (via "name") and then to symbol:
+;;; string (via "name") and then to symbol to remove the quote
+;;; marks:
 
 
 (defn symbolize-terms
   [group]
   (->> group
        ;; the actual terms -- left-hand sides of productions
-       (map first)
+       keys
        ;; Convert to string without the namespace (always asr.autospecs).
        ;; TODO: check that!
        (map name)
@@ -272,6 +281,9 @@
        set))
 
 
+;; Here are the 14 symconst terms:
+
+
 #_flat-symconst-terms-set
 ;;; => #{cmpop          arraystorage    deftype
 ;;      arraybound      storage_type    binop
@@ -285,6 +297,9 @@
        :ASDL-COMPOSITE
        symbolize-terms
        set))
+
+
+;; Here are the 10 composite terms:
 
 
 #_flat-composite-terms-set
@@ -301,10 +316,12 @@
        set))
 
 
+;; Here are the 6 tuple terms:
+
+
 #_flat-tuple-terms-set
 ;; => #{attribute_arg   alloc_arg       do_loop_head
 ;;      call_arg        array_index     dimension
-
 
 
 ;;   _______                                    __
@@ -337,8 +354,10 @@
 
 
 ;;; List out the terms and forms alternation -- left-hand and
-;;; right-hand sides -- of the fourteen symconst productions. Here
-;;; are the terms (left-hand sides) of all ASR-SYMCONSTs:
+;;; right-hand sides -- of the fourteen symconst productions.
+
+
+;;; Here are the terms (left-hand sides) of all ASR-SYMCONSTs:
 
 
 #_(->> (get-symconsts) symbolize-terms)
@@ -401,8 +420,8 @@
 
 
 ;;; Now do likewise for every ASDL-SYMCONST in the groups with one
-;;; extra level of mapping (use the debugger to see the
-;;; intermediate values):
+;;; extra level of mapping (inspect intermediate results with the
+;;; debugger):
 
 
 (defn symbolize-symconst-heads
@@ -448,6 +467,12 @@
 
 
 #_(->> (get-symconsts)
+     (symbolize-symconst-heads)
+     (map count))
+;; => (6 6 2 4 6 4 2 2 5 20 2 3 2 10)
+
+
+#_(->> (get-symconsts)
        (symbolize-symconst-heads)
        (mapcat identity)
        count)
@@ -461,14 +486,11 @@
        set))
 
 
-#_flat-symconst-heads-set                                   ; 74 of them
-;; => #{ComplexToReal
-;;      ReturnVar
-;;      Source
-;; ...
-;;      CharacterToList
-;;      Parameter
-;;      IntegerToComplex}
+;;; Check for duplicates
+
+
+#_(count flat-symconst-heads-set)
+;; => 74
 
 
 ;;   ____   __            __
@@ -562,8 +584,8 @@
 ;;; As before with symconsts, add one level of "map" to get all
 ;;; the heads. Note "check-counts 1" instead of "check-count 1" to
 ;;; effect the extra level of mapping. Unlike symconsts and
-;;; composites, there is only one level of list for all the tuple
-;;; heads.
+;;; composites, there is only one level of list for each tuple
+;;; head.
 
 
 (defn symbolize-tuple-heads
@@ -640,8 +662,8 @@
 ;;  unit
 
 
-;;; For a little variation, let's analyze the second
-;;; composite (this should always work because there should always
+;;; For a little variaty, analyze the second composite (this
+;;; should work on every drop of ASR because there should always
 ;;; be more than one composite). Note that asserts are not always
 ;;; thrown, here, but you can catch them by stepping with the
 ;;; debugger (TODO: reason unknown).
@@ -670,10 +692,10 @@
 
 (defn symbolize-composite-heads
   [_]
-  (let [forms (map second (get-composites))
-        valss- (map #(map :ASDL-COMPOSITE %) forms)
+  (let [forms   (map second (get-composites))
+        valss-  (map #(map :ASDL-COMPOSITE %) forms)
         headss- (map #(map :ASDL-HEAD %) valss-)
-        symss- (map #(map symbol %) headss-)]
+        symss-  (map #(map symbol %) headss-)]
     symss-))
 
 
@@ -682,16 +704,6 @@
        symbolize-composite-heads
        (mapcat identity)
        set))
-
-
-#_flat-composite-heads-set
-;; => #{ComplexConstructor
-;;      Enum
-;;      ListConstant
-;; ...
-;;      Program
-;;      ComplexBinOp
-;;      List}
 
 
 #_(symbolize-composite-heads (get-composites))
@@ -759,7 +771,7 @@
 ;;     (TranslationUnit))
 
 
-;;; It's interesting to count them all:
+;;; Count them all:
 
 
 #_(let [ccs (get-composites)
@@ -778,6 +790,12 @@
 ;;     tbind            1
 ;;     expr            86
 ;;     unit             1)
+
+
+;;         _                 _           _
+;;  __ ___| |_  _ _ __  _ _ (_)______ __| |
+;; / _/ _ \ | || | '  \| ' \| |_ / -_) _` |
+;; \__\___/_|\_,_|_|_|_|_||_|_/__\___\__,_|
 
 
 ;;; Here are all 30 terms:
@@ -799,8 +817,12 @@
 ;;; data (the ___columns___):
 
 
-#_(defn fetch-pair [key map]
+(defn fetch-pair [key map]
     [key (key map)])
+
+
+;;; Fourteen symbols (only coincidentally the same as the number
+;;; of symconst speclets.
 
 
 #_(->> big-map-of-speclets-from-terms
@@ -814,6 +836,9 @@
 ;;  StructType          EnumType            UnionType
 ;;  Variable            ClassType           ClassProcedure
 ;;  AssociateBlock      Block
+
+
+;;; 86 expressions:
 
 
 #_(->> big-map-of-speclets-from-terms
@@ -853,6 +878,9 @@
 ;; 29 PointerNullConstant     PointerAssociated)
 
 
+;;; 44 statements:
+
+
 #_(->> big-map-of-speclets-from-terms
        (fetch-pair :asr.autospecs/stmt)
        columnize-term
@@ -872,6 +900,15 @@
 ;; 11 ListInsert          ListRemove          ListClear           DictInsert
 
 
+;;; A random example of a tuple
+
+
 #_(->> big-map-of-speclets-from-terms
        (fetch-pair :asr.autospecs/call_arg)
        columnize-term)
+;; => {:group asr-tuple,
+;;     :nym :asr.autospecs/call_arg,
+;;     :head asr-tuple17871,
+;;     :parmtypes (expr),
+;;     :parmnyms (value),
+;;     :parmmults (:asr.parsed/at-most-once)}

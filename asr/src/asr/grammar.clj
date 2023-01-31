@@ -26,24 +26,47 @@
 
   The grammar says:
 
-  1. An ASDL spec is a bunch of ___productions___ or ASDL-DEFs.
+  1. An ASDL spec is a bunch of ___productions___, aka _speclets_
+  or ASDL-DEFs. For example,
 
-  2. An ASDL-DEF, aka ___speclet___, is a triple of
+    symbol
+      = Program(symbol_table symtab, identifier name, ..., stmt* body)
+      | Module(symbol_table symtab, identifier name, ...)
+    ...
+    storage_type = Default | Save | Parameter | Allocatable
+    abi                 -- External     ABI
+      = Source          --   No         Unspecified
+      | LFortranModule  --   Yes        LFortran
+    ...
+    stmt
+      = Allocate(alloc_arg* args, expr? stat, ...)
+      | Assign(int label, identifier variable)
+    ...
+    expr
+      = IfExp(expr test, expr body, expr orelse, ...)
+      | ComplexConstructor(expr re, expr im, ttype type, expr? value)
+    ...
+
+  is an ASDL spec consisting of productions (speclets) for
+  \"symbol,\" \"storage_type,\" \"abi,\" \"stmt,\" and \"expr.\".
+
+  2. An ASDL-DEF, aka _production_ or ___speclet___, is a triple
+  of
 
     (a) ___term___ or ASDL-TERM
 
     (b) an equals sign
 
     (c) one or more (a _bunch_ of) ASDL-FORMs, ___forms___, for
-  short, or _alternatives_.
+  short, aka _alternatives_.
 
   For example,
 
-          production         (grammar lingo)
+          production,        (grammar lingo)
             speclet          (ASR lingo)
      __________^___________
     |                      |
-      term        forms      (one or more)
+      term        forms      (one or more [bunch of])
      __^__      _____^_____
     |     |    |           |
      symbol  =  Program(...)
@@ -51,24 +74,23 @@
              |  Function(...)
                 ...
 
-  The left-hand side of (the equals sign in) a speclet is a term.
-  The right-hand side of (the equals sign in) a speclet is an
-  _alternation of forms_, just as one might say \"a murder of
-  crows,\" \"a parliament of owls,\" or a \"lamentation of
-  swans.\"
+  The left-hand side of (the equals sign in) a speclet is a
+  _term_. The right-hand side of (the equals sign in) a speclet is
+  an _alternation of forms_, a \"term of venery\" as one might say
+  \"a murder of crows,\" \"a parliament of owls,\" or a
+  \"lamentation of swans.\"
 
   There are 28 speclets in the constant ASR snapshot for testing,
-  and 30 terms in a recent drop of live ASR. See all-terms-test in
-  core_test.clj.
+  and 30 speclets in a recent drop of live ASR. See all-terms-test
+  in core_test.clj.
 
-  3. There are three ___groups___ of speclets: ___composite
-  speclets___, ___symconst speclets___, and ___tuple speclets___.
-  These are not algebraic groups; they're just
-  collections (see [this SO post for the difference between a
-  _collection_ and a _sequence_ in
+  3. There are three ___groups___ of speclets: ___composites___,
+  ___symconsts___, and ___tuples___. These are not algebraic
+  groups; they're just collections (see [this _stackoverflow_ post
+  for the difference between a _collection_ and a _sequence_ in
   Clojure](https://stackoverflow.com/questions/19850730/whats-the-difference-between-a-sequence-and-a-collection-in-clojure).
 
-  In a recent drop of ASR, there are
+  In a recent (Jan 2023) drop of ASR, there are
 
     (a) 10 composite speclets -- expr, stmt, ttype, symbol, etc.
 
@@ -96,7 +118,7 @@
   The \"symbol\" composite speclet has about 14 composite forms
   with heads Program, Module, Function, etc. The \"expr\"
   composite has about 86 heads: IfExp, ComplexConstructor,
-  NamedExpr, etc.
+  NamedExpr, etc. The \"stmt\" composite has about 74 heads.
 
   Parameters (ASDL-ARGS) of a composite form are identical in
   shape to a _tuple form_, e.g.,
@@ -136,7 +158,7 @@
   something like asr_234789, so that symconst, composite, and
   tuple forms all have heads.
 
-  There are about 227 heads across all the groups, about six of
+  There are about 248 heads across all the groups, about six of
   which are heads of tuple forms with gensymmed heads. The tuple
   speclets are things like array_index, attribute_arg, alloc_arg,
   etc. See all-heads-test in core_test.clj.
@@ -154,6 +176,11 @@
 
   The default multiplicity, with no STAR or QUES, is \"exactly
   once.\"
+
+  Identifiers are not spec'ced in ASDL. For test generation, an
+  identifier spec appears in base_specs.clj. We may extend that to
+  a superset of source-language identifiers like those of Fortran
+  or Python in the future.
 
   ## TL;DR SUMMARY:
 
