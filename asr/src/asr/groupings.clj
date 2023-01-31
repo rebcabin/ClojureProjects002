@@ -486,6 +486,12 @@
        set))
 
 
+(defn symconst?
+  "Used in eval-node."
+  [head]
+  (head flat-symconst-heads-set))
+
+
 ;;; Check for duplicates
 
 
@@ -607,6 +613,12 @@
        set))
 
 
+(defn tuple?
+  "Used in eval-node."
+  [head]
+  (head flat-tuple-heads-set))
+
+
 #_flat-tuple-heads-set
 ;; => #{asr-tuple10900
 ;;      asr-tuple10898
@@ -704,6 +716,12 @@
        symbolize-composite-heads
        (mapcat identity)
        set))
+
+
+(defn composite?
+  "Used in eval-node."
+  [head]
+  (head flat-composite-heads-set))
 
 
 #_(symbolize-composite-heads (get-composites))

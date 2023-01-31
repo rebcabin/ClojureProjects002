@@ -700,6 +700,7 @@
       (vector? node)
       (doall (for [n node] ((eval-node n) penv)))
       ;;------------------------------------------------
+      ;; looks like a lisp-call with a head in the first slot
       (list? node)                      ; then
       (let [head (first node)]
 
@@ -708,7 +709,7 @@
           (or (= head 'SymbolTable) (= head 'ForTest))
           ((eval-symbol node) penv) ; SymbolTable is an unspec'ced symbol
 
-          (head asr.groupings/flat-composite-heads-set)
+          (composite? head)
           (let [com- (term-from-head head)]
             (case com-
               unit   ((eval-unit   node) penv)
@@ -722,10 +723,10 @@
                 "Not Yet Implemented: composite case {com-}"))
               ))
 
-          (head asr.groupings/flat-symconst-heads-set)
+          (symconst? head)
           (assert false (f-str "Shouldn't have the symconst {head} here."))
 
-          (head asr.groupings/flat-tuple-terms-set)
+          (tuple? head)
           ((eval-tuple node) penv)
 
           :else
