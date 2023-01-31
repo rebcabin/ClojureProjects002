@@ -102,6 +102,19 @@
        (sym big-symdict-by-head))))))
 
 
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  E V A L S   F O R   I D E N T I F I E R
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+
+(defn eval-identifier
+  "unspec'ced"
+  [ident]
+  (fn [penv]
+    {:head ident
+     :term 'identifier}))
+
+
 ;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 ;;  E V A L S   F O R   T U P L E S
 ;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
@@ -115,6 +128,7 @@
 (defn eval-tuple
   [tup]
   (fn [penv]
+    (assert false "eval-tuple is Not Yet Implemented.")
     (echo tup)))
 
 
@@ -135,11 +149,9 @@
 ;;       | BitAnd | BitOr | BitXor | BitLShift | BitRShift
 
 
-(defn eval-binop
-  [head]
-  (fn [penv]
-    (echo {:head head
-           :term (term-from-head head)})))
+;; All symconsts can be handled the same way, in eval-node,
+;; as there is no extra evaluation to do. Breaking them out
+;; here is definitely over-engineering.
 
 
 ;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
@@ -205,7 +217,7 @@
            :term  (term-from-head head)
 
            :left  ((eval-expr  left)  penv)
-           :op    ((eval-binop op)    penv)
+           :op    ((eval-node  op)    penv)
            :right ((eval-expr  right) penv)
            :type  ((eval-ttype tipe)  penv)
            :value ((eval-expr  value) penv)
@@ -232,6 +244,7 @@
 ;; should be
 ;; | Var(symtab-id id, symbol v)
 
+
 (defmethod eval-expr 'Var
   [[head
     id
@@ -257,6 +270,11 @@
     (map (fn [node]
            ((evaluator node) penv))
          nodes)))
+
+
+(defn eval-identifiers
+  [idents]
+  (eval-many idents eval-identifier))
 
 
 (defn eval-nodes
@@ -351,10 +369,11 @@
     {:head         head          ; 'Program
      :term         (term-from-head head)
 
-     :symtab       ((eval-symbol symtab) penv)        ; 'SymbolTable
-     :nym          nym           ; identifier
-     :dependencies dependencies  ; identifier*
-     :body         body          ; stmt*
+     :symtab       ((eval-symbol symtab) penv)   ; 'SymbolTable
+     :nym          nym           ; identifier    (not spec'ced)
+     :dependencies dependencies  ; identifier *  (not spec'ced)
+     :body         body
+;;   :body         ((eval-stmts body) penv)      ; stmt *
      :penv         penv          ; Environment
      }))
 
@@ -394,8 +413,7 @@
            remaining bindings]
       (if (seq remaining)               ; idiom for not empty
         (let [[k v] (first remaining)]
-          ;; Every value had better be a symbol and not a node.
-          (recur (into result {k ((eval-symbol v) penv)})
+          (recur (into result {k ((eval-node v) penv)})
                  (rest remaining)))
         result))))
 
@@ -458,11 +476,18 @@
       {:head head})))
 
 
+;; | Variable(symbol_table parent_symtab, identifier name,
+;;   identifier* dependencies, intent intent,
+;;   expr? symbolic_value, expr? value,
+;;   storage_type storage, ttype type,
+;;   abi abi, access access, presence presence, bool value_attr)
+
+
 (defmethod eval-symbol 'Variable
   [[head
-    parent-symtab-id
-    nym                          ; "name" shadows Clojure build-in.
-    dependencies
+    parent-symtab-id  ; an integer
+    nym               ; "name" shadows Clojure build-in.
+    dependencies      ; "identifier" is not spec'ced;
     intent
     symbolic-value
     value
@@ -471,11 +496,12 @@
     abi
     access
     presence
-    value-attr      ; bool (.true., .false.)
+    value-attr        ; bool (.true., .false.)
     :as variable]]
   (fn [penv]
     {:head           head
      :term           (term-from-head head)
+
      :symtab-id      parent-symtab-id
      :name           nym
      :dependencies   dependencies
@@ -487,7 +513,7 @@
      :abi            ((eval-node abi)            penv)
      :access         ((eval-node access)         penv)
      :presence       ((eval-node presence)       penv)
-     :value-attr     ((eval-node value-attr)     penv)
+     :value-attr     ((eval-bool value-attr)     penv)
      }))
 
 
@@ -557,9 +583,9 @@
 
 (defmethod eval-stmt 'Assignment
   [[head
-    target      ;; expr: often usually a Variable
-    value       ;; expr
-    overloaded  ;; stmt ? -- absence is an empty list
+    target      ; expr: often, even usually a Variable
+    value       ; expr
+    overloaded  ; stmt ? -- absence is an empty list
     :as assignment
     ]]
   (fn [penv]
@@ -591,7 +617,7 @@
     (echo
      {:head      head
       :term      (term-from-head head)
-
+      ;; Use "eval-node" for ? multiplicities.
       :fmt       ((eval-node  fmt)       penv)
       :values    ((eval-exprs values)    penv)
       :separator ((eval-node  separator) penv)
@@ -638,17 +664,20 @@
     (cond       ; order matters ...
       ;;------------------------------------------------
       (symbol? node)                    ; then
+      ;; Handle all symconsts the same way:
       (cond
         (node asr.groupings/flat-symconst-heads-set)
-        node                            ; TODO
+        {:head node,
+         :term (term-from-head node)}
 
         (node asr.groupings/flat-tuple-terms-set)
         (assert false "Not Yet Implemented: asr-tuples") ; TODO
 
         :else
-        node
+        ((eval-identifier node) penv)
         )
       ;;------------------------------------------------
+      ;; e.g., empty calls like () or empty vectors like []
       (and (coll? node)
            (empty? node))               ; then
       node
@@ -658,19 +687,15 @@
       (doall (for [n node] ((eval-node n) penv)))
       ;;------------------------------------------------
       (list? node)                      ; then
-      (let [head (first node)
-            com (head asr.groupings/flat-composite-heads-set)
-            con (head asr.groupings/flat-symconst-heads-set)
-            tup (head asr.groupings/flat-tuple-terms-set)
-            smt (= head 'SymbolTable)]
+      (let [head (first node)]
 
         (cond
 
-          smt
+          (or (= head 'SymbolTable) (= head 'ForTest))
           ((eval-symbol node) penv) ; SymbolTable is an unspec'ced symbol
 
-          com
-          (let [com- (term-from-head com)]
+          (head asr.groupings/flat-composite-heads-set)
+          (let [com- (term-from-head head)]
             (case com-
               unit   ((eval-unit   node) penv)
               symbol ((eval-symbol node) penv)  ; collides with built-in
@@ -683,10 +708,10 @@
                 "Not Yet Implemented: composite case {com-}"))
               ))
 
-          con
+          (head asr.groupings/flat-symconst-heads-set)
           (assert false (f-str "Shouldn't have the symconst {con} here."))
 
-          tup
+          (head asr.groupings/flat-tuple-terms-set)
           ((eval-tuple tup) penv)
 
           :else
