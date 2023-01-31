@@ -709,10 +709,10 @@
               ))
 
           (head asr.groupings/flat-symconst-heads-set)
-          (assert false (f-str "Shouldn't have the symconst {con} here."))
+          (assert false (f-str "Shouldn't have the symconst {head} here."))
 
           (head asr.groupings/flat-tuple-terms-set)
-          ((eval-tuple tup) penv)
+          ((eval-tuple node) penv)
 
           :else
           (assert false (f-str "unclassified head {head} here"))
