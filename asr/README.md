@@ -25,16 +25,15 @@ lein test
 
 [CIDER](https://docs.cider.mx/cider/index.html) is almost
 essential. We make heavy use of its debugger (C-u C-M-x) and its
-pretty-print-to-comment (C-c C-v C-f C-c e). In-place evaluation
-(C-c e, C-M-x) is also priceless.
+pretty-print-to-comment (C-c C-v C-f C-c e) and in-place
+evaluation (C-c e, C-M-x).
 
 See also `echo` in `utils.clj` for standard "printf" debugging in
 the REPL.
 
 Many other things, like paredit and multiple-cursors, make Clojure
 programming with Emacs and CIDER the most joyful experience in the
-industry. Look for the video series "Emacs Rocks." There is no
-close second, except maybe Python's pudb.
+industry. Look for the video series "Emacs Rocks."
 
 ## Generating Documentation
 
@@ -44,9 +43,9 @@ See https://github.com/weavejester/codox.
 lein codox
 ```
 
-Codox doesn't handle specs. You'll have to read comments in
-`autospecs.clj`, `base_specs.clj`, `specs.clj`, `core.clj`. Sorry
-about that. TODO: figure out a work-around.
+Codox doesn't handle specs. Read comments in `autospecs.clj`,
+`base_specs.clj`, `specs.clj`, `core.clj`. Sorry about that. TODO:
+figure out a work-around.
 
 Look for generated docs in
 
@@ -68,50 +67,59 @@ target
 
 ## Theory of Operation
 
-This project exists to create test strings, ***programs***, in the
-common [Intermediate
+This project consists of _Abstract Execution_ (AE) and _Test
+Generation_ (TG). AE is an interpreted back-end for
+[ASR](https://github.com/lcompilers/libasr), the common
+[Intermediate
 Representation](https://en.wikipedia.org/wiki/Intermediate_representation)
 (IR) of the [LCompilers](https://github.com/lcompilers) such as
 [LFortran](https://gitlab.com/lfortran) and
-[LPython](https://github.com/lcompilers/lpython).
+[LPython](https://github.com/lcompilers/lpython). TG generates
+random ASR programs.
 
-The programs we generate in this Clojure program are not expressed
-in a surface language like Python or Fortran. They are expressed
-in the common [Intermediate
-Representations](https://en.wikipedia.org/wiki/Intermediate_representation)
-(IR) of the LPython and LFortran compilers. The language of that
-common IR is [ASR](https://github.com/lcompilers/libasr).
-This Clojure program thus tests the back ends of the LCompilers by
-generating trees of ASR.
+AE runs ASR programs while leaving out some details such as
+detailed numerical types. Those details must be handled by other,
+machine-oriented back ends such as those for C, WASM, LLVM, and
+binary executables. AE does not test these details.
 
-The mathematical set of ASR programs is the infinite set of
-trees specified by the ASR grammar. Testing all programs in such
-an infinite set is obviously not possible, so we test as many
-as we can, hand-written and machine-generated. We probabilistically
-generate devious cases because humans are
-tragically biased test-writers. Machine-generated test cases are
-critical for making compilers robust.
+## Abstract Execution
+
+See `asr.clj`. More is TBD.
+
+## Test Generation
+
+An _ASR program_ belongs to the infinite set of trees specified by
+the ASR grammar. Testing all programs in such an infinite set is
+obviously not possible, so we test as many as we can, hand-written
+and machine-generated.
+
+We aim to break ASR back-ends, including AE. We probabilistically
+generate devious cases because humans are tragically biased
+test-writers. Machine-generated test cases are critical for making
+compilers robust.
 [`clojure.spec.alpha`](https://github.com/clojure/spec.alpha)
 helps us find devious cases.
 
-## Roadmap for this Project's Source Code
+## Roadmap for Test Generation
 
 ### Autospecs
 
-The grammar for [ASR](https://github.com/lcompilers/libasr) is
-written in [ASDL](https://asdl.sourceforge.net/), a moribund
-language for specifying compiler [Intermediate
-Representations](https://en.wikipedia.org/wiki/Intermediate_representation).
+The grammar for ASR is written in
+[ASDL](https://asdl.sourceforge.net/), a moribund language for
+specifying compiler IRs.
 
-No current tools exist for ASDL, so we write our own. Our grammar
-for ASDL is expressed in
+_Moribund_ means that no current tools exist for ASDL, so we write
+our own. Our grammar for ASDL is expressed in
 [instaparse](https://github.com/Engelberg/instaparse) in the file
 `grammar.clj`. Instaparse gives us a parser for the ASR, which is
-in ASDL in the file `asr.clj`. From that, we automatically write
-many autospecs the language of in
+in ASDL in the file `grammar.clj`. From that, we automatically
+write many autospecs in
 [`clojure.spec.alpha`](https://www.google.com/search?client=firefox-b-1-d&q=clojure.spec.alpha).
-See `autospecs.clj`. Here is an abbreviated, recursive sample spec
-for ASR `IntegerBinOps` that bottom out in ASR `IntegerConstants`
+See `autospecs.clj`, `base_specs.clj`, and `specs.clj`.
+
+Here is an
+abbreviated, recursive sample spec for ASR `IntegerBinOps` that
+bottom out in ASR `IntegerConstants`:
 
 ```clojure
 (s/def ::i32-bin-op-semsem
@@ -138,10 +146,9 @@ for ASR `IntegerBinOps` that bottom out in ASR `IntegerConstants`
 
 ### Handwritten Specs
 
-We write some specs by hand: committed specs in `specs.cls`
-and experimental specs in `core.clj`. We occasionally backpatch
-some autospecs. Here is an example, handwritten spec for
-identifiers:
+We write some specs by hand in `base_specs.clj` and `specs.clj`.
+We occasionally backpatch some autospecs. Here is an example,
+hand-written spec for identifiers:
 
 ```clojure
 (let [alpha-re #"[a-zA-Z]"  ;; The famous "let over lambda."
@@ -188,78 +195,47 @@ test-generator itself. Here is one small example:
 ```
 
 The development horizon is in `core.clj`. As stuff evolves from
-experimental into production, it migrates into `specs.clj` and
-other namespaces.
+experimental into production, it migrates into other namespaces.
 
 ## Feeding ASR to Compiler Back-Ends
 
 In the short run, this program will communicate with compiler back
-ends via files full of generated examples.
+ends via generated examples read from files.
 
-Get examples from the folder named `outputs` at the project level.
+Get examples from the folder named `outputs` at the lpython
+project level.
 
 Create examples by modifying the `-main` function in `core.clj`.
-
-<!-- ### Future: via JavaCpp interop -->
-
-<!-- Via [javacpp](https://github.com/bytedeco/javacpp). See work-in-progress -->
-<!-- in `src/asr/sandbox.clj`. -->
-
-<!-- ### Abbreviated Instructions -->
-
-<!-- 1. Write stubs in Java; see `Abc.java`. -->
-<!-- 2. Write implementations in C++; see `Abc.hpp`. -->
-<!-- 3. Build and run according to the pattern obvious in `build-run.sh` -->
-<!-- 4. Put `Abc.class` in a copy of `javacpp.jar` so it's easy to find. -->
-<!-- 5. Put the modified `javacpp.jar` at the same level as `project.clj`. -->
-
-<!-- ### Essential findings -->
-
-<!-- 1. `build-run.sh` encapsulates hard-won facts about interfacing -->
-<!--    Clojure, java, and C++. -->
-<!-- 2. We found it convenient to put the required dylib at the same -->
-<!--    directory level as `project.clj`. Otherwise, we must figure out -->
-<!--    `java.library.path` and Clojure `:native-path`, neither of which -->
-<!--    are straightforward. -->
-<!-- 3. We found it convenient to add our class files to a copy of -->
-<!--    `javacpp.jar`. Otherwise, we must figure out how to propagate -->
-<!--    java `CLASSPATH` to Clojure, and that's not straightforward. -->
 
 ## Classifying Compiler Errors
 
 1. `synnasr`: Syntactically Correct Nonsense ASR
 
-   These are trees that satisfy that ASR grammar but specify
-   semantically meaningless programs such as applying
-   integer operations to string operands. ASR processors (compiler
-   back ends) must never crash or go into infinite loops on such
-   inputs.
+   These are trees that satisfy the ASR grammar but specify
+   semantically meaningless programs, for example, applying
+   integer operations to string operands. ASR back ends must never
+   crash or go into infinite loops on such inputs.
 
 2. `semnasr`: Semantically Correct Nonsense ASR
 
    These are trees that do not have type-mismatch and other
    top-level semantical errors, but still specify semantical
    nonsense at a value level, such as producing `null` from
-   compile-time arithmetic like `2 + 3`. ASR processors (compiler
-   back ends) must produce error messages on such inputs.
+   compile-time arithmetic like `2 + 3`. ASR back ends must
+   produce error messages on such inputs.
 
 3. `semsem`: Doubly Semantically Correct Nonsense ASR
 
    These are trees without type errors and without value errors,
    but are such that humans would (probably) not write then. These
-   probe the arithmetic capabilities of the back ends and expose
-   issues such as truncation and overflow.
+   probe the computational capabilities of the back ends and
+   expose issues such as dimension mis-match, truncation, and
+   overflow.
 
 ## Naming Conventions
 
-ASR heads, like
-
-```
-IntegerBinOp(expr left, binop op, expr right, ttype type, expr? value)
-```
-
-are in PascalCase. The corresponding clojure.specs are in
-kebab-case, as in
+ASR heads, like `IntegerBinOp` are in PascalCase. The
+corresponding clojure.specs are in kebab-case, as in
 
 ```clojure
 (s/describe :asr.autospecs/integer-bin-op)
@@ -273,15 +249,16 @@ kebab-case, as in
 ```
 
 Converting a name to kebab-case is ***kebabulating***. The
-function for doing that is `nskw-kebab-from` in `utils.clj` *nskw*
+kebabulating function is `nskw-kebab-from` in `utils.clj` *nskw*
 means *namespaced keyword*. Clojure.spec requires spec names to be
 namespaced keywords, as in `:asr.autospecs/integer-bin-op`
 
-## Namespaces and DataFlow
+## Namespaces and Data Flow
 
 ```
 +-----------------+
-| asr.asr/all-asr |    +-----------------+
+|  asr.snapshot   |
+|   asr.lpython   |    +-----------------+
 |                 |    | asr.grammar/    |
 | grammar for ASR |    |   asdl-grammar  |
 |    in ADSL      |    +--------.--------+
@@ -311,7 +288,7 @@ namespaced keywords, as in `:asr.autospecs/integer-bin-op`
                         `---------------'
 ```
 
-## Specs Defined by this Program
+## Snapshot Specs Defined by this Program
 
 ```clojure
 01 :asr.autospecs/abi
@@ -619,15 +596,22 @@ namespaced keywords, as in `:asr.autospecs/integer-bin-op`
 
 ## License
 
-Copyright © 2022 FIXME
+Copyright © 2023
 
-This program and the accompanying materials are made available under the
-terms of the Eclipse Public License 2.0 which is available at
+This program and the accompanying materials are made available
+under the same license as that of lpython
+https://github.com/lcompilers/lpython/blob/main/LICENSE.
+
+Certain aspects relating to Clojure and imported libraries may
+fall under more restrictive licenses, such as the Eclipse Public
+License 2.0 which is available at
 http://www.eclipse.org/legal/epl-2.0.
 
-This Source Code may also be made available under the following Secondary
-Licenses when the conditions for such availability set forth in the Eclipse
-Public License, v. 2.0 are satisfied: GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or (at your
-option) any later version, with the GNU Classpath Exception which is available
-at https://www.gnu.org/software/classpath/license.html.
+The Clojure materials may also be made available under the
+following Secondary Licenses when the conditions for such
+availability set forth in the Eclipse Public License, v. 2.0 are
+satisfied: GNU General Public License as published by the Free
+Software Foundation, either version 2 of the License, or (at your
+option) any later version, with the GNU Classpath Exception,
+is available at
+https://www.gnu.org/software/classpath/license.html.

@@ -1,7 +1,6 @@
 (ns asr.lpython
 
-  (:use [clojure.java.shell :only [sh     ] ]
-        )
+  (:use [clojure.java.shell :only [sh     ] ])
 
   (:require [pathetic.core  :as   path ]
             [clojure.string            ]))
