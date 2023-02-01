@@ -1900,29 +1900,44 @@
   [msg]
   (println "=================================================")
   (println msg)
-  (println ". . . . . . . . . . . . . . . . . . . . . . . . ."))
+  (println "................................................."))
 
 
 (deftest lpython-asr-test
   (testing "This test alerts me to structural changes in lpython"
     (is (= (do
              (print-barrier "Running ALERT test on expr2.py")
-             expr2-pp) expr2-clj))))
+             expr2-pp)
+           expr2-clj))))
 
 
 (deftest eval-node-test-expr2
-  (testing "that it's not nil"
-    (is (do
-          (print-barrier "Running expr2.py")
-          ((eval-node expr2-clj) ΓΠ)))))
+  (testing "that it's not nil; will run main_program if not empty."
+    (is (= SUCCESS
+           (do (print-barrier "Running expr2.py")
+               ((eval-node expr2-clj) ΓΠ))))))
+
+
+;; expr1.py
+;; def test_namedexpr():
+;;     a: i32
+;;     x: i32
+;;     y: i32
+;;     x = (y := 0)
+;;     if a := ord('3'):
+;;         x = 1
+;;     while a := 1:
+;;         y = 1
 
 
 (deftest eval-node-test-expr1
-  (testing "that it's not nil"
-    (is (do
-          (print-barrier "Running expr1.py")
-          ((eval-node
-           (get-clj "tests/expr1.py")) ΓΠ)))))
+  (testing "that it's not nil; this one has an empty main_program"
+    (is (=
+         ;; there is no body to the main program in this sample.
+         SUCCESS
+         (do (print-barrier "Running expr1.py")
+             ((eval-node
+               (get-clj "tests/expr1.py")) ΓΠ))))))
 
 
 (deftest asr-groupings-test
