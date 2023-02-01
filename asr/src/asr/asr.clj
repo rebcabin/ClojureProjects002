@@ -363,12 +363,11 @@
     {:head         head          ; 'Program
      :term         (term-from-head head)
 
-     :symtab       ((eval-symbol symtab) penv)   ; 'SymbolTable
-     :nym          nym           ; identifier    (not spec'ced)
-     :dependencies dependencies  ; identifier *  (not spec'ced)
-     :body         body
-;;   :body         ((eval-stmts body) penv)      ; stmt *
-     :penv         penv          ; Environment
+     :symtab       ((eval-symbol symtab)       penv)   ; 'SymbolTable
+     :nym          ((eval-node   nym)          penv)   ; identifier
+     :dependencies ((eval-node   dependencies) penv)   ; identifier *
+     :body         ((eval-stmts  body) penv)           ; stmt *
+     :penv         penv
      }))
 
 
