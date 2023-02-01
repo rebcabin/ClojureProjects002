@@ -7,7 +7,7 @@ Test generator and Abstract Execution for ASR
 
 Prerequisite: [Leiningen and Clojure](https://leiningen.org/)
 
-```
+```bash
 cd -=|[some convenient directory]|=-
 git clone https://github.com/rebcabin/ClojureProjects002
 ```
@@ -16,7 +16,18 @@ git clone https://github.com/rebcabin/ClojureProjects002
 
 Learn the code by reading, running, and writing tests.
 
+You may need to adjust hard-coded file paths in `lpython.clj`.
+This program assumes you have installed lpython in
+
+```clojure
+(def dir
+  (str (System/getProperty "user.home")
+       "/Documents/GitHub/lpython"))
 ```
+
+Change that if you need.
+
+```bash
 cd ClojureProjects002/asr
 lein test
 ```
@@ -39,7 +50,7 @@ industry. Look for the video series "Emacs Rocks."
 
 See https://github.com/weavejester/codox.
 
-```
+```bash
 lein codox
 ```
 
@@ -94,8 +105,8 @@ obviously not possible, so we test as many as we can, hand-written
 and machine-generated.
 
 We aim to break ASR back-ends, including AE. We probabilistically
-generate devious cases because humans are tragically biased
-test-writers. Machine-generated test cases are critical for making
+generate devious cases because human test-writers are tragically
+biased. Machine-generated test cases are critical for making
 compilers robust.
 [`clojure.spec.alpha`](https://github.com/clojure/spec.alpha)
 helps us find devious cases.
