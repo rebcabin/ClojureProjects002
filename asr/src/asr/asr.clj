@@ -779,7 +779,7 @@
     (let [r-left  ((run-expr (:left  e)) penv)
           r-right ((run-expr (:right e)) penv)
           result  (run-ibinop (:op e) r-left r-right)]
-      (pprint (f-str "IntegerBinOp result: {result}"))
+      ;; (pprint (f-str "IntegerBinOp result: {result}"))
       result)))
 
 
@@ -787,7 +787,7 @@
   [e]
   (fn [penv]
     (let [result (:n e)]
-      (pprint (f-str "IntegerConstant result: {result}"))
+      ;; (pprint (f-str "IntegerConstant result: {result}"))
       result)))
 
 
@@ -816,7 +816,7 @@
           ;; zipmap them to parameters; eval bindings in a new
           ;; penv.
 
-          body (echo (:body (:subroutine s)))
+          body (identity (:body (:subroutine s)))
           ]
       ;; TODO:                         |newpenv|
       ;;                                ---v---

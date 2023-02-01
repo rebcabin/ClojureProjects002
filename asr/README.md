@@ -1,6 +1,7 @@
 # asr
 
-Test generator for ASR (https://github.com/lcompilers/lpython/wiki/ASR-Design)
+Test generator and Abstract Execution for ASR
+(https://github.com/lcompilers/lpython/wiki/ASR-Design)
 
 ## Installation
 
@@ -30,10 +31,10 @@ pretty-print-to-comment (C-c C-v C-f C-c e). In-place evaluation
 See also `echo` in `utils.clj` for standard "printf" debugging in
 the REPL.
 
-Many other things, like paredit and multiple-cursors, make
-Clojure programming the most joyous experience in the industry.
-Look for the video series "Emacs Rocks." There is no close
-second, except maybe Python's pudb.
+Many other things, like paredit and multiple-cursors, make Clojure
+programming with Emacs and CIDER the most joyful experience in the
+industry. Look for the video series "Emacs Rocks." There is no
+close second, except maybe Python's pudb.
 
 ## Generating Documentation
 
@@ -44,8 +45,8 @@ lein codox
 ```
 
 Codox doesn't handle specs. You'll have to read comments in
-`autodocs.clj`, `spec.clj`, `core.clj`. Sorry about that. TODO:
-figure out a work-around.
+`autospecs.clj`, `base_specs.clj`, `specs.clj`, `core.clj`. Sorry
+about that. TODO: figure out a work-around.
 
 Look for generated docs in
 
