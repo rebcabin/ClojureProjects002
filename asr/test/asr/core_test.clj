@@ -1874,8 +1874,8 @@
     []))
 
 
-(def expr2-lpy "examples/expr2.py")
-(def expr2-clj
+(defn patch-assignment
+  [clj]
   (walk/prewalk
    (fn [node]
      ;; see https://github.com/lcompilers/lpython/issues/1466
@@ -1883,16 +1883,46 @@
            'Assignment
            :else
            node))
-   (lpython/get-sample-clj expr2-lpy)))
+   clj))
+
+
+(defn get-clj
+  [lpy-filename]
+  (->> lpy-filename
+       lpython/get-sample-clj
+       patch-assignment))
+
+
+(def expr2-clj (get-clj "examples/expr2.py"))
+
+
+(defn print-barrier
+  [msg]
+  (println "=================================================")
+  (println msg)
+  (println ". . . . . . . . . . . . . . . . . . . . . . . . ."))
 
 
 (deftest lpython-asr-test
   (testing "This test alerts me to structural changes in lpython"
-    (is (= expr2-pp expr2-clj))))
+    (is (= (do
+             (print-barrier "Running ALERT test on expr2.py")
+             expr2-pp) expr2-clj))))
 
 
-(deftest eval-node-test
-  (is ((eval-node expr2-pp) ΓΠ)))
+(deftest eval-node-test-expr2
+  (testing "that it's not nil"
+    (is (do
+          (print-barrier "Running expr2.py")
+          ((eval-node expr2-clj) ΓΠ)))))
+
+
+(deftest eval-node-test-expr1
+  (testing "that it's not nil"
+    (is (do
+          (print-barrier "Running expr1.py")
+          ((eval-node
+           (get-clj "tests/expr1.py")) ΓΠ)))))
 
 
 (deftest asr-groupings-test

@@ -17,6 +17,9 @@
   (str (System/getProperty "user.home")
        "/Documents/GitHub/lpython"))
 
+#_dir
+;; => "/Users/brian/Documents/GitHub/lpython"
+
 (def asr-asdl-file-relative
   "src/libasr/ASR.asdl")
 
@@ -50,6 +53,13 @@
                   test-options)))
 
 
+#_(test-version)
+;; => {:exit 0,
+;;     :out
+;;     "LPython version: 0.11.0-61-g2c5034a29\nPlatform: macOS ARM\nDefault target: arm64-apple-darwin22.2.0\n",
+;;     :err ""}
+
+
 ;;                  _ _
 ;;  _ _ ___ __ _ __| (_)_ _  __ _
 ;; | '_/ -_) _` / _` | | ' \/ _` |
@@ -68,6 +78,7 @@
                   (concat includes
                           options
                           (resolve-sample sample)))))
+
 
 
 (def clojurizer #"([^\s^\{]+)\:")

@@ -64,18 +64,24 @@
        (nil? (:π @penv))))
 
 
-(def ΓΠ
-  "Unique, session-specific penv: Global Γ Perimeter Π; has a
+(defn init-global-environments
+  "Also called in TranslationUnit in asr.clj"
+  []
+  (def ΓΠ
+      "Unique, session-specific penv: Global Γ Perimeter Π; has a
   frame (:φ is-a dict) and a parent perimeter (:π is-a penv).
   TODO: built-ins go here.
   TODO: spec."
-  (atom {:φ {}, :π nil} :validator is-environment?))
+    (atom {:φ {}, :π nil} :validator is-environment?))
 
 
-(def ΓΣ
-  "Unique, session-specific, integer-indexed, global registry of
+  (def ΓΣ
+    "Unique, session-specific, integer-indexed, global registry of
   symbol tables."
-  (atom {} :validator map?))
+    (atom {} :validator map?)))
+
+
+(init-global-environments)
 
 
 ;;; I think we don't ever need to "delete" a penv, but we may need

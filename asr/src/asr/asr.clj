@@ -333,6 +333,7 @@
   (assert (= 'TranslationUnit head)
           (f-str "head of a translation unit must be the symbol
                   TranslationUnit, not {head}"))
+  (init-global-environments)
   (fn [penv]
     #_(assert (s/valid? :asr.autospecs/TranslationUnit translation-unit))
     (let [tu {:head         head
