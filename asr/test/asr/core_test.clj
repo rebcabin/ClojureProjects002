@@ -1771,39 +1771,6 @@
              (indirect-penvs (new-penv foo ΓΠ)))))))
 
 
-#_(def mp {:main_program
-         '(Program
-           (SymbolTable 3 {})
-           main_program
-           []
-           [(SubroutineCall 1 _lpython_main_program () [] ())])})
-
-
-#_(deftest eval-program-symbol-test
-  (testing "clojure.walk/walk on an ASR tree"
-    (let [foo ((eval-symbol (:main_program mp)) ΓΠ)
-          bar (walk/prewalk
-               (fn [form]
-                 (cond
-                   (is-penv? form) (indirect-penvs form)
-                   :else form))
-               foo)
-          ]
-      (is (= {:head         'Program,
-              :term         'symbol
-              :symtab       {:head 'SymbolTable,  ; unique special case ...
-                             :term 'symbol,       ; ... of a symbol
-                             :integer-id 3,
-                             :bindings {},
-                             :penv (indirect-penvs (new-penv {} ΓΠ))
-                             }
-              :nym          'main_program,
-              :dependencies [],
-              :body         ['(SubroutineCall 1 _lpython_main_program () [] ())],
-              :penv         @ΓΠ}
-             bar)))))
-
-
 ;; expr2.py
 
 
