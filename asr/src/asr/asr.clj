@@ -335,6 +335,30 @@
   (throw (Exception. "catch me in the debugger: xzyzy plugh")))
 
 
+;; = IfExp(expr test, expr body, expr orelse, ttype type, expr? value)
+;; -- Such as: (x, y+z), (3.0, 2.0) generally not known at compile time
+
+
+(defmethod eval-expr 'IfExp
+  [[head
+    test-
+    body
+    orelse
+    type-
+    value]]
+  (fn [penv]
+    {:head  head
+     :term  (term-from-head head)
+
+     :test   ((eval-expr  test-) penv)
+     :body   ((eval-expr  body)  penv)
+     :orelse ((eval-expr orelse) penv)
+     :type   ((eval-ttype type-) penv)
+     ;; Use eval-node on question-marked items.
+     :value  ((eval-node  value) penv)
+     }    ))
+
+
 ;; | StringConcat(expr left, expr right, ttype type, expr? value)
 
 
@@ -349,6 +373,30 @@
      :term  (term-from-head head)
 
      :left  ((eval-expr  left)  penv)
+     :right ((eval-expr  right) penv)
+     :type  ((eval-ttype type-) penv)
+     ;; Use eval-node on question-marked items.
+     :value ((eval-node  value) penv)
+     }))
+
+
+;; | IntegerCompare(expr left, cmpop op, expr right,
+;;                  ttype type, expr? value)
+
+
+(defmethod eval-expr 'IntegerCompare
+  [[head
+    left
+    cmpop
+    right
+    type-
+    value]]
+  (fn [penv]
+    {:head  head
+     :term  (term-from-head head)
+
+     :left  ((eval-expr  left)  penv)
+     :cmpop ((eval-node  cmpop) penv)
      :right ((eval-expr  right) penv)
      :type  ((eval-ttype type-) penv)
      ;; Use eval-node on question-marked items.

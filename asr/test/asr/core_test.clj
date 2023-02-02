@@ -1906,9 +1906,9 @@
 
 (defn print-barrier
   [msg]
-  (println "=================================================")
+  (println "=========================================================")
   (println msg)
-  (println "................................................."))
+  (println "........................................................."))
 
 
 (deftest lpython-asr-change-alert-test
@@ -2042,6 +2042,22 @@
 (deftest eval-node-test-expr3
   (testing "that it's not nil"
     (is (taste-a-sample "expr5"))))
+
+
+;; tests/expr6.py
+;;
+;; def test_ifexp():
+;;     a: i32
+;;     b: i32
+;;     c: bool
+;;     a = 2
+;;     b = 6 if a == 2 else 8
+;;     c = True if b > 5 else False
+
+
+(deftest eval-node-test-expr3
+  (testing "that it's not nil"
+    (is (taste-a-sample "expr6"))))
 
 
 ;;                         _
