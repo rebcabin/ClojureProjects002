@@ -769,6 +769,31 @@
 ;; ListInsert          ListRemove          ListClear           DictInsert
 
 
+;; | ExplicitDeallocate(symbol* vars)
+;; https://github.com/lcompilers/lpython/issues/1492
+;; vars is not symbol*, but symref*. Until issue 1492
+;; is resolved, I'll fake symref.
+
+
+(defn eval-symrefs
+  [symrefs]  ; something like [2 x, 2 y, ...]
+  (assert (even? (count symrefs)))
+  (fn [penv]
+    (vec (partition 2 symrefs))))
+
+
+(defmethod eval-stmt 'ExplicitDeallocate
+  [[head
+    vars]]
+  (fn [penv]
+    {:head head
+     :term (term-from-head head)
+
+     :vars ((eval-symrefs vars) penv)
+     ;; Issue #1492 :vars ((eval-symbols vars) penv)
+     }))
+
+
 ;; | WhileLoop(expr test, stmt* body)
 
 
@@ -778,11 +803,11 @@
     body
     orelse]]
   (fn [penv]
-    {:head       head
-     :term       (term-from-head head)
+    {:head head
+     :term (term-from-head head)
 
-     :test       ((eval-expr  test-)  penv)
-     :body       ((eval-stmts body)   penv)
+     :test ((eval-expr  test-)  penv)
+     :body ((eval-stmts body)   penv)
      }))
 
 
@@ -795,12 +820,12 @@
     body
     orelse]]
   (fn [penv]
-    {:head       head
-     :term       (term-from-head head)
+    {:head   head
+     :term   (term-from-head head)
 
-     :test       ((eval-expr  test-)  penv)
-     :body       ((eval-stmts body)   penv)
-     :orelse     ((eval-stmts orelse) penv)
+     :test   ((eval-expr  test-)  penv)
+     :body   ((eval-stmts body)   penv)
+     :orelse ((eval-stmts orelse) penv)
      }))
 
 

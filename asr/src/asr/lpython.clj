@@ -78,7 +78,7 @@
       sample)])
   (let [rsamp (resolve-sample sample)]
     (if (.exists (io/file (first rsamp)))
-      ;; RACE THE OS TO SEE WHETHER THE FILE STILL EXISTS :)
+      ;; TODO: RACE THE OS TO SEE WHETHER THE FILE STILL EXISTS :)
       (let [result
             (apply sh (cons executable
                             (concat includes

@@ -1951,7 +1951,8 @@
         m))))
 
 
-;; expr1.py
+;; tests/expr1.py
+;;
 ;; def test_namedexpr():
 ;;     a: i32
 ;;     x: i32
@@ -1968,7 +1969,8 @@
     (is (taste-a-sample "expr1"))))
 
 
-;; expr2.py
+;; tests/expr2.py
+;;
 ;; def test_boolOp():
 ;;     a: bool
 ;;     b: bool
@@ -1990,7 +1992,7 @@
     (is (taste-a-sample "expr2"))))
 
 
-;; expr3.py
+;; tests/expr3.py
 ;;
 ;; from ltypes import i32, f32
 ;; def test_cast():
@@ -2011,6 +2013,21 @@
 (deftest eval-node-test-expr3
   (testing "that it's not nil"
     (is (taste-a-sample "expr3"))))
+
+
+;; tests/expr4.py
+;;
+;; def test_del():
+;;     a: i32
+;;     b: i32
+;;     a = 4
+;;     b = 20
+;;     del a, b
+
+
+(deftest eval-node-test-expr3
+  (testing "that it's not nil"
+    (is (taste-a-sample "expr4"))))
 
 
 ;;                         _
