@@ -79,10 +79,19 @@
   (let [rsamp (resolve-sample sample)]
     (if (.exists (io/file (first rsamp)))
       ;; RACE THE OS TO SEE WHETHER THE FILE STILL EXISTS :)
-      (apply sh (cons executable
-                      (concat includes
-                              options
-                              rsamp)))
+      (let [result
+            (apply sh (cons executable
+                            (concat includes
+                                    options
+                                    rsamp)))]
+        (when (not (= "" (:err result)))
+          (throw (java.lang.Error.
+                  (clojure.string/join
+                   "\n"
+                   [(f-str "LPython produced a compilation error for")
+                    (f-str "{(first rsamp)}")
+                    (:err result)]))))
+        result)
       (throw (java.io.FileNotFoundException.
               (f-str "LPython input {rsamp} not found."))))))
 

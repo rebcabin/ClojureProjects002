@@ -45,10 +45,10 @@
 ;;   |_| |_____|____/ |_| |____/
 
 
-;;                   _   _ _
-;;  __ _ ____ _ _  _| |_(_) |___
-;; / _` (_-< '_| || |  _| | (_-<
-;; \__,_/__/_|(_)_,_|\__|_|_/__/
+;;                         _   _ _
+;;  __ _ ____ _       _  _| |_(_) |___
+;; / _` (_-< '_|  _  | || |  _| | (_-<
+;; \__,_/__/_|   (_)  \_,_|\__|_|_/__/
 
 
 (deftest kebab-test
@@ -144,7 +144,7 @@
 
 
 (deftest all-terms-test
-  (testing "check all 28 terms"
+  (testing "check all 28 terms in the snapshot"
     (is (= 28 (->> snapshot/big-list-of-stuff (map :term) set count)))
     (is (= #{
              :asr.autospecs/abi
@@ -179,8 +179,8 @@
            (set (map :term snapshot/big-list-of-stuff))))))
 
 
-(deftest all-kinds-test
-  (testing "check all 3 kinds"
+(deftest all-groups-test
+  (testing "Check all 3 groups in the snapshot."
     (is (= #{:ASDL-SYMCONST :ASDL-COMPOSITE :ASDL-TUPLE}
            (set (map :grup snapshot/big-list-of-stuff))))))
 
@@ -190,7 +190,7 @@
 
 
 (deftest all-heads-test
-  (testing "check all 227 heads, minus 6 asr-tuples"
+  (testing "Check all 227 heads in the snapshot, minus 6 asr-tuples."
     (is (= (- 227 6)
            (->> snapshot/big-list-of-stuff
                 (map :head)
@@ -427,7 +427,7 @@
 
 
 (deftest install-all-symconst-specs-test
-  (testing "install all 72 symconst specs"
+  (testing "Install all 72 symconst specs."
     (is (= 72 (->> snapshot/symconst-stuffs set count)))
     (is (= #{
              :asr.autospecs/add
@@ -510,7 +510,7 @@
 
 
 (deftest install-symconst-stuffss-by-term-test
-  (testing "installing symconst stuffss by term"
+  (testing "Installing symconst stuffss by term."
     (is (= #{:asr.autospecs/deftype
              :asr.autospecs/arraybound
              :asr.autospecs/storage-type
@@ -771,175 +771,176 @@
 
 
 (deftest i32-bin-op-conformance
-  (testing "conformance to structural integer bin-op specs (not correct arithmetic):"
+  (testing "conformance to structural integer bin-op specs
+           (not correct arithmetic):"
     (testing "base case, base-answer"
       (is (let [test-vector '[IntegerBinOp
-                             [IntegerConstant 2 (Integer 4 [])]  ; left
-                             Add                                 ; binop
-                             [IntegerConstant 3 (Integer 4 [])]  ; right
-                             (Integer 4 [])                      ; answer-ttype
-                             [IntegerConstant 5 (Integer 4 [])]]] ; answer
-           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
+                              [IntegerConstant 2 (Integer 4 [])] ; left
+                              Add       ; binop
+                              [IntegerConstant 3 (Integer 4 [])] ; right
+                              (Integer 4 []) ; answer-ttype
+                              [IntegerConstant 5 (Integer 4 [])]]] ; answer
+            (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Base case, no-answer"
       (is (let [test-vector '[IntegerBinOp
-                             [IntegerConstant 2 (Integer 4 [])] ; left
-                             Add                                ; binop
-                             [IntegerConstant 3 (Integer 4 [])] ; right
-                             (Integer 4 []) ]]                  ; answer-ttype
-           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
+                              [IntegerConstant 2 (Integer 4 [])] ; left
+                              Add       ; binop
+                              [IntegerConstant 3 (Integer 4 [])] ; right
+                              (Integer 4 []) ]] ; answer-ttype
+            (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Recurse left, no answers"
       (is (let [test-vector '[IntegerBinOp
-                             [IntegerBinOp                      ; recuse:
-                              [IntegerConstant 2 (Integer 4 [])] ; left
-                              Add                                ; binop
+                              [IntegerBinOp ; recuse:
+                               [IntegerConstant 2 (Integer 4 [])] ; left
+                               Add      ; binop
+                               [IntegerConstant 3 (Integer 4 [])] ; right
+                               (Integer 4 [])] ; ttype
+                              Add              ; binop
                               [IntegerConstant 3 (Integer 4 [])] ; right
-                              (Integer 4 [])]                    ; ttype
-                             Add                                 ; binop
-                             [IntegerConstant 3 (Integer 4 [])]  ; right
-                             (Integer 4 [])] ]                   ; ttype
-           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
+                              (Integer 4 [])] ] ; ttype
+            (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Base case, doubly recursive-answer"
       (is (let [test-vector '[IntegerBinOp
-                             [IntegerConstant 2 (Integer 4 [])] ; left
-                             Add                                ; binop
-                             [IntegerConstant 3 (Integer 4 [])] ; right
-                             (Integer 4 [])                     ; answer-ttype
-                             [IntegerBinOp                      ; recurse answer
-                              [IntegerBinOp                     ; recurse again
-                               [IntegerConstant 2 (Integer 4 [])] ; left
-                               Add                                ; binop
+                              [IntegerConstant 2 (Integer 4 [])] ; left
+                              Add       ; binop
+                              [IntegerConstant 3 (Integer 4 [])] ; right
+                              (Integer 4 []) ; answer-ttype
+                              [IntegerBinOp  ; recurse answer
+                               [IntegerBinOp ; recurse again
+                                [IntegerConstant 2 (Integer 4 [])] ; left
+                                Add     ; binop
+                                [IntegerConstant 3 (Integer 4 [])] ; right
+                                (Integer 4 [])] ; ttype
+                               Add              ; binop
                                [IntegerConstant 3 (Integer 4 [])] ; right
-                               (Integer 4 [])]                    ; ttype
-                              Add                                 ; binop
-                              [IntegerConstant 3 (Integer 4 [])]  ; right
-                              (Integer 4 []) ]]]                  ; ttype
-           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
+                               (Integer 4 []) ]]] ; ttype
+            (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Recursive left, base-answer"
       (is (let [test-vector '[IntegerBinOp
-                             [IntegerBinOp                      ; recur-left
-                              [IntegerConstant 2 (Integer 4 [])] ;   left
-                              Add                                ;   binop
-                              [IntegerConstant 3 (Integer 4 [])] ;   right
-                              (Integer 4 []) ;   answer-ttype
-                              [IntegerConstant 5 (Integer 4 [])]] ;   answer
-                             Mul                                  ; binop
-                             [IntegerConstant 5 (Integer 4 [])]   ; right
-                             (Integer 4 [])                       ; answer-ttype
-                             [IntegerConstant 25 (Integer 4 [])]]] ; answer
-           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
+                              [IntegerBinOp ; recur-left
+                               [IntegerConstant 2 (Integer 4 [])] ;   left
+                               Add      ;   binop
+                               [IntegerConstant 3 (Integer 4 [])] ;   right
+                               (Integer 4 []) ;   answer-ttype
+                               [IntegerConstant 5 (Integer 4 [])]] ;   answer
+                              Mul       ; binop
+                              [IntegerConstant 5 (Integer 4 [])] ; right
+                              (Integer 4 []) ; answer-ttype
+                              [IntegerConstant 25 (Integer 4 [])]]] ; answer
+            (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Recursive right, base-answer"
       (is (let [test-vector '[IntegerBinOp
-                             [IntegerConstant 2 (Integer 4 [])] ; left
-                             Add                                ; binop
-                             [IntegerBinOp                      ; recur-right
-                              [IntegerConstant 3 (Integer 4 [])] ;   left
-                              Add                                ;   binop
-                              [IntegerConstant 4 (Integer 4 [])] ;   right
-                              (Integer 4 []) ;   answer-ttype
-                              [IntegerConstant 42 (Integer 4 [])]] ;   answer
-                             (Integer 4 [])                       ; answer-ttype
-                             [IntegerConstant 42 (Integer 4 [])]]] ; answer
-           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
+                              [IntegerConstant 2 (Integer 4 [])] ; left
+                              Add          ; binop
+                              [IntegerBinOp ; recur-right
+                               [IntegerConstant 3 (Integer 4 [])] ;   left
+                               Add      ;   binop
+                               [IntegerConstant 4 (Integer 4 [])] ;   right
+                               (Integer 4 []) ;   answer-ttype
+                               [IntegerConstant 42 (Integer 4 [])]] ;   answer
+                              (Integer 4 []) ; answer-ttype
+                              [IntegerConstant 42 (Integer 4 [])]]] ; answer
+            (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "Recursive right, recursive answer"
       (is (let [test-vector '[IntegerBinOp
-                             [IntegerConstant 2 (Integer 4 [])]
-                             Add
-                             [IntegerBinOp ; recursive right       ; recur-right
-                              [IntegerConstant 3 (Integer 4 [])]
+                              [IntegerConstant 2 (Integer 4 [])]
                               Add
-                              [IntegerConstant 4 (Integer 4 [])]
-                              (Integer 4 [])]
-                             (Integer 4 []) ; answer type
-                             [IntegerBinOp  ; recurse answer
-                              [IntegerConstant 3 (Integer 4 [])]
-                              Mul
-                              [IntegerConstant 4 (Integer 4 [])]
-                              (Integer 4 [])
-                              [IntegerConstant 25 (Integer 4 [])]]]]
-           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
+                              [IntegerBinOp ; recursive right
+                               [IntegerConstant 3 (Integer 4 [])]
+                               Add
+                               [IntegerConstant 4 (Integer 4 [])]
+                               (Integer 4 [])]
+                              (Integer 4 []) ; answer type
+                              [IntegerBinOp  ; recurse answer
+                               [IntegerConstant 3 (Integer 4 [])]
+                               Mul
+                               [IntegerConstant 4 (Integer 4 [])]
+                               (Integer 4 [])
+                               [IntegerConstant 25 (Integer 4 [])]]]]
+            (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "base, recursive answer"
       (is (let [test-vector '[IntegerBinOp
-                             [IntegerConstant 2 (Integer 4 [])] ; base
-                             Add
-                             [IntegerConstant 4 (Integer 4 [])] ; base
-                             (Integer 4 [])                     ; answer ttype
-                             [IntegerBinOp ; recursive answer
-                              [IntegerConstant 3 (Integer 4 [])]
-                              Mul
-                              [IntegerConstant 4 (Integer 4 [])]
-                              (Integer 4 [])
-                              [IntegerConstant 25 (Integer 4 [])]]]]
-           (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
+                              [IntegerConstant 2 (Integer 4 [])] ; base
+                              Add
+                              [IntegerConstant 4 (Integer 4 [])] ; base
+                              (Integer 4 []) ; answer ttype
+                              [IntegerBinOp  ; recursive answer
+                               [IntegerConstant 3 (Integer 4 [])]
+                               Mul
+                               [IntegerConstant 4 (Integer 4 [])]
+                               (Integer 4 [])
+                               [IntegerConstant 25 (Integer 4 [])]]]]
+            (s/valid? :asr.expr.semnasr/i32-bin-op test-vector))))
 
     (testing "big-honkin' case"
       (is (s/valid?
-          :asr.expr.semnasr/i32-bin-op
-          '[IntegerBinOp
-            [IntegerBinOp
+           :asr.expr.semnasr/i32-bin-op
+           '[IntegerBinOp
              [IntegerBinOp
               [IntegerBinOp
                [IntegerBinOp
-                [IntegerConstant 544338735 (Integer 4 [])]
-                BitXor
-                [IntegerConstant -1100782011 (Integer 4 [])]
-                (Integer 4 [])]
-               Mul
-               [IntegerConstant -971625237 (Integer 4 [])]
-               (Integer 4 [])
-               [IntegerConstant 1980305294 (Integer 4 [])]]
-              Sub
-              [IntegerConstant 1776882703 (Integer 4 [])]
-              (Integer 4 [])]
-             BitLShift
-             [IntegerBinOp
-              [IntegerConstant 1019633051 (Integer 4 [])]
-              BitRShift
-              [IntegerBinOp
-               [IntegerConstant -1661136848 (Integer 4 [])]
-               BitXor
-               [IntegerBinOp
-                [IntegerConstant -390475637 (Integer 4 [])]
-                BitOr
-                [IntegerConstant -627011181 (Integer 4 [])]
+                [IntegerBinOp
+                 [IntegerConstant 544338735 (Integer 4 [])]
+                 BitXor
+                 [IntegerConstant -1100782011 (Integer 4 [])]
+                 (Integer 4 [])]
+                Mul
+                [IntegerConstant -971625237 (Integer 4 [])]
                 (Integer 4 [])
-                [IntegerConstant 591935352 (Integer 4 [])]]
+                [IntegerConstant 1980305294 (Integer 4 [])]]
+               Sub
+               [IntegerConstant 1776882703 (Integer 4 [])]
+               (Integer 4 [])]
+              BitLShift
+              [IntegerBinOp
+               [IntegerConstant 1019633051 (Integer 4 [])]
+               BitRShift
+               [IntegerBinOp
+                [IntegerConstant -1661136848 (Integer 4 [])]
+                BitXor
+                [IntegerBinOp
+                 [IntegerConstant -390475637 (Integer 4 [])]
+                 BitOr
+                 [IntegerConstant -627011181 (Integer 4 [])]
+                 (Integer 4 [])
+                 [IntegerConstant 591935352 (Integer 4 [])]]
+                (Integer 4 [])
+                [IntegerBinOp
+                 [IntegerConstant -903848770 (Integer 4 [])]
+                 BitRShift
+                 [IntegerConstant -256687998 (Integer 4 [])]
+                 (Integer 4 [])]]
                (Integer 4 [])
                [IntegerBinOp
-                [IntegerConstant -903848770 (Integer 4 [])]
-                BitRShift
-                [IntegerConstant -256687998 (Integer 4 [])]
+                [IntegerBinOp
+                 [IntegerConstant -147005213 (Integer 4 [])]
+                 BitXor
+                 [IntegerConstant -2030399113 (Integer 4 [])]
+                 (Integer 4 [])]
+                BitAnd
+                [IntegerConstant -1249059602 (Integer 4 [])]
                 (Integer 4 [])]]
               (Integer 4 [])
-              [IntegerBinOp
-               [IntegerBinOp
-                [IntegerConstant -147005213 (Integer 4 [])]
-                BitXor
-                [IntegerConstant -2030399113 (Integer 4 [])]
-                (Integer 4 [])]
-               BitAnd
-               [IntegerConstant -1249059602 (Integer 4 [])]
-               (Integer 4 [])]]
-             (Integer 4 [])
-             [IntegerConstant -1164337677 (Integer 4 [])]]
-            Add
-            [IntegerConstant 1917318437 (Integer 4 [])]
-            (Integer 4 [])])))
+              [IntegerConstant -1164337677 (Integer 4 [])]]
+             Add
+             [IntegerConstant 1917318437 (Integer 4 [])]
+             (Integer 4 [])])))
 
     (testing "Stress. Guaranteed by clojure.spec, but ya' never know."
       (is (every?
-          (partial s/valid? :asr.expr.semnasr/i32-bin-op)
-          (binding [s/*recursion-limit* RECURSION-LIMIT]
-            (for [_ (range NTESTS)]
-              (-> :asr.expr.semnasr/i32-bin-op
-                  s/gen
-                  gen/generate))))))))
+           (partial s/valid? :asr.expr.semnasr/i32-bin-op)
+           (binding [s/*recursion-limit* RECURSION-LIMIT]
+             (for [_ (range NTESTS)]
+               (-> :asr.expr.semnasr/i32-bin-op
+                   s/gen
+                   gen/generate))))))))
 
 
 ;;  _     _                                                 _
@@ -1226,7 +1227,7 @@
                            (IntegerConstant 43 (Integer 4 [])))))))
     ;; Check that a nested expr is not valid. It will fail due to
     ;; structural (syntactical?) constraints on the head, not due
-    ;; to types and kinds (semnasr) on the preimage or
+    ;; to types and groups (semnasr) on the preimage or
     ;; arithmetic (sem-sem) constraints on the values.
     (testing "nested structure (not leaf)"
       (is (not (s/valid? :asr.expr.semsem/i32-bin-op-leaf
@@ -1290,6 +1291,7 @@
 ;; | '  \/ _` | || | '_ \/ -_) \ V / _` | | || / -_) | ||_ \/ /
 ;; |_|_|_\__,_|\_, |_.__/\___|  \_/\__,_|_|\_,_\___| |_|___/___|
 ;;             |__/
+
 
 ;; Co-cursively calls spec ::i32-bin-op.
 
@@ -1772,7 +1774,11 @@
              (indirect-penvs (new-penv foo ΓΠ)))))))
 
 
-;; expr2.py
+;;                          _            __                  ___
+;;  _____ ____ _ _ __  _ __| |___ ___   / /  _____ ___ __ _ |_  )
+;; / -_) \ / _` | '  \| '_ \ / -_|_-<  / /  / -_) \ / '_ \ '_/ /
+;; \___/_\_\__,_|_|_|_| .__/_\___/__/ /_/   \___/_\_\ .__/_|/___|
+;;                    |_|                           |_|
 
 
 ;; def main0():
@@ -1876,6 +1882,7 @@
 
 
 (defn patch-assignment
+  "Change equals-sign to 'Assignment' in ASR."
   [clj]
   (walk/prewalk
    (fn [node]
@@ -1904,7 +1911,7 @@
   (println "................................................."))
 
 
-(deftest lpython-asr-test
+(deftest lpython-asr-change-alert-test
   (testing "This test alerts me to structural changes in lpython"
     (is (= (do
              (print-barrier "Running ALERT test on expr2.py")
@@ -1912,30 +1919,36 @@
            expr2-clj))))
 
 
-;;       _       _               _
-;;  __ _| |__ __| |_ _ _ __ _ __| |_
-;; / _` | '_ (_-<  _| '_/ _` / _|  _|
-;; \__,_|_.__/__/\__|_| \__,_\__|\__|
-;;               _           _   _
-;;  _____ ____ _| |_  _ __ _| |_(_)___ _ _
-;; / -_) V / _` | | || / _` |  _| / _ \ ' \
-;; \___|\_/\__,_|_|\_,_\__,_|\__|_\___/_||_|
+;; This next test concerns the stored sample, expr2-clj, from
+;; the "ALERT" test above.
 
-
-
-(deftest eval-node-test-expr2
+(deftest eval-node-test-examples-slash-expr2-alert
   (testing "that it's not nil; will run main_program if not empty."
     (is (= SUCCESS
            (do (print-barrier "Running expr2.py")
                ((eval-node expr2-clj) ΓΠ))))))
 
 
+;;  _          _           _ _            _
+;; | |_ ___ __| |_ ___  __| (_)_ _ ___ __| |_ ___ _ _ _  _
+;; |  _/ -_|_-<  _(_-< / _` | | '_/ -_) _|  _/ _ \ '_| || |
+;;  \__\___/__/\__/__/ \__,_|_|_| \___\__|\__\___/_|  \_, |
+;;                                                    |__/
+
+
 (defn taste-a-sample
+  "General function for compiling and 'abstractly executing' a
+  sample from the lpython 'tests' subdirectory."
   [samp]
-  (= SUCCESS
-     (do (print-barrier (f-str "Running {samp}.py"))
-         ((eval-node
-           (get-clj (f-str "tests/{samp}.py"))) ΓΠ))))
+  (try
+    (= SUCCESS
+       (do (print-barrier (f-str "Running {samp}.py"))
+           ((eval-node
+             (get-clj (f-str "tests/{samp}.py"))) ΓΠ)))
+    (catch Error e
+      (let [m (.getMessage e)]
+        (print m)
+        m))))
 
 
 ;; expr1.py
@@ -1951,10 +1964,11 @@
 
 
 (deftest eval-node-test-expr1
-  (testing "that it's not nil; this one has an empty main_program"
+  (testing "that it's not nil; empty main_program; no output"
     (is (taste-a-sample "expr1"))))
 
 
+;; expr2.py
 ;; def test_boolOp():
 ;;     a: bool
 ;;     b: bool
@@ -1971,9 +1985,39 @@
 ;; (get-clj "tests/expr2.py")
 
 
-(deftest eval-node-test-expr2-2
-  (testing "that it's not nil"
+(deftest eval-node-test-expr2
+  (testing "that it's not nil; no output"
     (is (taste-a-sample "expr2"))))
+
+
+;; expr3.py
+;;
+;; from ltypes import i32, f32
+;; def test_cast():
+;;     a: i32
+;;     b: f32
+;;     a = 2
+;;     b = f32(4.2)
+;;     a *= b
+;;     b += 1
+;;     a = 5
+;;     a -= 3.9
+;;     a /= b
+;;     b = 3/4
+;;     if a < b:
+;;         print("a < b")
+
+
+(deftest eval-node-test-expr3
+  (testing "that it's not nil"
+    (is (taste-a-sample "expr3"))))
+
+
+;;                         _
+;;  __ _ _ _ ___ _  _ _ __(_)_ _  __ _ ___
+;; / _` | '_/ _ \ || | '_ \ | ' \/ _` (_-<
+;; \__, |_| \___/\_,_| .__/_|_||_\__, /__/
+;; |___/             |_|         |___/
 
 
 (deftest asr-groupings-test
