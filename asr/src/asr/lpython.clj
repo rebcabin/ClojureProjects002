@@ -2,8 +2,10 @@
 
   (:use [clojure.java.shell :only [sh     ] ])
 
-  (:require [pathetic.core  :as   path ]
-            [clojure.string            ]))
+  (:require [blaster.clj-fstring :refer [f-str]]
+            [pathetic.core       :as    path   ]
+            [clojure.java.io     :as    io     ]
+            [clojure.string                    ]))
 
 
 ;;   __ _ _                       _
@@ -74,11 +76,15 @@
     [(path/resolve
       dir
       sample)])
-  (apply sh (cons executable
-                  (concat includes
-                          options
-                          (resolve-sample sample)))))
-
+  (let [rsamp (resolve-sample sample)]
+    (if (.exists (io/file (first rsamp)))
+      ;; RACE THE OS TO SEE WHETHER THE FILE STILL EXISTS :)
+      (apply sh (cons executable
+                      (concat includes
+                              options
+                              rsamp)))
+      (throw (java.io.FileNotFoundException.
+              (f-str "LPython input {rsamp} not found."))))))
 
 
 (def clojurizer #"([^\s^\{]+)\:")

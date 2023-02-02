@@ -15,6 +15,7 @@
 
   (:require
    [asr.parsed                    :as    snapshot]
+   [blaster.clj-fstring           :refer [f-str] ]
    [clojure.math                  :as    math    ]
    [clojure.test                  :refer :all    ]
    [clojure.string                :as    string  ]
@@ -1911,11 +1912,30 @@
            expr2-clj))))
 
 
+;;       _       _               _
+;;  __ _| |__ __| |_ _ _ __ _ __| |_
+;; / _` | '_ (_-<  _| '_/ _` / _|  _|
+;; \__,_|_.__/__/\__|_| \__,_\__|\__|
+;;               _           _   _
+;;  _____ ____ _| |_  _ __ _| |_(_)___ _ _
+;; / -_) V / _` | | || / _` |  _| / _ \ ' \
+;; \___|\_/\__,_|_|\_,_\__,_|\__|_\___/_||_|
+
+
+
 (deftest eval-node-test-expr2
   (testing "that it's not nil; will run main_program if not empty."
     (is (= SUCCESS
            (do (print-barrier "Running expr2.py")
                ((eval-node expr2-clj) ΓΠ))))))
+
+
+(defn taste-a-sample
+  [samp]
+  (= SUCCESS
+     (do (print-barrier (f-str "Running {samp}.py"))
+         ((eval-node
+           (get-clj (f-str "tests/{samp}.py"))) ΓΠ))))
 
 
 ;; expr1.py
@@ -1932,12 +1952,28 @@
 
 (deftest eval-node-test-expr1
   (testing "that it's not nil; this one has an empty main_program"
-    (is (=
-         ;; there is no body to the main program in this sample.
-         SUCCESS
-         (do (print-barrier "Running expr1.py")
-             ((eval-node
-               (get-clj "tests/expr1.py")) ΓΠ))))))
+    (is (taste-a-sample "expr1"))))
+
+
+;; def test_boolOp():
+;;     a: bool
+;;     b: bool
+;;     a = False
+;;     b = True
+;;     a = a and b
+;;     b = a or True
+;;     a = a or b
+;;     a = a and b == b
+;;     a = a and b != b
+;;     a = b or b
+
+
+;; (get-clj "tests/expr2.py")
+
+
+(deftest eval-node-test-expr2-2
+  (testing "that it's not nil"
+    (is (taste-a-sample "expr2"))))
 
 
 (deftest asr-groupings-test

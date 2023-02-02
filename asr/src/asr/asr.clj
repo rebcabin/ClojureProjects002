@@ -330,6 +330,59 @@
 ;; 29 PointerNullConstant     PointerAssociated)
 
 
+(defmethod eval-expr nil
+  [_]
+  (throw (Exception. "catch me in the debugger: xzyzy plugh")))
+
+
+;; | LogicalCompare(expr left, cmpop op, expr right,
+;;                  ttype type, expr? value)
+
+
+(defmethod eval-expr 'LogicalCompare
+  [[head
+    left
+    cmpop
+    right
+    type-
+    value]]
+  (fn [penv]
+    {:head  head
+     :term  (term-from-head head)
+
+     :left  ((eval-expr  left)  penv)
+     :cmpop ((eval-node  cmpop) penv)
+     :right ((eval-expr  right) penv)
+     :type  ((eval-ttype type-) penv)
+     ;; Use eval-node on question-marked items.
+     :value ((eval-node  value) penv)
+     }))
+
+
+;; | LogicalBinOp(expr left, logicalbinop op, expr right,
+;;                ttype type, expr? value)
+
+
+(defmethod eval-expr 'LogicalBinOp
+  [[head
+    left
+    logicalbinop
+    right
+    type-
+    value]]
+  (fn [penv]
+    {:head  head
+     :term  (term-from-head head)
+
+     :left         ((eval-expr  left)         penv)
+     :logicalbinop ((eval-node  logicalbinop) penv)
+     :right        ((eval-expr  right)        penv)
+     :type         ((eval-ttype type-)        penv)
+     ;; Use eval-node on question-marked items.
+     :value        ((eval-node  value)        penv)
+     }))
+
+
 ;; | IntegerBinOp(expr left, binop op, expr right, ttype type, expr? value)
 
 
@@ -341,15 +394,31 @@
     type-
     value]]
   (fn [penv]
-    {:head head
+    {:head  head
      :term  (term-from-head head)
 
      :left  ((eval-expr  left)  penv)
      :op    ((eval-node  op)    penv)
      :right ((eval-expr  right) penv)
      :type  ((eval-ttype type-) penv)
-     :value ((eval-expr  value) penv)
+     ;; Use eval-node on question-marked items.
+     :value ((eval-node  value) penv)
      }))
+
+
+;; | LogicalConstant(bool value, ttype type)
+
+
+(defmethod eval-expr 'LogicalConstant
+  [[head
+    value
+    type-]]
+  (fn [penv]
+    {:head head
+     :term  (term-from-head     head)
+
+     :value ((eval-bool  value) penv)
+     :type  ((eval-ttype type-) penv)}))
 
 
 ;; | IntegerConstant(int n, ttype type)
@@ -361,9 +430,9 @@
     type-]]
   (fn [penv]
     {:head head
-     :term (term-from-head head)
+     :term (term-from-head     head)
 
-     :n    n
+     :n    ((eval-node  n)     penv)
      :type ((eval-ttype type-) penv)}))
 
 
@@ -620,6 +689,26 @@
 ;; |  __/\ V / (_| | | |_____| | |_| |_| |_| | |_) |  __/
 ;;  \___| \_/ \__,_|_|          \__|\__|\__, | .__/ \___|
 ;;                                      |___/|_|
+
+
+;;| Logical(int kind, dimension* dims)
+
+
+(defn common-ttype
+  [head kind dims]
+  (fn [penv]
+    {:head head
+     :term (term-from-head head)
+
+     :kind ((eval-node  kind) penv)
+     :dims ((eval-nodes dims) penv)}))
+
+
+(defmethod eval-ttype 'Logical
+  [[head
+    kind
+    dims]]
+  (common-ttype head kind dims))
 
 
 ;; = Integer(int kind, dimension* dims)
@@ -885,6 +974,17 @@
 
 
 ;;                        _ _    _
+;;  _ _ _  _ _ _    ___  | | |__(_)_ _  ___ _ __
+;; | '_| || | ' \  |___| | | '_ \ | ' \/ _ \ '_ \
+;; |_|  \_,_|_||_|       |_|_.__/_|_||_\___/ .__/
+;;                                         |_|
+
+
+(defmulti run-lbinop
+  (fn [op _l _r] (:head op)))
+
+
+;;                        _ _    _
 ;;  _ _ _  _ _ _    ___  (_) |__(_)_ _  ___ _ __
 ;; | '_| || | ' \  |___| | | '_ \ | ' \/ _ \ '_ \
 ;; |_|  \_,_|_||_|       |_|_.__/_|_||_\___/ .__/
@@ -892,7 +992,7 @@
 
 
 (defmulti run-ibinop
-  (fn [op l r] (:head op)))
+  (fn [op _l _r] (:head op)))
 
 
 (defmethod run-ibinop 'Mul [_ l r] (* l r))
@@ -908,13 +1008,29 @@
 (defmulti run-expr :head)
 
 
+;; When 'value' is nil
+
+
+(defmethod run-expr nil
+  [_]
+  nil)
+
+
+;; "If there is a 'value' attribute, compare it to the result of
+;; the abstract execution. The 'value' attribute is a compile-time
+;; constant, meaning that the compiler could compute the answer."
+
+
 (defmethod run-expr 'IntegerBinOp
   [e]
   (fn [penv]
     (let [r-left  ((run-expr (:left  e)) penv)
           r-right ((run-expr (:right e)) penv)
-          result  (run-ibinop (:op e) r-left r-right)]
+          result  (run-ibinop (:op e) r-left r-right)
+          value   ((run-expr (:value e)) penv)]
       ;; (pprint (f-str "IntegerBinOp result: {result}"))
+      (when value
+        (assert (= value result)))
       result)))
 
 
