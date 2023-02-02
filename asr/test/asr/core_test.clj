@@ -2030,6 +2030,20 @@
     (is (taste-a-sample "expr4"))))
 
 
+;; tests/expr5.py
+;;
+;; def test_StrOp_concat():
+;;     s: str
+;;     s = '3' + '4'
+;;     s = "a " + "test"
+;;     s = 'test' + 'test' + 'test'
+
+
+(deftest eval-node-test-expr3
+  (testing "that it's not nil"
+    (is (taste-a-sample "expr5"))))
+
+
 ;;                         _
 ;;  __ _ _ _ ___ _  _ _ __(_)_ _  __ _ ___
 ;; / _` | '_/ _ \ || | '_ \ | ' \/ _` (_-<

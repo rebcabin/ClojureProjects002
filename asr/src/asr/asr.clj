@@ -335,6 +335,27 @@
   (throw (Exception. "catch me in the debugger: xzyzy plugh")))
 
 
+;; | StringConcat(expr left, expr right, ttype type, expr? value)
+
+
+(defmethod eval-expr 'StringConcat
+  [[head
+    left
+    right
+    type-
+    value]]
+  (fn [penv]
+    {:head  head
+     :term  (term-from-head head)
+
+     :left  ((eval-expr  left)  penv)
+     :right ((eval-expr  right) penv)
+     :type  ((eval-ttype type-) penv)
+     ;; Use eval-node on question-marked items.
+     :value ((eval-node  value) penv)
+     }))
+
+
 ;; | LogicalCompare(expr left, cmpop op, expr right,
 ;;                  ttype type, expr? value)
 
