@@ -1,6 +1,7 @@
 (ns asr.lpython
 
-  (:use [clojure.java.shell :only [sh     ] ])
+  (:use [clojure.java.shell :only [sh     ] ]
+        [asr.utils                          ])
 
   (:require [blaster.clj-fstring :refer [f-str]]
             [pathetic.core       :as    path   ]
@@ -69,6 +70,15 @@
 ;;                          |___/
 
 
+(defn err-string
+  [severity rsamp result]
+  (clojure.string/join
+   "\n"
+   [(f-str "LPython produced compilation {severity}s for")
+    (f-str "{(first rsamp)}")
+    (:err result)]))
+
+
 (defn get-sample-str
   [sample]
   (defn resolve-sample
@@ -84,29 +94,40 @@
                             (concat includes
                                     options
                                     rsamp)))]
-        (when (not (= "" (:err result)))
+        (cond
+
+          (and (= "" (:out result))
+               (not (= "" (:err result))))
           (throw (java.lang.Error.
-                  (clojure.string/join
-                   "\n"
-                   [(f-str "LPython produced a compilation error for")
-                    (f-str "{(first rsamp)}")
-                    (:err result)]))))
-        result)
+                  (err-string "error" rsamp result)))
+
+          (not (= "" (:err result)))
+          (print (err-string "warning" rsamp result)))
+
+        (identity result))
       (throw (java.io.FileNotFoundException.
               (f-str "LPython input {rsamp} not found."))))))
 
 
-(def clojurizer #"([^\s^\{]+)\:")
-
+(def clojurizer-1 #"([^\s^\{]+)\:") ; move colons to beginning of keywords
+(def clojurizer-2 #"@")
 
 (defn post-process-asr
   [asr-sh-result]
-  (clojure.string/replace asr-sh-result clojurizer ":$1"))
+  (let [one (clojure.string/replace
+             asr-sh-result
+             clojurizer-1
+             ":$1")
+        two (clojure.string/replace
+             one
+             clojurizer-2
+             "_AT_")]
+    two))
 
 
 (defn get-sample-clj
   [sample]
-  "DANGER! NEVER, EVER RUN ON UNTRUSTED INPUTS."
+  "DANGER! NEVER, EVER RUN THIS ON UNTRUSTED INPUTS."
   (-> sample
       get-sample-str
       :out

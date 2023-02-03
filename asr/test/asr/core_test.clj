@@ -17,6 +17,7 @@
    [asr.parsed                    :as    snapshot]
    [blaster.clj-fstring           :refer [f-str] ]
    [clojure.math                  :as    math    ]
+   [clojure.pprint                :refer [pprint]]
    [clojure.test                  :refer :all    ]
    [clojure.string                :as    string  ]
    [clojure.spec.alpha            :as    s       ]
@@ -2025,7 +2026,7 @@
 ;;     del a, b
 
 
-(deftest eval-node-test-expr3
+(deftest eval-node-test-expr4
   (testing "that it's not nil"
     (is (taste-a-sample "expr4"))))
 
@@ -2039,7 +2040,7 @@
 ;;     s = 'test' + 'test' + 'test'
 
 
-(deftest eval-node-test-expr3
+(deftest eval-node-test-expr5
   (testing "that it's not nil"
     (is (taste-a-sample "expr5"))))
 
@@ -2055,9 +2056,34 @@
 ;;     c = True if b > 5 else False
 
 
-(deftest eval-node-test-expr3
+(deftest eval-node-test-expr6
   (testing "that it's not nil"
     (is (taste-a-sample "expr6"))))
+
+
+;; tests/expr7.py
+;;
+;; from ltypes import i32
+;; def test_pow():
+;;     a: i32
+;;     a = i32(pow(2, 2))
+;;
+;; def test_pow_1(a: i32, b: i32) -> i32:
+;;     res: i32
+;;     res = i32(pow(a, b))
+;;     return res
+;;
+;; def main0():
+;;     test_pow()
+;;     c: i32
+;;     c = test_pow_1(1, 2)
+;;
+;; main0()
+
+
+(deftest eval-node-test-expr7
+  (testing "that it's not nil"
+   (is (taste-a-sample "expr7"))))
 
 
 ;;                         _
