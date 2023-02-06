@@ -335,6 +335,51 @@
   (throw (Exception. "catch me in the debugger: xzyzy plugh")))
 
 
+;; See Issue #1508 https://github.com/lcompilers/lpython/issues/1508
+;; | FunctionCall(symbol name, symbol? original_name, call_arg* args,
+;;                       ttype type, expr? value, expr? dt)
+
+
+;; Example from expr7.py doesn't match the spec.
+
+
+;; (FunctionCall
+;;  1
+;;  test_pow_1
+;;  ()
+;;  [((IntegerConstant 1 (Integer 4 [])))
+;;   ((IntegerConstant 2 (Integer 4 [])))]
+;;  (Integer 4 [])
+;;  ()
+;;  ())
+
+
+(defmethod eval-expr 'FunctionCall
+  [[head
+    stid-unspecified
+    nym-type-mismatch
+    original-nym-type-mismatch
+    arguments
+    type-
+    value
+    dt
+    :as function-call
+    ]]
+  (fn [penv]
+    {:head  head
+     :term  (term-from-head head)
+
+     :stid-unspecified ((eval-node       stid-unspecified)           penv)
+     :name             ((eval-identifier nym-type-mismatch)          penv)
+     :original-name    ((eval-nodes      original-nym-type-mismatch) penv)
+     :arguments        ((eval-nodes      arguments)                  penv)
+     :type             ((eval-ttype      type-)                      penv)
+     ;; Use "eval-node" for elements with question marks.
+     :value            ((eval-node       value)                      penv)
+     :dt               ((eval-node       dt)                         penv)
+     }))
+
+
 ;; = IfExp(expr test, expr body, expr orelse, ttype type, expr? value)
 ;; -- Such as: (x, y+z), (3.0, 2.0) generally not known at compile time
 
@@ -587,6 +632,49 @@
 ;;; symbol. SymbolTable is not actually specified in ASR.
 
 
+;; | ExternalSymbol(symbol_table parent_symtab, identifier name,
+;;                  symbol external, identifier module_name,
+;;                  identifier* scope_names, identifier original_name,
+;;                  access access)
+
+
+(defmethod eval-symbol 'ExternalSymbol
+  [[head
+    parent-stid
+    nym
+    external-stid
+    module-nym
+    ;; Issue #1507 https://github.com/lcompilers/lpython/issues/1507
+    -unspecified
+    scope-nyms
+    original-nym
+    access
+    :as external-symbol]]
+  (fn [penv]
+    {:head            head
+     :term            (term-from-head head)
+
+     :stid            ((eval-node parent-stid)   penv)
+     :name            ((eval-node nym)           penv)
+     :external-stid   ((eval-node external-stid) penv)
+     :module-name     ((eval-node module-nym)    penv)
+     :-unspecified    ((eval-node -unspecified)  penv)
+     :scope-names     ((eval-nodes scope-nyms)   penv)
+     :original-name   ((eval-node original-nym)  penv)
+     :acces           ((eval-node access)        penv)
+     }))
+
+
+;; TODO: Issues #1505, #1420, #1498
+;; https://github.com/lcompilers/lpython/issues/1498
+
+
+(defmethod eval-symbol 'IntrinsicModule
+  [node]
+  (fn [penv]
+    (echo node)))
+
+
 ;; = Program(symbol_table symtab, identifier name,
 ;;           identifier* dependencies, stmt* body)
 
@@ -732,7 +820,7 @@
      ;; here is useful during development to expose missing
      ;; defmethods.
      :body             (identity
-                        #_echo
+                        #_ echo
                         ((eval-nodes  body)             penv))
      :return-var       ((eval-node    return-var)       penv)
      :abi              ((eval-node    abi)              penv)
@@ -841,7 +929,9 @@
 ;; | ExplicitDeallocate(symbol* vars)
 ;; https://github.com/lcompilers/lpython/issues/1492
 ;; vars is not symbol*, but symref*. Until issue 1492
-;; is resolved, I'll fake symref.
+;; is resolved, I'll fake symref. Find 'eval-symrefs'
+;; in this file, which is moved ahead of the first
+;; function that needs it as we develop.
 
 
 (defn eval-symrefs
@@ -1046,6 +1136,11 @@
 
           (or (= head 'SymbolTable) (= head 'ForTest))
           ((eval-symbol node) penv) ; SymbolTable is an unspec'ced symbol
+
+          ;; TODO: Issues #1505, #1420, #1498
+          ;; https://github.com/lcompilers/lpython/issues/1498
+          (= head 'IntrinsicModule)
+          ((eval-symbol node) penv)
 
           (composite? head)
           (eval-composite head node penv)

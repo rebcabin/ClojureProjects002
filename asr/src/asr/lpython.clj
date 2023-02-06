@@ -45,7 +45,10 @@
   [(str "-I" (path/resolve dir ltypes-relative))])
 
 (def options
-  ["--show-asr" "--no-color"])
+  ["--show-asr"
+   "--no-color"
+   ;; Issues #1505 and #1420 https://github.com/lcompilers/lpython/issues/1505
+   #_"--with-intrinsic-mods"])
 
 (def test-options
   ["--version"])
@@ -90,10 +93,10 @@
     (if (.exists (io/file (first rsamp)))
       ;; TODO: RACE THE OS TO SEE WHETHER THE FILE STILL EXISTS :)
       (let [result
-            (apply sh (cons executable
-                            (concat includes
-                                    options
-                                    rsamp)))]
+            (apply sh (echo (cons executable
+                             (concat includes
+                                     options
+                                     rsamp))))]
         (cond
 
           (and (= "" (:out result))
@@ -111,8 +114,12 @@
 
 (def clojurizer-1 #"([^\s^\{]+)\:") ; move colons to beginning of keywords
 (def clojurizer-2 #"@")
+(def clojurizer-2-replacement
+  "/"
+  #_"_AT_")
 
 (defn post-process-asr
+  "TODO: (nice-to-have) swiss arrows for this."
   [asr-sh-result]
   (let [one (clojure.string/replace
              asr-sh-result
@@ -121,7 +128,7 @@
         two (clojure.string/replace
              one
              clojurizer-2
-             "_AT_")]
+             clojurizer-2-replacement)]
     two))
 
 
