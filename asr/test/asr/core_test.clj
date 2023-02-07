@@ -2090,206 +2090,189 @@
 
 
 #_'(TranslationUnit
-  (SymbolTable
-   1
-   {:lpython_builtin (IntrinsicModule lpython_builtin),
-    :main0   (Function
-              (SymbolTable
-               4
-               {:c
-                (Variable
+    (SymbolTable
+     1
+     {:lpython_builtin (IntrinsicModule lpython_builtin),
+      :main0   (Function
+                (SymbolTable
                  4
-                 c
-                 []
-                 Local
-                 ()
-                 ()
-                 Default
-                 (Integer 4 [])
-                 Source
-                 Public
-                 Required
-                 .false.)})
-              main0
-              [test_pow test_pow_1]
-              []
-              [(SubroutineCall 1 test_pow () [] ())
-               (Assignment
-                (Var 4 c)
-                (FunctionCall
-                 1
-                 test_pow_1
-                 ()
-                 [((IntegerConstant 1 (Integer 4 [])))
-                  ((IntegerConstant 2 (Integer 4 [])))]
-                 (Integer 4 [])
-                 ()
-                 ())
-                ())]
-              ()
-              Source
-              Public
-              Implementation
-              ()
-              .false.
-              .false.
-              .false.
-              .false.
-              .false.
-              []
-              []
-              .false.
-              .false.
-              .false.),
-    :main_program (Program (SymbolTable 98 {}) main_program [] []),
-    :test_pow
-    (Function
-     (SymbolTable
-      2
-      {:a      (Variable
-                2
-                a
-                []
-                Local
+                 {:c
+                  (Variable
+                   4
+                   c
+                   []
+                   Local
+                   ()
+                   ()
+                   Default
+                   (Integer 4 [])
+                   Source
+                   Public
+                   Required
+                   .false.)})
+                main0
+                [test_pow test_pow_1]
+                [] ;; v--- body:
+                [(SubroutineCall 1 test_pow () [] ())
+                 (Assignment
+                  (Var 4 c)
+                  (FunctionCall
+                   1
+                   test_pow_1
+                   ()
+                   [((IntegerConstant 1 (Integer 4 [])))
+                    ((IntegerConstant 2 (Integer 4 [])))]
+                   (Integer 4 [])
+                   ()
+                   ())
+                  ())]
                 ()
-                ()
-                Default
-                (Integer 4 [])
-                Source
-                Public
-                Required
-                .false.),
-       :pow (ExternalSymbol 2 pow 6 pow lpython_builtin [] pow Private),
-       :pow/__lpython_overloaded_0__pow
-       (ExternalSymbol
+                Source Public Implementation ()
+                .false. .false. .false. .false. .false.
+                [] [] .false. .false. .false.),
+      :main_program (Program (SymbolTable 98 {}) main_program [] []),
+      :test_pow
+      (Function
+       (SymbolTable
         2
-        pow/__lpython_overloaded_0__pow
-        6
-        __lpython_overloaded_0__pow
-        lpython_builtin
-        []
-        __lpython_overloaded_0__pow
-        Public)})
-     test_pow
-     [pow/__lpython_overloaded_0__pow]
-     []
-     [(Assignment
-       (Var 2 a)
-       (Cast
-        (FunctionCall
-         2
-         pow/__lpython_overloaded_0__pow
-         2
-         pow
-         [((IntegerConstant 2 (Integer 4 [])))
-          ((IntegerConstant 2 (Integer 4 [])))]
-         (Real 8 [])
-         (RealConstant 4.0 (Real 8 []))
-         ())
-        RealToInteger
-        (Integer 4 [])
-        (IntegerConstant 4 (Integer 4 [])))
-       ())]
-     ()
-     Source    Public    Implementation
-     ()
-     .false.    .false.    .false.    .false.    .false.
-     []
-     []
-     .false.    .false.    .false.),
-    :test_pow_1
-    (Function
-     (SymbolTable
-      3
-      {:_lpython_return_variable      (Variable
-                                       3
-                                       _lpython_return_variable
-                                       []
-                                       ReturnVar
-                                       ()
-                                       ()
-                                       Default
-                                       (Integer 4 [])
-                                       Source
-                                       Public
-                                       Required
-                                       .false.),
-       :a      (Variable
-                3
-                a
-                []
-                In
-                ()
-                ()
-                Default
-                (Integer 4 [])
-                Source
-                Public
-                Required
-                .false.),
-       :b      (Variable
-                3
-                b
-                []
-                In
-                ()
-                ()
-                Default
-                (Integer 4 [])
-                Source
-                Public
-                Required
-                .false.),
-       :pow (ExternalSymbol 3 pow 6 pow lpython_builtin [] pow Private),
-       :pow/__lpython_overloaded_0__pow
-       (ExternalSymbol       3
-                             pow/__lpython_overloaded_0__pow       6
-                             __lpython_overloaded_0__pow
-                             lpython_builtin
-                             []
-                             __lpython_overloaded_0__pow
-                             Public),
-       :res
-       (Variable
+        {:a      (Variable
+                  2
+                  a
+                  []
+                  Local
+                  ()
+                  ()
+                  Default
+                  (Integer 4 [])
+                  Source
+                  Public
+                  Required
+                  .false.),
+         :pow (ExternalSymbol 2 pow 6 pow lpython_builtin [] pow Private),
+         :pow/__lpython_overloaded_0__pow
+         (ExternalSymbol
+          2
+          pow/__lpython_overloaded_0__pow
+          6
+          __lpython_overloaded_0__pow
+          lpython_builtin
+          []
+          __lpython_overloaded_0__pow
+          Public)})
+       test_pow
+       [pow/__lpython_overloaded_0__pow]
+       [] ;; v--- body:
+       [(Assignment
+         (Var 2 a)
+         (Cast
+          (FunctionCall
+           2
+           pow/__lpython_overloaded_0__pow
+           2
+           pow
+           [((IntegerConstant 2 (Integer 4 [])))
+            ((IntegerConstant 2 (Integer 4 [])))]
+           (Real 8 [])
+           (RealConstant 4.0 (Real 8 []))
+           ())
+          RealToInteger
+          (Integer 4 [])
+          (IntegerConstant 4 (Integer 4 [])))
+         ())]
+       ()
+       Source Public Implementation ()
+       .false. .false. .false. .false. .false.
+       [] [] .false. .false. .false.),
+      :test_pow_1
+      (Function
+       (SymbolTable
         3
-        res
-        []
-        Local
-        ()
-        ()
-        Default
-        (Integer 4 [])
-        Source
-        Public
-        Required
-        .false.)})
-     test_pow_1
-     [pow/__lpython_overloaded_0__pow]
-     [(Var 3 a) (Var 3 b)]
-     [(Assignment
-       (Var 3 res)
-       (Cast
-        (FunctionCall        3
-                             pow/__lpython_overloaded_0__pow        3
-                             pow
-                             [((Var 3 a)) ((Var 3 b))]
-                             (Real 8 [])
-                             ()
-                             ())
-        RealToInteger
-        (Integer 4 [])
-        ())
-       ())
-      (Assignment (Var 3 _lpython_return_variable) (Var 3 res) ())
-      (Return)]
-     (Var 3 _lpython_return_variable)
-     Source    Public    Implementation
-     ()
-     .false.    .false.    .false.    .false.    .false.
-     []
-     []
-     .false.    .false.    .false.)})
-  [])
+        {:_lpython_return_variable      (Variable
+                                         3
+                                         _lpython_return_variable
+                                         []
+                                         ReturnVar
+                                         ()
+                                         ()
+                                         Default
+                                         (Integer 4 [])
+                                         Source
+                                         Public
+                                         Required
+                                         .false.),
+         :a      (Variable
+                  3
+                  a
+                  []
+                  In
+                  ()
+                  ()
+                  Default
+                  (Integer 4 [])
+                  Source
+                  Public
+                  Required
+                  .false.),
+         :b      (Variable
+                  3
+                  b
+                  []
+                  In
+                  ()
+                  ()
+                  Default
+                  (Integer 4 [])
+                  Source
+                  Public
+                  Required
+                  .false.),
+         :pow (ExternalSymbol 3 pow 6 pow lpython_builtin [] pow Private),
+         :pow/__lpython_overloaded_0__pow
+         (ExternalSymbol       3
+                               pow/__lpython_overloaded_0__pow       6
+                               __lpython_overloaded_0__pow
+                               lpython_builtin
+                               []
+                               __lpython_overloaded_0__pow
+                               Public),
+         :res
+         (Variable
+          3
+          res
+          []
+          Local
+          ()
+          ()
+          Default
+          (Integer 4 [])
+          Source
+          Public
+          Required
+          .false.)})
+       test_pow_1
+       [pow/__lpython_overloaded_0__pow]
+       [(Var 3 a) (Var 3 b)] ;; v--- body
+       [(Assignment
+         (Var 3 res)
+         (Cast
+          (FunctionCall        3
+                               pow/__lpython_overloaded_0__pow        3
+                               pow
+                               [((Var 3 a)) ((Var 3 b))]
+                               (Real 8 [])
+                               ()
+                               ())
+          RealToInteger
+          (Integer 4 [])
+          ())
+         ())
+        (Assignment (Var 3 _lpython_return_variable) (Var 3 res) ())
+        (Return)]
+       (Var 3 _lpython_return_variable)
+       Source Public Implementation ()
+       .false. .false. .false. .false. .false.
+       [] [] .false. .false. .false.)})
+    [])
 
 
 #_(pprint (get-clj "tests/expr7.py"))

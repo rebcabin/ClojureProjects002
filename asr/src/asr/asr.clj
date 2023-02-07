@@ -310,13 +310,55 @@
     s))
 
 
+;;; TODO: Make a pass over the code ensuring that functions with
+;;; side-effects are named with imperative verbs, functions that
+;;; mutate have names ending in bang "!", names that collide with
+;;; built-ins end with a hyphen, private names begin with a
+;;; hyphen, names of ignorable values begin with an underscore,
+;;; and functions without side effects are named with nouns that
+;;; connote the type of the output or product.
+
+
+(defprotocol Summarize
+  "shorter and flatter printouts for sane development"
+  (summarize [r] "Summarize a record, i.e., print its summary.")
+  (summary [r] "Construct a string summary of a record."))
+
+
+(defrecord RealConstant-rec
+    [head, term, r, type]
+    Summarize
+    (summary [rc]
+      (list (:r rc)
+            [(:head (:type rc))
+             (:kind (:type rc))])))
+
+
+(defrecord IntegerConstant-rec
+    [head, term, n, type]
+    Summarize
+    (summary [ic]
+      (list (:n ic)
+            [(:head (:type ic))
+             (:kind (:type ic))])))
+
+
+(defrecord call-arg-rec
+    [head term value]
+    Summarize
+    (summary [ca] (summary (:value ca)))
+    (summarize [ca]
+      (println (f-str "  {(summary ca)}"))))
+
+
 (defn eval-call-arg
   [call-arg]
   (fn [penv]
-    {:head (tuple-head-from-term :asr.autospecs/call_arg)
-     :term 'call-arg
+    (map->call-arg-rec
+     {:head (tuple-head-from-term :asr.autospecs/call_arg)
+      :term 'call-arg
 
-     :value ((eval-node (first call-arg)) penv)}))
+      :value ((eval-node (first call-arg)) penv)})))
 
 
 (defn eval-call-args
@@ -453,6 +495,20 @@
     :name ((eval-identifier nym)  penv)}))
 
 
+(defrecord FunctionCall-rec
+    [head, stid, nym, function,
+     name-symref, original-name-symref,
+     arguments, type, value, dt]
+
+  Summarize
+
+  (summary [fc] {:name (:head (:name (:name-symref fc)))
+                 :stid (:stid (:name-symref fc))
+                 :args (doall (map summary arguments))})
+  (summarize [fc]
+    (println (f-str "FunctionCall: {(summary fc)}"))))
+
+
 (defmethod eval-expr 'FunctionCall
   [[head
     ;; The following two should be SymbolRef(stid, nym)
@@ -461,13 +517,9 @@
     ;; The following should be SymbolRef(orig-stid, orig-nym)
     ;; Destructuring must stop, here, because the following could
     ;; be the empty list or it could be a naked, interpolated
-    ;; pair.
+    ;; pair
     & rest-
-    ;; original-nym
-    ;; arguments
-    ;; type-
-    ;; value
-    ;; dt
+    ;; original-nym   arguments   type-   value   dt
     :as function-call
     ]]
   (fn [penv]
@@ -476,13 +528,14 @@
       (when (not fun)
         (throw (Exception.
                 (f-str "Error: Function {nym} not found."))))
-      (print (f-str "Setting up function call {nym}"))
       (let [empty-original-name?
             (and (list? (first rest-)) (empty? (first rest-)))
 
             first-bit
             {:head  head
              :term  (term-from-head head)
+
+             :function    fun
              :name-symref ((make-symref stid nym) penv)}
 
             second-bit
@@ -499,13 +552,18 @@
                   (if empty-original-name?
                     (rest rest-)
                     (rest (rest rest-)))]
-              {:arguments ((eval-call-args arguments) penv)
-               :type      ((eval-ttype type-)         penv)
-               ;; Use eval-node on elements with question marks.
-               :value     ((eval-node value)          penv)
-               :dt        ((eval-node dt)             penv)
-               })]
-        (merge first-bit second-bit third-bit)
+              (let [eargs ((eval-call-args arguments) penv)]
+                {:arguments eargs
+                 :type      ((eval-ttype type-)         penv)
+                 ;; Use eval-node on elements with question marks.
+                 :value     ((eval-node value)          penv)
+                 :dt        ((eval-node dt)             penv)
+                 }))]
+        (let [result
+              (map->FunctionCall-rec
+               (merge first-bit second-bit third-bit))]
+          (summarize result)
+          result)
         ))))
 
 
@@ -672,11 +730,12 @@
     n
     type-]]
   (fn [penv]
-    {:head head
-     :term (term-from-head     head)
+    (map->IntegerConstant-rec
+     {:head head
+      :term (term-from-head     head)
 
-     :n    ((eval-node  n)     penv)
-     :type ((eval-ttype type-) penv)}))
+      :n    ((eval-node  n)     penv)
+      :type ((eval-ttype type-) penv)})))
 
 
 ;; | Var(symbol v)
@@ -801,7 +860,7 @@
 (defmethod eval-symbol 'IntrinsicModule
   [node]
   (fn [penv]
-    (echo node)))
+    (identity node)))
 
 
 ;; = Program(symbol_table symtab, identifier name,
@@ -820,7 +879,7 @@
      :term         (term-from-head head)
 
      :symtab       ((eval-symbol symtab)       penv)   ; 'SymbolTable
-     :nym          ((eval-node   nym)          penv)   ; identifier
+     :name         ((eval-node   nym)          penv)   ; identifier
      :dependencies ((eval-node   dependencies) penv)   ; identifier *
      :body         ((eval-stmts  body) penv)           ; stmt *
      :penv         penv
@@ -841,13 +900,13 @@
               :bindings   bindings      ; dict
               :penv       np            ; Environment
               }]
-      (plnecho integer-id)
+      #_(plnecho integer-id)
       (swap! ΓΣ
              (fn [old]
                (into
                 old
                 {integer-id np})))
-      (dump-global-chains)
+      #_(dump-global-chains)
       ts)))
 
 
@@ -912,6 +971,22 @@
 ;;            bool deterministic, bool side_effect_free)
 
 
+(defrecord Function-rec
+    [head, term, symtab, name,
+     dependencies, args, body, return-var,
+     abi, access, deftype, bindc-name, elemental,
+     pure, module, inline, static,
+     type-params, restrictions, is-restriction,
+     deterministic, side-effect-free]
+
+  Summarize
+
+  (summary [f] {:name (:name f)})
+
+  (summarize [f]
+    (println (f-str "Function: {(summary f)}"))))
+
+
 (defmethod eval-symbol 'Function
   [[head                       ; 'Function
     symtab                     ; SymbolTable
@@ -937,36 +1012,37 @@
     :as function]]
   (fn [penv]
     (println (f-str "Setting up Function {nym}"))
-    {:head             head
-     :term             (term-from-head head)
-     :symtab           ((eval-symbol  symtab)           penv)
-     :name             ((eval-node    nym)              penv)
-     :dependencies     ((eval-nodes   dependencies)     penv)
-     :args             ((eval-nodes   args)             penv)  ; TODO: params!
-     ;; Replace "identity" with "echo" or "doall" to force faults
-     ;; that depend on lazy evaluation (grep "lazy" and "laziness"
-     ;; in this file for relevant commentary). Forcing evaluation
-     ;; here is useful during development to expose missing
-     ;; defmethods.
-     :body             (identity
-                        #_ echo
-                        ((eval-nodes  body)             penv))
-     :return-var       ((eval-node    return-var)       penv)
-     :abi              ((eval-node    abi)              penv)
-     :access           ((eval-node    access)           penv)
-     :deftype          ((eval-node    deftype)          penv)
-     :bindc-name       ((eval-node    bindc-name)       penv)
-     :elemental        ((eval-bool    elemental)        penv)
-     :pure             ((eval-bool    pure)             penv)
-     :module           ((eval-bool    module)           penv)
-     :inline           ((eval-bool    inline)           penv)
-     :static           ((eval-bool    static)           penv)
-     :type-params      ((eval-nodes   type-params)      penv)
-     :restrictions     ((eval-symbols restrictions)     penv)
-     :is-restriction   ((eval-bool    is-restriction)   penv)
-     :deterministic    ((eval-bool    deterministic)    penv)
-     :side-effect-free ((eval-bool    side-effect-free) penv)
-     }))
+    (map->Function-rec
+     {:head             head
+      :term             (term-from-head head)
+      :symtab           ((eval-symbol  symtab)           penv)
+      :name             ((eval-node    nym)              penv)
+      :dependencies     ((eval-nodes   dependencies)     penv)
+      :args             ((eval-nodes   args)             penv) ; TODO: params!
+      ;; Replace "identity" with "echo" or "doall" to force faults
+      ;; that depend on lazy evaluation (grep "lazy" and "laziness"
+      ;; in this file for relevant commentary). Forcing evaluation
+      ;; here is useful during development to expose missing
+      ;; defmethods.
+      :body             (identity
+                         #_ echo
+                         ((eval-nodes  body)             penv))
+      :return-var       ((eval-node    return-var)       penv)
+      :abi              ((eval-node    abi)              penv)
+      :access           ((eval-node    access)           penv)
+      :deftype          ((eval-node    deftype)          penv)
+      :bindc-name       ((eval-node    bindc-name)       penv)
+      :elemental        ((eval-bool    elemental)        penv)
+      :pure             ((eval-bool    pure)             penv)
+      :module           ((eval-bool    module)           penv)
+      :inline           ((eval-bool    inline)           penv)
+      :static           ((eval-bool    static)           penv)
+      :type-params      ((eval-nodes   type-params)      penv)
+      :restrictions     ((eval-symbols restrictions)     penv)
+      :is-restriction   ((eval-bool    is-restriction)   penv)
+      :deterministic    ((eval-bool    deterministic)    penv)
+      :side-effect-free ((eval-bool    side-effect-free) penv)
+      })))
 
 
 ;;                  _           _   _
@@ -1201,13 +1277,24 @@
 ;; (SubroutineCall 1 _lpython_main_program () [] ())
 
 
+(defrecord SubroutineCall-rec
+    [head, term, symtab-id, name,
+     original-name, arguments, dt, subroutine]
+    Summarize
+    (summary [sc] {:sub (:head (:name (summary subroutine)))
+                   :args (doall (map summary arguments))})
+    (summarize [sc]
+      (println (f-str "SubroutineCall: {(summary sc)}")))
+    )
+
+
 (defmethod eval-stmt 'SubroutineCall
-  [[head                             ; 'SubroutineCall
-    symtab-id                        ; integer
-    nym                              ; e.g., _lpython_main_program
-    original-name                    ; nil, GenericProcedure or ExternalSymbol
-    arguments                        ;
-    dt                               ; expr ?
+  [[head                 ; 'SubroutineCall
+    symtab-id            ; integer
+    nym                  ; e.g., _lpython_main_program
+    original-name        ; nil, GenericProcedure or ExternalSymbol
+    arguments            ;
+    dt                   ; expr ?
     :as subroutine-call]]
   (fn [penv]
     (let [symtable  (@ΓΣ symtab-id)
@@ -1219,18 +1306,21 @@
       ;; in "Function" to test that claim).
       (when (not sub)
         (throw (Exception. (f-str "Error: Subroutine {nym} not found."))))
-      (println (f-str"Setting up subroutine call {nym} with {arguments}."))
-      {:head           head
-       :term           (term-from-head head)
+      (let [result
+            (map->SubroutineCall-rec
+             {:head           head
+              :term           (term-from-head head)
 
-       ;; TODO: Look up parameters, here?
-       :symtab-id      symtab-id
-       :nym            nym ;; Function and Variable have :name
-       :original-name  ((eval-node      original-name) penv)
-       :arguments      ((eval-call-args arguments)     penv)
-       :dt             ((eval-node      dt)            penv)
-       :subroutine     sub
-       })))
+              ;; TODO: Look up parameters, here?
+              :symtab-id      symtab-id
+              :name           nym ;; Function and Variable have :name
+              :original-name  ((eval-node      original-name) penv)
+              :arguments      ((eval-call-args arguments)     penv)
+              :dt             ((eval-node      dt)            penv)
+              :subroutine     sub
+              })]
+        (summarize result)
+        result))))
 
 
 ;;                  _                           _
@@ -1361,6 +1451,38 @@
   nil)
 
 
+;; Setting up function call test_pow_1 with arguments
+;; ({:head asr-tuple10856,
+;;   :term call-arg,
+;;   :value
+;;   {:head IntegerConstant,
+;;    :term expr,
+;;    :n 1,
+;;    :type {:head Integer, :term ttype, :kind 4, :dims ()}}}
+;;  {:head asr-tuple10856,
+;;   :term call-arg,
+;;   :value
+;;   {:head IntegerConstant,
+;;    :term expr,
+;;    :n 2,
+;;    :type {:head Integer, :term ttype, :kind 4, :dims ()}}})
+;; Setting up function call pow/__lpython_overloaded_0__pow with arguments
+;; ({:head asr-tuple10856,
+;;   :term call-arg,
+;;   :value
+;;   {:head IntegerConstant,
+;;    :term expr,
+;;    :n 2,
+;;    :type {:head Integer, :term ttype, :kind 4, :dims ()}}}
+;;  {:head asr-tuple10856,
+;;   :term call-arg,
+;;   :value
+;;   {:head IntegerConstant,
+;;    :term expr,
+;;    :n 2,
+;;    :type {:head Integer, :term ttype, :kind 4, :dims ()}}})
+
+
 (defmethod run-expr 'FunctionCall
   [{:keys [name-symref
            original-name-symref
@@ -1368,6 +1490,7 @@
            value]}]
   (fn [penv]
     (let [{:keys [name]} (or original-name-symref name-symref)]
+
           42)))
 
 
@@ -1413,7 +1536,7 @@
 (defmethod run-stmt 'SubroutineCall
   [s]
   (fn [penv]
-    (let [nym  (:nym s)
+    (let [nym  (:name s)
           stid (:symtab-id s) ;; local variables
 
           ;; TODO: We've lost the nested chains of envrt's
@@ -1540,7 +1663,7 @@
                      (:penv (:global-scope tu)))]
       tu
       (when main-prog
-        (println "Statement heads in main program (observe laziness):")
-        (doseq [s (:body main-prog)] (nkecho (:head s)))
+        ;; (println "Statement heads in main program (observe laziness):")
+        ;; (doseq [s (:body main-prog)] (nkecho (:head s)))
         ((run-program main-prog) penv))
       )))
