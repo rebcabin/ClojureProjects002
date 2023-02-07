@@ -12,7 +12,7 @@
    [asr.lpython                        ]
    [clojure.pprint      :refer [pprint]]
    [clojure.walk        :as     walk   ]
-   [clojure.spec.alpha  :as s]))
+   [clojure.spec.alpha  :as     s      ]))
 
 
 ;;  _     _____     _______      _    ____  ____
@@ -187,23 +187,6 @@
        (sym big-symdict-by-head))))))
 
 
-;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-;;  E V A L S   F O R   T U P L E S
-;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-
-#_flat-tuple-terms-set
-;; => #{attribute_arg   alloc_arg       do_loop_head
-;;      call_arg        array_index     dimension
-
-
-(defn eval-tuple
-  [tup]
-  (fn [penv]
-    (assert false "eval-tuple is Not Yet Implemented.")
-    (echo tup)))
-
-
 ;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 ;;  E V A L S   F O R   S Y M C O N S T S
 ;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
@@ -237,6 +220,14 @@
 ;;      unit            symbol          case_stmt
 ;;      type_stmt       expr            ttype
 ;;      stmt}
+
+
+;; The reason we can't 'just write functions' for exprs and stmts
+;; like "Cast," "FunctionCall," "IntegerConstant," and so on is
+;; that there is no straightforward way to thread the necessary
+;; "penv" argument through them. We could go monadic and all that,
+;; and we might do later, but multimethods and maybe protocols
+;; will get us started.
 
 
 (defmulti eval-tbind           first)
@@ -290,6 +281,50 @@
   (eval-many exprs eval-expr))
 
 
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+;;  E V A L S   F O R   T U P L E S
+;; -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+
+#_flat-tuple-terms-set
+;; => #{attribute_arg   alloc_arg       do_loop_head
+;;      call_arg        array_index     dimension
+
+
+(defn eval-tuple
+  [tup]
+  (fn [penv]
+    (assert false "eval-tuple is Not Yet Implemented.")
+    (echo tup)))
+
+
+;; call_arg = (expr? value)
+
+
+(defn tuple-head-from-term
+  [term]
+  (let [speclet (term big-map-of-speclets-from-terms)
+        f (first speclet)
+        t (:ASDL-TUPLE f)
+        s (symbol t)]
+    s))
+
+
+(defn eval-call-arg
+  [call-arg]
+  (fn [penv]
+    {:head (tuple-head-from-term :asr.autospecs/call_arg)
+     :term 'call-arg
+
+     :value ((eval-node (first call-arg)) penv)}))
+
+
+(defn eval-call-args
+  [call-args]
+  (fn [penv]
+    (map #((eval-call-arg %) penv) call-args)))
+
+
 ;;                  _
 ;;   _____   ____ _| |           _____  ___ __  _ __
 ;;  / _ \ \ / / _` | |  _____   / _ \ \/ / '_ \| '__|
@@ -335,49 +370,143 @@
   (throw (Exception. "catch me in the debugger: xzyzy plugh")))
 
 
+;; | RealConstant(float r, ttype type)
+
+
+(defmethod eval-expr 'RealConstant
+  [[head
+    r
+    type-
+    :as real-constant]]
+  (fn [penv]
+    {:head  head
+     :term  (term-from-head head)
+     :r     ((eval-node  r)     penv)
+     :type  ((eval-ttype type-) penv)}))
+
+
+;; | Cast(expr arg, cast_kind kind, ttype type, expr? value)
+
+;; (Cast
+;;  (FunctionCall ...)
+;;  RealToInteger
+;;  (Integer 4 [])
+;;  (IntegerConstant 4 (Integer 4 [])))
+
+
+(defmethod eval-expr 'Cast
+  [[head
+    argument
+    cast-kind
+    type-
+    value
+    :as cast-]]
+  (fn [penv]
+    {:head  head
+     :term  (term-from-head head)
+     :argument  ((eval-expr argument)  penv)
+     :cast-kind ((eval-node cast-kind) penv)
+     :type      ((eval-ttype type-)    penv)
+     ;; Use "eval-node" for elements with question-marks.
+     :value     ((eval-node value)     penv)}))
+
+
 ;; See Issue #1508 https://github.com/lcompilers/lpython/issues/1508
 ;; | FunctionCall(symbol name, symbol? original_name, call_arg* args,
 ;;                       ttype type, expr? value, expr? dt)
 
 
-;; Example from expr7.py doesn't match the spec.
+;; Examples from expr7.py that don't match the spec.
 
 
 ;; (FunctionCall
-;;  1
-;;  test_pow_1
-;;  ()
-;;  [((IntegerConstant 1 (Integer 4 [])))
+;;  1            \____ should be (SymbolRef 1 test_pow_1)
+;;  test_pow_1   /
+;;  ()           >---- should be NullSymbolRef (new symconst)
+;;  [((IntegerConstant 1 (Integer 4 [])))   ; call_args
 ;;   ((IntegerConstant 2 (Integer 4 [])))]
 ;;  (Integer 4 [])
 ;;  ()
 ;;  ())
 
 
+;; (FunctionCall _____________________
+;;  2                                 \____ should be SymbolRef(...)
+;;  pow/__lpython_overloaded_0__pow __/
+;;  2     \____ should be (SymbolRef 2 pow)
+;;  pow __/
+;;  [((IntegerConstant 2 (Integer 4 [])))
+;;   ((IntegerConstant 2 (Integer 4 [])))]
+;;  (Real 8 [])
+;;  (RealConstant 4.0 (Real 8 []))
+;;  ())
+
+
+(defn make-symref
+  "Fill in for missing spec in ASR.asdl."
+  [stid
+   nym]
+  (fn [penv]
+   {:head 'SymbolRef
+    :term 'symref
+    :stid ((eval-node       stid) penv)
+    :name ((eval-identifier nym)  penv)}))
+
+
 (defmethod eval-expr 'FunctionCall
   [[head
-    stid-unspecified
-    nym-type-mismatch
-    original-nym-type-mismatch
-    arguments
-    type-
-    value
-    dt
+    ;; The following two should be SymbolRef(stid, nym)
+    stid
+    nym
+    ;; The following should be SymbolRef(orig-stid, orig-nym)
+    ;; Destructuring must stop, here, because the following could
+    ;; be the empty list or it could be a naked, interpolated
+    ;; pair.
+    & rest-
+    ;; original-nym
+    ;; arguments
+    ;; type-
+    ;; value
+    ;; dt
     :as function-call
     ]]
   (fn [penv]
-    {:head  head
-     :term  (term-from-head head)
+    (let [stab (@ΓΣ stid)
+          fun  (lookup-penv nym stab)]
+      (when (not fun)
+        (throw (Exception.
+                (f-str "Error: Function {nym} not found."))))
+      (print (f-str "Setting up function call {nym}"))
+      (let [empty-original-name?
+            (and (list? (first rest-)) (empty? (first rest-)))
 
-     :stid-unspecified ((eval-node       stid-unspecified)           penv)
-     :name             ((eval-identifier nym-type-mismatch)          penv)
-     :original-name    ((eval-nodes      original-nym-type-mismatch) penv)
-     :arguments        ((eval-nodes      arguments)                  penv)
-     :type             ((eval-ttype      type-)                      penv)
-     ;; Use "eval-node" for elements with question marks.
-     :value            ((eval-node       value)                      penv)
-     :dt               ((eval-node       dt)                         penv)
-     }))
+            first-bit
+            {:head  head
+             :term  (term-from-head head)
+             :name-symref ((make-symref stid nym) penv)}
+
+            second-bit
+            {:original-name-symref
+             (if empty-original-name?
+               'NullSymbolRef
+               ((make-symref (first rest-)
+                             (first (rest rest-))) penv))}
+            third-bit
+            (let [[arguments
+                   type-
+                   value
+                   dt]
+                  (if empty-original-name?
+                    (rest rest-)
+                    (rest (rest rest-)))]
+              {:arguments ((eval-call-args arguments) penv)
+               :type      ((eval-ttype type-)         penv)
+               ;; Use eval-node on elements with question marks.
+               :value     ((eval-node value)          penv)
+               :dt        ((eval-node dt)             penv)
+               })]
+        (merge first-bit second-bit third-bit)
+        ))))
 
 
 ;; = IfExp(expr test, expr body, expr orelse, ttype type, expr? value)
@@ -861,6 +990,19 @@
      :dims ((eval-nodes dims) penv)}))
 
 
+;; | Real(int kind, dimension* dims)
+
+
+(defmethod eval-ttype 'Real
+  [[head
+    kind
+    dims]]
+  (common-ttype head kind dims))
+
+
+;; | Logical(int kind, dimension* dims)
+
+
 (defmethod eval-ttype 'Logical
   [[head
     kind
@@ -926,19 +1068,33 @@
 ;; ListInsert          ListRemove          ListClear           DictInsert
 
 
+;; | Return()
+
+
+(defmethod eval-stmt 'Return
+  [[head
+    nothing]]
+  (assert (nil? nothing) (f-str "Return stmt must have no arguments,
+ not {nothing}."))
+  (fn [penv]
+    {:head head
+     :term (term-from-head head)}))
+
+
 ;; | ExplicitDeallocate(symbol* vars)
-;; https://github.com/lcompilers/lpython/issues/1492
-;; vars is not symbol*, but symref*. Until issue 1492
-;; is resolved, I'll fake symref. Find 'eval-symrefs'
-;; in this file, which is moved ahead of the first
-;; function that needs it as we develop.
+;; https://github.com/lcompilers/lpython/issues/1492 vars is not
+;; symbol*, but symref* (SymbolRef). Until Issue #1492 is
+;; resolved, I'll fake symref and SymbolRef. Grep for instances of
+;; 1508 and 1492 in this file for other fakery. Also
+;; find "make-symref."
 
 
 (defn eval-symrefs
-  [symrefs]  ; something like [2 x, 2 y, ...]
+  [symrefs]                       ; something like [2 x, 2 y, ...]
   (assert (even? (count symrefs)))
   (fn [penv]
-    (vec (partition 2 symrefs))))
+    (map #(apply make-symref %)
+         (partition 2 symrefs))))
 
 
 (defmethod eval-stmt 'ExplicitDeallocate
@@ -1062,17 +1218,17 @@
       ;; throw (try "doall" to force the "body" evaluation
       ;; in "Function" to test that claim).
       (when (not sub)
-        (throw (Exception. (f-str "Error: Subroutine {nym} not found"))))
-      (println (f-str"Setting up subroutine call {nym} with {arguments}"))
+        (throw (Exception. (f-str "Error: Subroutine {nym} not found."))))
+      (println (f-str"Setting up subroutine call {nym} with {arguments}."))
       {:head           head
        :term           (term-from-head head)
 
        ;; TODO: Look up parameters, here?
        :symtab-id      symtab-id
        :nym            nym ;; Function and Variable have :name
-       :original-name  ((eval-node  original-name) penv)
-       :arguments      ((eval-nodes arguments)     penv)
-       :dt             ((eval-node  dt)            penv)
+       :original-name  ((eval-node      original-name) penv)
+       :arguments      ((eval-call-args arguments)     penv)
+       :dt             ((eval-node      dt)            penv)
        :subroutine     sub
        })))
 
@@ -1205,12 +1361,26 @@
   nil)
 
 
-;; "If there is a 'value' attribute, compare it to the result of
-;; the abstract execution. The 'value' attribute is a compile-time
-;; constant, meaning that the compiler could compute the answer."
+(defmethod run-expr 'FunctionCall
+  [{:keys [name-symref
+           original-name-symref
+           arguments
+           value]}]
+  (fn [penv]
+    (let [{:keys [name]} (or original-name-symref name-symref)]
+          42)))
+
+
+(defmethod run-expr 'Cast
+  [e]
+  (fn [penv]
+    ((run-expr (:value e)) penv)))
 
 
 (defmethod run-expr 'IntegerBinOp
+  ;; "If there is a 'value' attribute, compare it to the result of
+  ;; the abstract execution. The 'value' attribute is a compile-time
+  ;; constant, meaning that the compiler could compute the answer."
   [e]
   (fn [penv]
     (let [r-left  ((run-expr (:left  e)) penv)
@@ -1218,7 +1388,7 @@
           result  (run-ibinop (:op e) r-left r-right)
           value   ((run-expr (:value e)) penv)]
       ;; (pprint (f-str "IntegerBinOp result: {result}"))
-      (when value
+      (when value ;; Trust, but verify!
         (assert (= value result)))
       result)))
 

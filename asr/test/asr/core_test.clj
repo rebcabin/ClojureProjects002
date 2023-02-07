@@ -2084,7 +2084,7 @@
 ;; WIP
 
 
-#_(deftest eval-node-test-expr7
+(deftest eval-node-test-expr7
   (testing "that it's not nil"
    (is (taste-a-sample "expr7"))))
 
