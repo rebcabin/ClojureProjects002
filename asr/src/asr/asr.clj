@@ -321,26 +321,61 @@
 
 (defprotocol Summarize
   "shorter and flatter printouts for sane development"
-  (summarize [r] "Summarize a record, i.e., print its summary.")
+  (summarize [r] "Summarize a record, i.e., print its summary.
+ By convention, return 'self', like 'echo', so 'summarize'
+ acts like a logging 'identity' function.")
   (summary [r] "Construct a string summary of a record."))
+
+
+(defprotocol Run
+  (run [e] "Perform abstract execution on a program or
+ program element."))
 
 
 (defrecord RealConstant-rec
     [head, term, r, type]
     Summarize
     (summary [rc]
-      (list (:r rc)
-            [(:head (:type rc))
-             (:kind (:type rc))])))
+      (list r
+            [(:head type)
+             (:kind type)]))
+    Run
+    (run [_] (fn [penv] r)))
+
+
+(extend java.lang.Long
+  Summarize
+  {:summary   (fn [l] (f-str "{l}"))
+   :summarize (fn [l]
+                (println (f-str "java.lang.Long: {(summary l)}"))
+                l)})
 
 
 (defrecord IntegerConstant-rec
     [head, term, n, type]
+
     Summarize
     (summary [ic]
-      (list (:n ic)
-            [(:head (:type ic))
-             (:kind (:type ic))])))
+      (list n
+            [(:head type)
+             (:kind type)]))
+    (summarize [c]
+      (println (f-str "  IC: {(summary c)}"))
+      c)
+
+    Run
+    (run [_] (fn [penv] n)))
+
+
+(defrecord LogicalConstant-rec
+    [head, term, value, type]
+    Summarize
+    (summary [lc]
+      (list (:value lc)
+            [(:head (:type lc))
+             (:kind (:type lc))]))
+    Run
+    (run [_] (fn [penv] value)))
 
 
 (defrecord call-arg-rec
@@ -348,7 +383,8 @@
     Summarize
     (summary [ca] (summary (:value ca)))
     (summarize [ca]
-      (println (f-str "  {(summary ca)}"))))
+      (println (f-str "  CA: {(summary ca)}"))
+      ca))
 
 
 (defn eval-call-arg
@@ -436,6 +472,18 @@
 ;;  (IntegerConstant 4 (Integer 4 [])))
 
 
+(defrecord Cast-rec
+    [head, argument, cast-kind, type, value]
+
+  Summarize
+
+  (summary [c] {:value (:value c)})
+
+  Run
+
+  (run [_] (fn [penv] value)))
+
+
 (defmethod eval-expr 'Cast
   [[head
     argument
@@ -444,13 +492,14 @@
     value
     :as cast-]]
   (fn [penv]
-    {:head  head
-     :term  (term-from-head head)
-     :argument  ((eval-expr argument)  penv)
-     :cast-kind ((eval-node cast-kind) penv)
-     :type      ((eval-ttype type-)    penv)
-     ;; Use "eval-node" for elements with question-marks.
-     :value     ((eval-node value)     penv)}))
+    (map->Cast-rec
+     {:head  head
+      :term  (term-from-head head)
+      :argument  ((eval-expr argument)  penv)
+      :cast-kind ((eval-node cast-kind) penv)
+      :type      ((eval-ttype type-)    penv)
+      ;; Use "eval-node" for elements with question-marks.
+      :value     ((eval-node value)     penv)})))
 
 
 ;; See Issue #1508 https://github.com/lcompilers/lpython/issues/1508
@@ -500,13 +549,25 @@
      name-symref, original-name-symref,
      arguments, type, value, dt]
 
+  Run
+
+  (run [{:keys [name-symref
+                original-name-symref
+                arguments
+                value]}]
+    (fn [penv]
+      (let [{:keys [name]}
+            (or original-name-symref name-symref)]
+        42)))
+
   Summarize
 
   (summary [fc] {:name (:head (:name (:name-symref fc)))
                  :stid (:stid (:name-symref fc))
                  :args (doall (map summary arguments))})
   (summarize [fc]
-    (println (f-str "FunctionCall: {(summary fc)}"))))
+    (println (f-str "  FC: {(summary fc)}"))
+    fc))
 
 
 (defmethod eval-expr 'FunctionCall
@@ -559,11 +620,9 @@
                  :value     ((eval-node value)          penv)
                  :dt        ((eval-node dt)             penv)
                  }))]
-        (let [result
-              (map->FunctionCall-rec
-               (merge first-bit second-bit third-bit))]
-          (summarize result)
-          result)
+        (summarize
+         (map->FunctionCall-rec
+          (merge first-bit second-bit third-bit)))
         ))))
 
 
@@ -687,6 +746,32 @@
 ;; | IntegerBinOp(expr left, binop op, expr right, ttype type, expr? value)
 
 
+(defmulti run-ibinop
+  (fn [op _l _r] (:head op)))
+
+
+(defmethod run-ibinop 'Mul [_ l r] (* l r))
+(defmethod run-ibinop 'Add [_ l r] (+ l r))
+
+
+(defrecord IntegerBinop-rec
+    [head, left, op, right, type, value]
+
+  Summarize
+
+  Run
+
+  (run [_]
+    (fn [penv]
+      (let [r-left  ((run left)  penv)
+            r-right ((run right) penv)
+            value   ((run value) penv)
+            result  (run-ibinop op r-left r-right)]
+        (when value ;; Trust, but verify!
+          (assert (= value result)))
+        result))))
+
+
 (defmethod eval-expr 'IntegerBinOp
   [[head
     left
@@ -695,16 +780,17 @@
     type-
     value]]
   (fn [penv]
-    {:head  head
-     :term  (term-from-head head)
+    (map->IntegerBinop-rec
+     {:head  head
+      :term  (term-from-head head)
 
-     :left  ((eval-expr  left)  penv)
-     :op    ((eval-node  op)    penv)
-     :right ((eval-expr  right) penv)
-     :type  ((eval-ttype type-) penv)
-     ;; Use eval-node on question-marked items.
-     :value ((eval-node  value) penv)
-     }))
+      :left  ((eval-expr  left)  penv)
+      :op    ((eval-node  op)    penv)
+      :right ((eval-expr  right) penv)
+      :type  ((eval-ttype type-) penv)
+      ;; Use eval-node on question-marked items.
+      :value ((eval-node  value) penv)
+      })))
 
 
 ;; | LogicalConstant(bool value, ttype type)
@@ -744,17 +830,29 @@
 ;; | Var(symtab-id id, symbol v)
 
 
+(defrecord Var-rec
+    [head, term, symtab-id, v]
+  Summarize
+  (summary [_] (f-str "{v}"))
+  (summarize [vrec]
+    (println (f-str "  VR: {(summary vrec)}"))
+    vrec)
+  Run
+  (run [_] (fn [penv] v)))
+
+
 (defmethod eval-expr 'Var
   [[head
     id
     v]]
   (fn [penv]
-    {:head      head
-     :term      (term-from-head head)
+    (map->Var-rec
+     {:head      head
+      :term      (term-from-head head)
 
-     :symtab-id id
-     ;; TODO chain the environments!
-     :v         (lookup-penv v (@ΓΣ id))})) ; a Variable!
+      :symtab-id id
+      ;; TODO chain the environments!
+      :v         (lookup-penv v (@ΓΣ id))}))) ; a Variable!
 
 
 ;; | NamedExpr(expr target, expr value, ttype type)
@@ -867,6 +965,23 @@
 ;;           identifier* dependencies, stmt* body)
 
 
+(def SUCCESS 0)
+
+
+(defrecord Program-rec
+    [head, term, symtab, name,
+     dependencies, body, penv]
+
+  Summarize
+  Run
+
+  (run [_]
+    (fn [penv]
+      (let [ev ((eval-node body) penv)]
+        (doseq [s ev] ((run s) penv)))
+      SUCCESS)))
+
+
 (defmethod eval-symbol 'Program
   [[head
     symtab
@@ -875,15 +990,16 @@
     body
     :as program]]
   (fn [penv]
-    {:head         head          ; 'Program
-     :term         (term-from-head head)
+    (map->Program-rec
+     {:head         head                ; 'Program
+      :term         (term-from-head head)
 
-     :symtab       ((eval-symbol symtab)       penv)   ; 'SymbolTable
-     :name         ((eval-node   nym)          penv)   ; identifier
-     :dependencies ((eval-node   dependencies) penv)   ; identifier *
-     :body         ((eval-stmts  body) penv)           ; stmt *
-     :penv         penv
-     }))
+      :symtab       ((eval-symbol symtab)       penv) ; 'SymbolTable
+      :name         ((eval-node   nym)          penv) ; identifier
+      :dependencies ((eval-node   dependencies) penv) ; identifier *
+      :body         ((eval-stmts  body) penv)         ; stmt *
+      :penv         penv
+      })))
 
 
 (defmethod eval-symbol 'SymbolTable
@@ -900,13 +1016,13 @@
               :bindings   bindings      ; dict
               :penv       np            ; Environment
               }]
-      #_(plnecho integer-id)
+      ;; (plnecho integer-id)
       (swap! ΓΣ
              (fn [old]
                (into
                 old
                 {integer-id np})))
-      #_(dump-global-chains)
+      ;; (dump-global-chains)
       ts)))
 
 
@@ -928,6 +1044,15 @@
 ;;   abi abi, access access, presence presence, bool value_attr)
 
 
+(defrecord Variable-rec
+    [head, term, symtab-id, name,
+     dependencies, intent, symbolic-value,
+     value, storage, type, abi, access,
+     presence, value-attr]
+  Summarize
+  Run)
+
+
 (defmethod eval-symbol 'Variable
   [[head
     parent-symtab-id  ; an integer
@@ -937,29 +1062,31 @@
     symbolic-value
     value
     storage
-    type-                         ; "type" shadows Clojure built-in.
+    type-
     abi
     access
     presence
     value-attr        ; bool (.true., .false.)
     :as variable]]
   (fn [penv]
-    {:head           head
-     :term           (term-from-head head)
+    (map->Variable-rec
+     {:head           head
+      :term           (term-from-head head)
 
-     :symtab-id      parent-symtab-id
-     :name           nym
-     :dependencies   dependencies
-     :intent         ((eval-node intent)         penv)
-     :symbolic-value ((eval-node symbolic-value) penv)
-     :value          ((eval-node value)          penv)
-     :storage        ((eval-node storage)        penv)
-     :type           ((eval-node type-)          penv)
-     :abi            ((eval-node abi)            penv)
-     :access         ((eval-node access)         penv)
-     :presence       ((eval-node presence)       penv)
-     :value-attr     ((eval-bool value-attr)     penv)
-     }))
+      :symtab-id      parent-symtab-id
+      :name           ((eval-identifier nym)           penv)
+      :dependencies   ((eval-identifiers dependencies) penv)
+      :intent         ((eval-node intent)              penv)
+      ;; Use 'eval-node' for items with question marks.
+      :symbolic-value ((eval-node symbolic-value)      penv)
+      :value          ((eval-node value)               penv)
+      :storage        ((eval-node storage)             penv)
+      :type           ((eval-ttype type-)              penv)
+      :abi            ((eval-node abi)                 penv)
+      :access         ((eval-node access)              penv)
+      :presence       ((eval-node presence)            penv)
+      :value-attr     ((eval-bool value-attr)          penv)
+      })))
 
 
 ;; | Function(symbol_table symtab, identifier name,
@@ -984,7 +1111,8 @@
   (summary [f] {:name (:name f)})
 
   (summarize [f]
-    (println (f-str "Function: {(summary f)}"))))
+    (println (f-str "  FN: {(summary f)}"))
+    f))
 
 
 (defmethod eval-symbol 'Function
@@ -1223,6 +1351,37 @@
 ;; | Assignment(expr target, expr value, stmt? overloaded)
 
 
+(defrecord Assignment-rec
+    [head, term, target, value, overloaded]
+    Summarize
+    Run
+    (run [_]
+      (fn [penv]
+        (let [target   target
+              tgtnym   (:head (:name (:v target))) ; identifier
+              stid     (:symtab-id target)
+              stab     (@ΓΣ stid)
+              prelkup  (lookup-penv tgtnym stab)
+              presumm  {:name (:head (:name prelkup)),
+                        :value (:value prelkup)}
+              value    ((run value) penv)
+              post     (assoc prelkup :value value)
+              augbdg   {(keyword tgtnym) post}
+              augres   (augment-bindings-penv! augbdg stab)
+              ustab    (@ΓΣ stid)
+              postlkup (lookup-penv tgtnym ustab)
+              postsumm {:name (:head (:name postlkup)),
+                        :value (summary (:value postlkup))}]
+
+          (println (f-str "running Assignment"))
+          (println (f-str "   tgtnym:   {tgtnym}"))
+          (println (f-str "   value:    {(summary value)}"))
+          (println (f-str "   stid:     {stid}"))
+          (println (f-str "   presumm:  {presumm}"))
+          (println (f-str "   postsumm: {postsumm}"))
+          ))))
+
+
 (defmethod eval-stmt 'Assignment
   [[head
     target      ; expr: often, even usually a Variable
@@ -1231,22 +1390,49 @@
     :as assignment
     ]]
   (fn [penv]
-    {;; Every eval'ed speclet has :head and :term:
-     :head       head
-     :term       (term-from-head head)
+    (map->Assignment-rec
+     { ;; Every eval'ed speclet has :head and :term:
+      :head       head
+      :term       (term-from-head head)
 
-     :target     ((eval-expr target)     penv)  ; TODO: a Var or a Variable?
-     ;; The rest of this varies from speclet to speclet.
-     :value      ((eval-expr value)      penv)
-     ;; Use "eval-node" for ? multiplicities. Otherwise, use the
-     ;; most specific "eval-<whatever>" you can read from the
-     ;; ASR: "eval-expr" if you know it's an expr;
-     ;; "eval-stmt" if you know it's a stmt, etc.
-     :overloaded ((eval-node overloaded) penv)
-     }))
+      :target     ((eval-expr target)     penv) ; TODO: a Var or a Variable?
+      ;; The rest of this varies from speclet to speclet.
+      :value      ((eval-expr value)      penv)
+      ;; Use "eval-node" for ? multiplicities. Otherwise, use the
+      ;; most specific "eval-<whatever>" you can read from the
+      ;; ASR: "eval-expr" if you know it's an expr;
+      ;; "eval-stmt" if you know it's a stmt, etc.
+      :overloaded ((eval-node overloaded) penv)
+      })))
 
 
 ;; Print(expr? fmt, expr* values, expr? separator, expr? end)
+
+
+(defn print-expr
+  [e]
+  (let [nym      (:head (:name (:v e))) ; identifier
+        stid     (:symtab-id e)
+        stidtest (:symtab-id (:v e))
+        stab     (@ΓΣ stid)
+        variable (lookup-penv nym stab)
+        value    (:value variable)]
+    (assert
+     (= stid stidtest)
+     (f-str "Var {nym} has symtab-id {stid} but
+             Variable has symtab-id {stidtest}"))
+    (pprint {(keyword nym) value})))
+
+
+(defrecord Print-rec
+    [head, term, fmt, values, separator, end]
+  Summarize
+  Run
+  (run [_]
+    (fn [penv]
+      (let [values values]
+        (println (f-str "running Print"))
+        (dorun (map print-expr values))))))
 
 
 (defmethod eval-stmt 'Print
@@ -1257,14 +1443,15 @@
     end        ; expr ?
     :as print]]
   (fn [penv]
-    {:head      head
-     :term      (term-from-head head)
-     ;; Use "eval-node" for ? multiplicities.
-     :fmt       ((eval-node  fmt)       penv)
-     :values    ((eval-exprs values)    penv)
-     :separator ((eval-node  separator) penv)
-     :end       ((eval-node  end)       penv)
-     }))
+    (map->Print-rec
+     {:head      head
+      :term      (term-from-head head)
+      ;; Use "eval-node" for ? multiplicities.
+      :fmt       ((eval-node  fmt)       penv)
+      :values    ((eval-exprs values)    penv)
+      :separator ((eval-node  separator) penv)
+      :end       ((eval-node  end)       penv)
+      })))
 
 
 ;; https://github.com/lcompilers/lpython/issues/1479
@@ -1280,12 +1467,37 @@
 (defrecord SubroutineCall-rec
     [head, term, symtab-id, name,
      original-name, arguments, dt, subroutine]
+
+    Run
+
+    (run [_]
+      (fn [penv]
+        (let [stid symtab-id ;; local variables
+
+              ;; TODO: We've lost the nested chains of envrt's
+              ;; wherein to look up free variables. We need to
+              ;; restore that nesting.
+
+              stab (@ΓΣ stid)
+
+              ;; Look up parameters; evaluate actual args in penv;
+              ;; zipmap them to parameters; eval bindings in a new
+              ;; penv.
+
+              body (:body subroutine)
+              ]
+          ;; TODO:               |newpenv|
+          ;;                      ---v---
+          (doseq [s body] ((run s) penv))
+          )))
+
     Summarize
-    (summary [sc] {:sub (:head (:name (summary subroutine)))
-                   :args (doall (map summary arguments))})
+
+    (summary [_] {:sub (:head (:name (summary subroutine)))
+                  :args (doall (map summary arguments))})
     (summarize [sc]
-      (println (f-str "SubroutineCall: {(summary sc)}")))
-    )
+      (println (f-str "  SC: {(summary sc)}"))
+      sc))
 
 
 (defmethod eval-stmt 'SubroutineCall
@@ -1306,21 +1518,19 @@
       ;; in "Function" to test that claim).
       (when (not sub)
         (throw (Exception. (f-str "Error: Subroutine {nym} not found."))))
-      (let [result
-            (map->SubroutineCall-rec
-             {:head           head
-              :term           (term-from-head head)
+      (summarize
+       (map->SubroutineCall-rec
+        {:head           head
+         :term           (term-from-head head)
 
-              ;; TODO: Look up parameters, here?
-              :symtab-id      symtab-id
-              :name           nym ;; Function and Variable have :name
-              :original-name  ((eval-node      original-name) penv)
-              :arguments      ((eval-call-args arguments)     penv)
-              :dt             ((eval-node      dt)            penv)
-              :subroutine     sub
-              })]
-        (summarize result)
-        result))))
+         ;; TODO: Look up parameters, here?
+         :symtab-id      symtab-id
+         :name          ((eval-identifier nym)           penv)
+         :original-name ((eval-node       original-name) penv)
+         :arguments     ((eval-call-args  arguments)     penv)
+         :dt            ((eval-node       dt)            penv)
+         :subroutine     sub
+         })))))
 
 
 ;;                  _                           _
@@ -1419,214 +1629,6 @@
   (fn [op _l _r] (:head op)))
 
 
-;;                        _ _    _
-;;  _ _ _  _ _ _    ___  (_) |__(_)_ _  ___ _ __
-;; | '_| || | ' \  |___| | | '_ \ | ' \/ _ \ '_ \
-;; |_|  \_,_|_||_|       |_|_.__/_|_||_\___/ .__/
-;;                                         |_|
-
-
-(defmulti run-ibinop
-  (fn [op _l _r] (:head op)))
-
-
-(defmethod run-ibinop 'Mul [_ l r] (* l r))
-(defmethod run-ibinop 'Add [_ l r] (+ l r))
-
-
-;;  _ _ _  _ _ _    ___   _____ ___ __ _ _
-;; | '_| || | ' \  |___| / -_) \ / '_ \ '_|
-;; |_|  \_,_|_||_|       \___/_\_\ .__/_|
-;;                               |_|
-
-
-(defmulti run-expr :head)
-
-
-;; When 'value' is nil
-
-
-(defmethod run-expr nil
-  [_]
-  nil)
-
-
-;; Setting up function call test_pow_1 with arguments
-;; ({:head asr-tuple10856,
-;;   :term call-arg,
-;;   :value
-;;   {:head IntegerConstant,
-;;    :term expr,
-;;    :n 1,
-;;    :type {:head Integer, :term ttype, :kind 4, :dims ()}}}
-;;  {:head asr-tuple10856,
-;;   :term call-arg,
-;;   :value
-;;   {:head IntegerConstant,
-;;    :term expr,
-;;    :n 2,
-;;    :type {:head Integer, :term ttype, :kind 4, :dims ()}}})
-;; Setting up function call pow/__lpython_overloaded_0__pow with arguments
-;; ({:head asr-tuple10856,
-;;   :term call-arg,
-;;   :value
-;;   {:head IntegerConstant,
-;;    :term expr,
-;;    :n 2,
-;;    :type {:head Integer, :term ttype, :kind 4, :dims ()}}}
-;;  {:head asr-tuple10856,
-;;   :term call-arg,
-;;   :value
-;;   {:head IntegerConstant,
-;;    :term expr,
-;;    :n 2,
-;;    :type {:head Integer, :term ttype, :kind 4, :dims ()}}})
-
-
-(defmethod run-expr 'FunctionCall
-  [{:keys [name-symref
-           original-name-symref
-           arguments
-           value]}]
-  (fn [penv]
-    (let [{:keys [name]} (or original-name-symref name-symref)]
-
-          42)))
-
-
-(defmethod run-expr 'Cast
-  [e]
-  (fn [penv]
-    ((run-expr (:value e)) penv)))
-
-
-(defmethod run-expr 'IntegerBinOp
-  ;; "If there is a 'value' attribute, compare it to the result of
-  ;; the abstract execution. The 'value' attribute is a compile-time
-  ;; constant, meaning that the compiler could compute the answer."
-  [e]
-  (fn [penv]
-    (let [r-left  ((run-expr (:left  e)) penv)
-          r-right ((run-expr (:right e)) penv)
-          result  (run-ibinop (:op e) r-left r-right)
-          value   ((run-expr (:value e)) penv)]
-      ;; (pprint (f-str "IntegerBinOp result: {result}"))
-      (when value ;; Trust, but verify!
-        (assert (= value result)))
-      result)))
-
-
-(defmethod run-expr 'IntegerConstant
-  [e]
-  (fn [penv]
-    (let [result (:n e)]
-      ;; (pprint (f-str "IntegerConstant result: {result}"))
-      result)))
-
-
-;;                           _        _
-;;  _ _ _  _ _ _    ___   __| |_ _ __| |_
-;; | '_| || | ' \  |___| (_-<  _| '  \  _|
-;; |_|  \_,_|_||_|       /__/\__|_|_|_\__|
-
-
-(defmulti run-stmt :head)
-
-
-(defmethod run-stmt 'SubroutineCall
-  [s]
-  (fn [penv]
-    (let [nym  (:name s)
-          stid (:symtab-id s) ;; local variables
-
-          ;; TODO: We've lost the nested chains of envrt's
-          ;; wherein to look up free variables. We need to
-          ;; restore that nesting.
-
-          stab (@ΓΣ stid)
-
-          ;; Look up parameters; evaluate actual args in penv;
-          ;; zipmap them to parameters; eval bindings in a new
-          ;; penv.
-
-          body (identity (:body (:subroutine s)))
-          ]
-      ;; TODO:                         |newpenv|
-      ;;                                ---v---
-      (doall (for [s body] ((run-stmt s) penv)))
-      )))
-
-
-(defmethod run-stmt 'Assignment
-  [s]
-  (fn [penv]
-    (let [target   (:target s)
-          tgtnym   (:name (:v target))
-          stid     (:symtab-id target)
-          stab     (@ΓΣ stid)
-          prelkup  (lookup-penv tgtnym stab)
-          presumm  {:name (:name prelkup), :value (:value prelkup)}
-          value    ((run-expr (:value s)) penv)
-          post     (assoc prelkup :value value)
-          augbdg   {(keyword tgtnym) post}
-          augres   (augment-bindings-penv! augbdg stab)
-          ustab    (@ΓΣ stid)
-          postlkup (lookup-penv tgtnym ustab)
-          postsumm {:name (:name postlkup), :value (:value postlkup)}]
-
-      (pprint (f-str "running Assignment"))
-      (pprint (f-str "   tgtnym:   {tgtnym}"))
-      (pprint (f-str "   value:    {value}"))
-      (pprint (f-str "   stid:     {stid}"))
-      (pprint (f-str "   presumm:  {presumm}"))
-      (pprint (f-str "   postsumm: {postsumm}"))
-      )))
-
-
-(defn print-expr
-  [e]
-  (let [nym      (:name (:v e))
-        stid     (:symtab-id e)
-        stidtest (:symtab-id (:v e))
-        stab     (@ΓΣ stid)
-        variable (lookup-penv nym stab)
-        value    (:value variable)]
-    (assert
-     (= stid stidtest)
-     (f-str "Var {nym} has symtab-id {stid} but
-             Variable has symtab-id {stidtest}"))
-    (pprint {(keyword nym) value})))
-
-
-(defmethod run-stmt 'Print
-  [s]
-  (fn [penv]
-    (let [values (:values s)]
-      (pprint (f-str "running Print"))
-      (dorun (map print-expr values)))))
-
-
-;;  _ _ _  _ _ _    ___   _ __ _ _ ___  __ _ _ _ __ _ _ __
-;; | '_| || | ' \  |___| | '_ \ '_/ _ \/ _` | '_/ _` | '  \
-;; |_|  \_,_|_||_|       | .__/_| \___/\__, |_| \__,_|_|_|_|
-;;                       |_|           |___/
-
-
-(def SUCCESS 0)
-
-
-(defn run-program
-  [e]
-  (fn [penv]
-    (let [code (:body e)
-          ev ((eval-node code) penv)]
-      ;; could have expressions here, too
-      (doall (for [s ev] ((run-stmt s) penv)))
-      SUCCESS
-      )))
-
-
-;;                  _                       _ _
 ;;   _____   ____ _| |          _   _ _ __ (_) |_
 ;;  / _ \ \ / / _` | |  _____  | | | | '_ \| | __|
 ;; |  __/\ V / (_| | | |_____| | |_| | | | | | |_
@@ -1665,5 +1667,4 @@
       (when main-prog
         ;; (println "Statement heads in main program (observe laziness):")
         ;; (doseq [s (:body main-prog)] (nkecho (:head s)))
-        ((run-program main-prog) penv))
-      )))
+        ((run main-prog) penv)))))

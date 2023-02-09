@@ -1828,7 +1828,8 @@
         2                         ;  integer         unique_global_id
         {:x                       ;  key
          (Variable                ;   head, term: symbol
-          2                       ;   symbol_table    parent-symtab-id (TODO: !!!)
+          2                       ;   symbol_table    parent-symtab-id
+                                  ;     TODO: NOT SYMBOL!
           x                       ;   identifier      nym
           []                      ;   identifier *    dependencies
           Local                   ;   intent          intent
@@ -2090,8 +2091,7 @@
 
 
 #_'(TranslationUnit
-    (SymbolTable
-     1
+    (SymbolTable     1
      {:lpython_builtin (IntrinsicModule lpython_builtin),
       :main0   (Function
                 (SymbolTable
@@ -2133,8 +2133,7 @@
       :main_program (Program (SymbolTable 98 {}) main_program [] []),
       :test_pow
       (Function
-       (SymbolTable
-        2
+       (SymbolTable    2
         {:a      (Variable
                   2
                   a
@@ -2185,8 +2184,7 @@
        [] [] .false. .false. .false.),
       :test_pow_1
       (Function
-       (SymbolTable
-        3
+       (SymbolTable    3
         {:_lpython_return_variable      (Variable
                                          3
                                          _lpython_return_variable
