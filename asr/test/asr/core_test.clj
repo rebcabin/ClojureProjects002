@@ -2185,19 +2185,18 @@
       :test_pow_1
       (Function
        (SymbolTable    3
-        {:_lpython_return_variable      (Variable
-                                         3
-                                         _lpython_return_variable
-                                         []
-                                         ReturnVar
-                                         ()
-                                         ()
-                                         Default
-                                         (Integer 4 [])
-                                         Source
-                                         Public
-                                         Required
-                                         .false.),
+        {:_lpython_return_variable (Variable 3
+                                             _lpython_return_variable
+                                             []
+                                             ReturnVar
+                                             ()
+                                             ()
+                                             Default
+                                             (Integer 4 [])
+                                             Source
+                                             Public
+                                             Required
+                                             .false.),
          :a      (Variable
                   3
                   a
@@ -2226,40 +2225,38 @@
                   .false.),
          :pow (ExternalSymbol 3 pow 6 pow lpython_builtin [] pow Private),
          :pow/__lpython_overloaded_0__pow
-         (ExternalSymbol       3
-                               pow/__lpython_overloaded_0__pow       6
-                               __lpython_overloaded_0__pow
-                               lpython_builtin
-                               []
-                               __lpython_overloaded_0__pow
-                               Public),
-         :res
-         (Variable
-          3
-          res
-          []
-          Local
-          ()
-          ()
-          Default
-          (Integer 4 [])
-          Source
-          Public
-          Required
-          .false.)})
+         (ExternalSymbol 3
+                         pow/__lpython_overloaded_0__pow       6
+                         __lpython_overloaded_0__pow
+                         lpython_builtin
+                         []
+                         __lpython_overloaded_0__pow
+                         Public),
+         :res (Variable 3
+                        res
+                        []
+                        Local
+                        ()
+                        ()
+                        Default
+                        (Integer 4 [])
+                        Source
+                        Public
+                        Required
+                        .false.)})
        test_pow_1
        [pow/__lpython_overloaded_0__pow]
        [(Var 3 a) (Var 3 b)] ;; v--- body
        [(Assignment
          (Var 3 res)
          (Cast
-          (FunctionCall        3
-                               pow/__lpython_overloaded_0__pow        3
-                               pow
-                               [((Var 3 a)) ((Var 3 b))]
-                               (Real 8 [])
-                               ()
-                               ())
+          (FunctionCall 3
+                        pow/__lpython_overloaded_0__pow        3
+                        pow
+                        [((Var 3 a)) ((Var 3 b))]
+                        (Real 8 [])
+                        ()
+                        ())
           RealToInteger
           (Integer 4 [])
           ())
