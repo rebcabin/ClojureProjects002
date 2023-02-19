@@ -2117,9 +2117,9 @@
                  (Assignment
                   (Var 4 c)
                   (FunctionCall
-                   1
+                   1 ; stid
                    test_pow_1
-                   ()
+                   () ; symref
                    [((IntegerConstant 1 (Integer 4 [])))
                     ((IntegerConstant 2 (Integer 4 [])))]
                    (Integer 4 [])
@@ -2150,14 +2150,15 @@
          :pow (ExternalSymbol 2 pow 6 pow lpython_builtin [] pow Private),
          :pow/__lpython_overloaded_0__pow
          (ExternalSymbol
-          2
-          pow/__lpython_overloaded_0__pow
-          6
-          __lpython_overloaded_0__pow
-          lpython_builtin
-          []
-          __lpython_overloaded_0__pow
-          Public)})
+          2                               ; stid
+          pow/__lpython_overloaded_0__pow ; nym
+          6                               ; external-stid
+          __lpython_overloaded_0__pow     ; -unspecified
+          lpython_builtin                 ; module-nym
+          []                              ; scope-nyms
+          __lpython_overloaded_0__pow     ; original-nym
+          Public                          ; access
+          )})
        test_pow
        [pow/__lpython_overloaded_0__pow]
        [] ;; v--- body:
@@ -2165,9 +2166,9 @@
          (Var 2 a)
          (Cast
           (FunctionCall
-           2
+           2 ; stid
            pow/__lpython_overloaded_0__pow
-           2
+           2 ; symref
            pow
            [((IntegerConstant 2 (Integer 4 [])))
             ((IntegerConstant 2 (Integer 4 [])))]
@@ -2184,19 +2185,20 @@
        [] [] .false. .false. .false.),
       :test_pow_1
       (Function
-       (SymbolTable    3
-        {:_lpython_return_variable (Variable 3
-                                             _lpython_return_variable
-                                             []
-                                             ReturnVar
-                                             ()
-                                             ()
-                                             Default
-                                             (Integer 4 [])
-                                             Source
-                                             Public
-                                             Required
-                                             .false.),
+       (SymbolTable 3
+        {:_lpython_return_variable
+         (Variable 3
+                   _lpython_return_variable
+                   []
+                   ReturnVar
+                   ()
+                   ()
+                   Default
+                   (Integer 4 [])
+                   Source
+                   Public
+                   Required
+                   .false.),
          :a      (Variable
                   3
                   a
@@ -2226,7 +2228,8 @@
          :pow (ExternalSymbol 3 pow 6 pow lpython_builtin [] pow Private),
          :pow/__lpython_overloaded_0__pow
          (ExternalSymbol 3
-                         pow/__lpython_overloaded_0__pow       6
+                         pow/__lpython_overloaded_0__pow
+                         6
                          __lpython_overloaded_0__pow
                          lpython_builtin
                          []
@@ -2246,12 +2249,14 @@
                         .false.)})
        test_pow_1
        [pow/__lpython_overloaded_0__pow]
-       [(Var 3 a) (Var 3 b)] ;; v--- body
+       [(Var 3 a) (Var 3 b)] ; args
+       ;; v--- body
        [(Assignment
          (Var 3 res)
          (Cast
-          (FunctionCall 3
-                        pow/__lpython_overloaded_0__pow        3
+          (FunctionCall 3 ; stid
+                        pow/__lpython_overloaded_0__pow
+                        3 ; symref
                         pow
                         [((Var 3 a)) ((Var 3 b))]
                         (Real 8 [])

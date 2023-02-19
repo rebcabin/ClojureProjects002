@@ -21,7 +21,7 @@
                  #_[org.bytedeco.javacpp-presets/openblas-platform "0.3.5-1.4.4"]]
   :test-selectors {:current (fn [metadata- & _]
                               (or
-                               (= (:name metadata-)
+                               #_(= (:name metadata-)
                                   'eval-node-test-examples-slash-expr2-alert)
                                (= (:name metadata-)
                                   'eval-node-test-expr7)))

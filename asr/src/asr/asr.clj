@@ -169,7 +169,6 @@
   "Add-to or update bindings in penv. Binding symbols must be
   keywords. Binding values may be anything"
   [bindings penv]
-  (echo bindings)
   (assert (is-penv? penv))
   (let [oenv (:π @penv)]
     (swap!
@@ -479,11 +478,10 @@
     Run
 
     (run [_]
-      (println "Running Cast")
       (fn [penv]
         (let [result ((run argument) penv)]
+          (echo ["Running Cast" :v value, :r result])
           (when value ;; Trust, but verify!
-            (echo [:CAST :v value, :r result])
             (let [v ((conditional-run value) penv)]
              (assert (or v
                          (= v result)
@@ -560,6 +558,7 @@
 
     (run [fc]
       (fn [penv]
+        ;; (echo [:FIDS :stid stid :name-symref name-symref])
         ;; Arguments have already been evaluated in penv.
         ;; Find the parameters in the attached 'Function.
         ;; TODO: Find free-vars in braided environments.
@@ -567,7 +566,7 @@
         (let [params   (:args function)
               knyms    (map (comp keyword :head :name :v) params)
               vals     (map #((run %) penv) arguments)
-              bindings (echo (zipmap knyms vals))
+              bindings (zipmap knyms vals)
               fun-stab (:symtab function) ; Has params.
               ;; _        (summarize function)
               ;; nupenv will shadow params:
@@ -590,12 +589,7 @@
                 (sm/push-call-args
                  (map #(lookup % penv) vals))
                 ((run function) penv)
-                (let [res (echo (sm/pop-result))
-                      ret (echo (lookup-penv
-                                 '_lpython_return_variable
-                                 penv))]
-
-                  ))
+                (sm/pop-result))
               ))
           )))
 
@@ -1020,7 +1014,7 @@
 
 (defrecord ExternalSymbol-rec
     [head term, stid name external-stid
-     module-name -unspecified scope-names
+     -unspecified module-name scope-names
      original-name access]
 
     Summarize
@@ -1042,9 +1036,9 @@
     parent-stid
     nym
     external-stid
-    module-nym
     ;; Issue #1507 https://github.com/lcompilers/lpython/issues/1507
     -unspecified
+    module-nym
     scope-nyms
     original-nym
     access
@@ -1057,8 +1051,8 @@
       :stid            ((eval-node  parent-stid)   penv)
       :name            ((eval-node  nym)           penv)
       :external-stid   ((eval-node  external-stid) penv)
-      :module-name     ((eval-node  module-nym)    penv)
       :-unspecified    ((eval-node  -unspecified)  penv)
+      :module-name     ((eval-node  module-nym)    penv)
       :scope-names     ((eval-nodes scope-nyms)    penv)
       :original-name   ((eval-node  original-nym)  penv)
       :access          ((eval-node  access)        penv)
@@ -1178,7 +1172,13 @@
     Lookup
 
     (lookup [_, penv]
-      (lookup-penv (:head name) penv)))
+      (lookup-penv (:head name) penv))
+
+    Run
+    (run [_]
+      (fn [penv]
+        (lookup-penv (:head name) penv)))
+    )
 
 
 (defmethod eval-symbol 'Variable
@@ -1423,7 +1423,8 @@
 
     (run [_]
       (fn [penv]
-        (println "Running Return."))))
+        (println "Running Return.")
+        (let [lrv (echo (lookup-penv '_lpython_return_value penv))]))))
 
 
 (defmethod eval-stmt 'Return
@@ -1529,6 +1530,9 @@
 
           (println (f-str "Running Assignment"))
           (println (f-str "   tgtsumm   {(summary target)}"))
+          (println
+           (f-str
+            "   value     {value} {(conditional-summary value)}"))
           (println (f-str "   stid:     {stid}"))
           (println (f-str "   presumm:  {(summary prelkup)}"))
           (println (f-str "   postsumm: {(summary postlkup)}"))

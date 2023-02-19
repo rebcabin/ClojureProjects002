@@ -1,6 +1,6 @@
 (ns stack-machine.stack
   (:use    asr.utils)
-  (:require [clojure.math.numeric-tower :as math :refer [expt]])
+  (:require [clojure.math.numeric-tower :as math])
   (:import java.util.concurrent.Executors))
 
 
@@ -30,7 +30,7 @@
     'pow/__lpython_overloaded_0__pow
     (let [victim (pop-arg-stack)
           expont (pop-arg-stack)
-          result (expt victim expont)]
+          result (math/expt victim expont)]
       (swap! eval-stack conj result))))
 
 
